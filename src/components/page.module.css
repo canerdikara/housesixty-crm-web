@@ -1,0 +1,85 @@
+/*
+ * The frame every panel screen sits in — mockup screens 2–18.
+ *
+ * All eighteen share the same skeleton: a title with a grey subtitle line, filter
+ * controls pushed to the right of it, then cards. Keeping it in one place is what
+ * stops the leads screen and the members screen drifting a few pixels apart.
+ */
+
+.page {
+  padding: 26px 30px 34px;
+  max-width: 1680px;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 22px;
+}
+
+.titleBlock {
+  min-width: 0;
+}
+
+.title {
+  font-size: 30px;
+  line-height: 1.15;
+  margin: 0;
+}
+
+.subtitle {
+  margin: 5px 0 0;
+  color: var(--text-muted);
+  font-size: 13.5px;
+}
+
+/* Filters and the primary action, right-aligned. Wraps rather than overflowing. */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  padding: 20px 22px;
+}
+
+/*
+ * Placeholder for screens that are designed but not built.
+ *
+ * It names the phase rather than saying "coming soon", so anyone clicking through the
+ * panel can see what is deliberately absent versus what is broken.
+ */
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 46px 22px;
+  color: var(--text-muted);
+}
+
+.placeholderPhase {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--chip);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.placeholderText {
+  margin: 0;
+  max-width: 52ch;
+  line-height: 1.6;
+}

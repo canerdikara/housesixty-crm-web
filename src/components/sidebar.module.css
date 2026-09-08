@@ -1,0 +1,211 @@
+/*
+ * The left navigation — mockup screens 2–18.
+ *
+ * Fixed to the viewport rather than scrolling with the page: the panel is a
+ * table-heavy tool and navigation has to stay reachable at the bottom of a long list.
+ */
+
+.sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: var(--sidebar-w);
+  background: var(--sidebar);
+  display: flex;
+  flex-direction: column;
+  z-index: 20;
+}
+
+/* ── Brand ────────────────────────────────────────────────────────────────── */
+
+.brand {
+  padding: 26px 22px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 9px;
+}
+
+.logo {
+  height: 44px;
+  width: auto;
+}
+
+.brandSub {
+  color: var(--sand);
+  font-size: 9.5px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+}
+
+/* ── Navigation ───────────────────────────────────────────────────────────── */
+
+.nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 12px 16px;
+  /*
+   * The list can outgrow a short viewport once the warehouse entry is on. Scrolling
+   * the nav rather than the sidebar keeps the user block below pinned in place.
+   */
+  scrollbar-width: thin;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  color: var(--sidebar-text-dim);
+  font-size: 13.5px;
+  text-decoration: none;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.link:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--sidebar-text);
+  text-decoration: none;
+}
+
+.link.active {
+  background: var(--sidebar-on);
+  color: #fff;
+  font-weight: 600;
+}
+
+/*
+ * The bullet is the mockup's active marker. It is decorative — aria-current on the
+ * link is what actually announces the current page, so a screen reader is not relying
+ * on a dot it cannot see.
+ */
+.dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.45;
+  flex: 0 0 auto;
+}
+
+.link.active .dot {
+  background: var(--accent);
+  opacity: 1;
+}
+
+/* ── User ─────────────────────────────────────────────────────────────────── */
+
+.user {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 16px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.avatar {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-ink);
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.userText {
+  min-width: 0;
+  flex: 1;
+}
+
+.userName,
+.userRole {
+  /*
+   * Names in this club run long ("Mehmet Aliosmanoğlu"). Truncating beats wrapping to
+   * a second line, which would shove the whole block off a short viewport.
+   */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.userName {
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.userRole {
+  color: var(--sidebar-text-dim);
+  font-size: 11.5px;
+}
+
+.logout {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--sidebar-text-dim);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.logout:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+
+/* ── Page area ────────────────────────────────────────────────────────────── */
+
+.main {
+  margin-left: var(--sidebar-w);
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/*
+ * Below this the sidebar would leave too little room for a data table, so it becomes
+ * a normal block at the top and the page scrolls past it.
+ *
+ * The panel is a desktop tool and the mockups only describe the wide layout; this is a
+ * graceful degradation so a tablet is usable, not a claim that the panel is responsive.
+ * Proper small-screen navigation is its own piece of work.
+ */
+@media (max-width: 900px) {
+  .sidebar {
+    position: static;
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .nav {
+    overflow: visible;
+  }
+
+  .list {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .main {
+    margin-left: 0;
+  }
+}
