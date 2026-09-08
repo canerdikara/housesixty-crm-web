@@ -1,0 +1,193 @@
+/*
+ * Satış hunisi — mockup screen 4.
+ *
+ * A funnel strip across the top, then one column per stage.
+ */
+
+/* ── Funnel ───────────────────────────────────────────────────────────────── */
+
+.funnel {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 22px;
+}
+
+.funnelStage {
+  min-width: 0;
+}
+
+/*
+ * The bar is a proportion, drawn against a track so the *unfilled* part is visible
+ * too. A bare bar with no track shows a length but not a share, and the share is the
+ * whole point of a funnel.
+ */
+.funnelTrack {
+  height: 9px;
+  border-radius: var(--radius-pill);
+  background: var(--grid);
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.funnelFill {
+  height: 100%;
+  border-radius: var(--radius-pill);
+}
+
+.funnelCount {
+  font-family: var(--font-serif);
+  font-size: 30px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.funnelLabel {
+  margin-top: 5px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.funnelStep {
+  margin-left: 7px;
+  color: var(--text-faint);
+}
+
+/* ── Board ────────────────────────────────────────────────────────────────── */
+
+.board {
+  display: grid;
+  /*
+   * Six equal columns that never shrink below a readable width; the board scrolls
+   * sideways instead. Squeezing a name into 90px is worse than a scrollbar.
+   */
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(230px, 1fr);
+  gap: 14px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  align-items: start;
+}
+
+.column {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+}
+
+.columnHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 15px;
+  border-bottom: 1px solid var(--border);
+}
+
+.columnDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex: 0 0 auto;
+}
+
+.columnTitle {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.columnCount {
+  color: var(--text-muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.columnBody {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+/* ── Card ─────────────────────────────────────────────────────────────────── */
+
+.card {
+  display: block;
+  padding: 12px 13px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card-2);
+  text-decoration: none;
+  color: inherit;
+}
+
+.card:hover {
+  border-color: var(--accent);
+  text-decoration: none;
+}
+
+.cardName {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  letter-spacing: 0.01em;
+  margin-bottom: 9px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cardTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 11px;
+}
+
+.cardFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cardAge {
+  color: var(--text-faint);
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+
+.columnEmpty {
+  padding: 22px 12px;
+  text-align: center;
+  color: var(--text-faint);
+  font-size: 12.5px;
+}
+
+/* "+ 4 aday daha" — the column shows a capped preview, not the whole stage. */
+.more {
+  display: block;
+  padding: 8px;
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.more:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 1100px) {
+  .funnel {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+}

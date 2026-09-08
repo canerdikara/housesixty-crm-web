@@ -1,0 +1,301 @@
+/*
+ * Shared primitives — table, badge, chip, filter bar, pagination.
+ *
+ * Built once here because screens 3, 6, 8, 11, 13, 15, 16, 17 and 18 are all the same
+ * object: a header, a row of filter chips, a card holding a table, a pagination footer.
+ * Nine screens diverging by a few pixels each is exactly what a shared primitive
+ * prevents.
+ */
+
+/* ── Table ────────────────────────────────────────────────────────────────── */
+
+.tableWrap {
+  /*
+   * The table scrolls inside its own container rather than pushing the page sideways.
+   * A lead table with every column on is wider than a laptop, and a horizontally
+   * scrolling *page* moves the sidebar off-screen with it.
+   */
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+.table th {
+  text-align: left;
+  padding: 0 14px 10px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  white-space: nowrap;
+  border-bottom: 1px solid var(--border);
+}
+
+.table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.table tbody tr:hover {
+  background: var(--card-2);
+}
+
+.rowLink {
+  color: var(--text);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.rowLink:hover {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.muted {
+  color: var(--text-muted);
+}
+
+.faint {
+  color: var(--text-faint);
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+/* Right-aligned action link at the end of a row — "Ara", "Takip et". */
+.rowAction {
+  color: var(--accent);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ── Badge ────────────────────────────────────────────────────────────────── */
+
+/*
+ * Status pill. Always outlined and always carrying its own word — never colour alone,
+ * per the chart rules, which apply just as much to a table cell.
+ */
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid;
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badgeNeutral { background: var(--chip); border-color: var(--border); color: var(--text-muted); }
+.badgeAccent  { background: transparent; border-color: var(--warn); color: var(--warn); }
+.badgeGood    { background: var(--good-bg); border-color: var(--good); color: var(--good); }
+.badgeCrit    { background: var(--crit-bg); border-color: var(--crit); color: var(--crit); }
+
+/* Outlined tag — source, interest. Lighter than a status badge on purpose. */
+.tag {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+
+.tagMuted {
+  border-color: var(--border);
+  color: var(--text-muted);
+}
+
+/* ── Avatar ───────────────────────────────────────────────────────────────── */
+
+.avatar {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.avatarEmpty {
+  background: var(--chip);
+  color: var(--text-faint);
+  border: 1px dashed var(--border);
+}
+
+/* ── Filter chips ─────────────────────────────────────────────────────────── */
+
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 15px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text-muted);
+  font-size: 13px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.chip:hover {
+  background: var(--card-2);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.chipActive,
+.chipActive:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+
+.chipCount {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Controls ─────────────────────────────────────────────────────────────── */
+
+.select,
+.search {
+  padding: 8px 11px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  font-size: 13px;
+}
+
+.search {
+  min-width: 220px;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.button:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+  text-decoration: none;
+}
+
+.buttonGhost {
+  background: var(--card);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.buttonGhost:hover {
+  background: var(--card-2);
+  border-color: var(--text-faint);
+}
+
+/* ── Footer / pagination ──────────────────────────────────────────────────── */
+
+.tableFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 16px;
+  margin-top: 4px;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 12.5px;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pageLink {
+  display: grid;
+  place-items: center;
+  min-width: 29px;
+  height: 29px;
+  padding: 0 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text-muted);
+  font-size: 12.5px;
+  text-decoration: none;
+}
+
+.pageLink:hover {
+  background: var(--card-2);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.pageCurrent,
+.pageCurrent:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 700;
+}
+
+.pageDisabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* ── Empty state ──────────────────────────────────────────────────────────── */
+
+.empty {
+  padding: 54px 20px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.emptyTitle {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  color: var(--text);
+  margin: 0 0 6px;
+}
+
+.emptyText {
+  margin: 0;
+  font-size: 13.5px;
+}

@@ -1,0 +1,269 @@
+/*
+ * Aday detayı — mockup screen 5.
+ *
+ * A wide header card, then three columns: profile and consent on the left, the
+ * timeline in the middle, next action and notes on the right.
+ */
+
+.hero {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 22px 24px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  margin-bottom: 18px;
+}
+
+.heroAvatar {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.heroMain {
+  flex: 1;
+  min-width: 0;
+}
+
+.heroName {
+  font-size: 27px;
+  line-height: 1.1;
+  margin: 0 0 5px;
+}
+
+.heroMeta {
+  color: var(--text-muted);
+  font-size: 13px;
+  margin: 0 0 12px;
+}
+
+.heroTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Right-hand figures in the header — etkileşim / ziyaret / gün. */
+.heroStats {
+  display: flex;
+  gap: 26px;
+  padding-left: 26px;
+  border-left: 1px solid var(--border);
+  flex: 0 0 auto;
+}
+
+.stat {
+  text-align: center;
+}
+
+.statValue {
+  font-family: var(--font-serif);
+  font-size: 26px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.statLabel {
+  margin-top: 5px;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+/* ── Columns ──────────────────────────────────────────────────────────────── */
+
+.columns {
+  display: grid;
+  grid-template-columns: 1fr 1.35fr 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+}
+
+.cardTitle {
+  font-size: 16px;
+  margin: 0 0 3px;
+}
+
+.cardSub {
+  color: var(--text-muted);
+  font-size: 12.5px;
+  margin: 0 0 16px;
+}
+
+/* ── Definition rows ──────────────────────────────────────────────────────── */
+
+.rows {
+  margin: 0;
+}
+
+.row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.row:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.rowKey {
+  color: var(--text-muted);
+  font-size: 13px;
+  flex: 0 0 auto;
+}
+
+.rowValue {
+  font-size: 13.5px;
+  font-weight: 600;
+  text-align: right;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* ── Stage strip ──────────────────────────────────────────────────────────── */
+
+.stages {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.stageBar {
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--grid);
+  margin-bottom: 7px;
+}
+
+.stageBarDone {
+  background: var(--accent);
+}
+
+.stageLabel {
+  font-size: 11px;
+  color: var(--text-faint);
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stageLabelDone {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* ── Timeline ─────────────────────────────────────────────────────────────── */
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+}
+
+.entry {
+  display: flex;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.entry:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.entryType {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  padding: 2px 9px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--s2);
+  color: var(--s2);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+/* System rows are the platform talking, not a person — they recede. */
+.entryTypeSystem {
+  border-color: var(--border);
+  color: var(--text-faint);
+}
+
+.entryMain {
+  flex: 1;
+  min-width: 0;
+}
+
+.entryWhen {
+  color: var(--text-faint);
+  font-size: 11.5px;
+  margin-bottom: 3px;
+}
+
+.entryNote {
+  font-size: 13.5px;
+  margin: 0;
+  /* Notes are written with newlines; preserve them without letting one long
+     unbroken string widen the column. */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.entryWho {
+  flex: 0 0 auto;
+  align-self: flex-start;
+}
+
+/* ── Notes ────────────────────────────────────────────────────────────────── */
+
+.notes {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text-muted);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1240px) {
+  .columns {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 860px) {
+  .columns {
+    grid-template-columns: 1fr;
+  }
+
+  .hero {
+    flex-wrap: wrap;
+  }
+
+  .heroStats {
+    padding-left: 0;
+    border-left: 0;
+  }
+}

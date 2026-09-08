@@ -14,7 +14,11 @@ export function PageHeader({
   actions,
 }: {
   title: string;
-  subtitle?: string;
+  /**
+   * ReactNode rather than string: the detail screens put a breadcrumb here
+   * ("Adaylar › Emre Doğan") and the link in it has to be a real anchor.
+   */
+  subtitle?: React.ReactNode;
   actions?: React.ReactNode;
 }) {
   return (
