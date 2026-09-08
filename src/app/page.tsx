@@ -1,7 +1,10 @@
 import { redirect } from "next/navigation";
 import { readSession } from "@/lib/session";
 import { roleLabel, initialsOf } from "@/lib/roles";
+import { apiRequest } from "@/lib/api";
 import { logoutAction } from "./login/actions";
+
+type Me = { id: string; email: string; fullName: string; role: string };
 
 /**
  * Placeholder landing.
@@ -22,6 +25,24 @@ export default async function HomePage() {
   if (!session) redirect("/login");
 
   const { user } = session;
+
+  /*
+   * A live call to the backend, not just a cookie read.
+   *
+   * The session cookies alone prove nothing about the backend — they would still
+   * render this page happily if the API were down or the token had been revoked. This
+   * exercises the real path every future screen will use, which also means it is what
+   * drives the refresh-and-replay branch in apiRequest: when the fifteen-minute access
+   * token expires, this call 401s, the refresh happens, and the request is replayed
+   * before the page ever renders.
+   *
+   * `unauthorized` here means the refresh itself failed, so the session is genuinely
+   * dead and the only correct move is the login page. Anything else is reported inline
+   * rather than redirecting — a backend that is merely unreachable must not look like
+   * being signed out.
+   */
+  const me = await apiRequest<Me>("/api/v1/users/me");
+  if (me.kind === "unauthorized") redirect("/login");
 
   return (
     <main style={{ display: "grid", placeItems: "center", minHeight: "100dvh", padding: 24 }}>
@@ -62,10 +83,35 @@ export default async function HomePage() {
         </div>
 
         <h1 style={{ fontSize: 22, marginBottom: 8 }}>Genel Bakış</h1>
-        <p style={{ color: "var(--text-muted)", margin: "0 0 24px" }}>
+        <p style={{ color: "var(--text-muted)", margin: "0 0 20px" }}>
           Panel altyapısı hazır. Gösterge paneli ve diğer ekranlar sıradaki aşamada
           eklenecek.
         </p>
+
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            marginBottom: 24,
+            padding: "9px 12px",
+            borderRadius: "var(--radius-sm)",
+            fontSize: 13,
+            background: me.kind === "ok" ? "var(--good-bg)" : "var(--crit-bg)",
+            border: `1px solid ${me.kind === "ok" ? "var(--good)" : "var(--crit)"}`,
+            color: me.kind === "ok" ? "var(--good)" : "var(--crit)",
+          }}
+        >
+          {/* Status carried by an icon and a word, never by colour alone. */}
+          <span aria-hidden="true">{me.kind === "ok" ? "●" : "▲"}</span>
+          <span>
+            {me.kind === "ok"
+              ? `Sunucu bağlantısı doğrulandı — ${me.data.email}`
+              : me.kind === "forbidden"
+                ? `Yetki hatası: ${me.message}`
+                : `Sunucuya bağlanılamadı: ${me.message}`}
+          </span>
+        </div>
 
         <form action={logoutAction}>
           <button

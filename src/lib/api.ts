@@ -1,6 +1,6 @@
 import "server-only";
 
-import { clearSession, readSession, writeSession, type Session, type SessionUser } from "./session";
+import { readSession, type SessionUser } from "./session";
 
 /**
  * The panel's only route to the backend. Server-side, always.
@@ -27,7 +27,8 @@ export type ApiError = {
  * is how the 401/403 distinction gets lost:
  *
  *  - `ok`         — the data.
- *  - `unauthorized` — refresh failed or there is no session. Send them to login.
+ *  - `unauthorized` — no session, or the token was refused despite middleware having
+ *                   just ensured a fresh one. Send them to login.
  *  - `forbidden`  — signed in, wrong role. Show a permission message. **Never log out.**
  *  - `error`      — everything else, with the backend's own message.
  */
@@ -66,37 +67,6 @@ async function readError(res: Response): Promise<string> {
   return `Beklenmeyen bir hata oluştu (${res.status}).`;
 }
 
-/**
- * Exchanges the refresh token for a new pair, and rewrites the session.
- *
- * **The role trap.** `/auth/refresh` returns a full `AuthResponse` including the whole
- * user object, and that is where the role must come from. The refresh token itself
- * carries only `sub`, `type`, `iat` and `exp` — **no `role` claim**. Any code that
- * reads the role out of the token comes up empty fifteen minutes into every session,
- * once the first refresh has happened. So the user object is rewritten here from the
- * response body, not preserved from the old session.
- */
-async function refreshSession(session: Session): Promise<Session | null> {
-  const res = await fetch(`${requireBase()}/api/v1/auth/refresh`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    // camelCase and @NotBlank on the backend — `refresh_token` is silently rejected.
-    body: JSON.stringify({ refreshToken: session.refreshToken }),
-    cache: "no-store",
-  });
-
-  if (!res.ok) return null;
-
-  const auth = (await res.json()) as AuthResponse;
-  const next: Session = {
-    accessToken: auth.accessToken,
-    refreshToken: auth.refreshToken,
-    user: auth.user,
-  };
-  await writeSession(next);
-  return next;
-}
-
 type RequestOptions = {
   method?: string;
   body?: unknown;
@@ -106,72 +76,59 @@ type RequestOptions = {
 };
 
 /**
- * An authenticated call to the backend, with one refresh-and-replay on 401.
+ * An authenticated call to the backend.
+ *
+ * ## This function does not refresh
+ *
+ * Token refresh happens in `middleware.ts`, before the render starts, and that is not
+ * a stylistic choice: **Next.js throws if cookies are written during a Server
+ * Component render**. Refreshing here would therefore have to either crash the page or
+ * discard the new tokens and refresh again on every subsequent request. Middleware may
+ * write cookies, so it does the refresh, and by the time this function runs the access
+ * token is already fresh.
  *
  * ## The rule this exists to enforce
  *
- * - **401** → the token is expired or absent. Refresh once and replay the original
- *   request. If the replay is also 401, the session is genuinely dead: clear it and
- *   report `unauthorized`.
- * - **403** → the caller is authenticated but lacks the role. Report `forbidden` and
- *   **do not refresh and do not log out.** Refreshing would not help, and logging out
- *   turns "you cannot see the consent log" into "you have been signed out", which
- *   staff read as a broken panel.
+ * - **401** → the token was rejected even though middleware had just ensured a fresh
+ *   one, so it has been revoked or the account is gone. Report `unauthorized`; the
+ *   caller sends them to login and middleware clears the cookies on the way.
+ * - **403** → authenticated, wrong role. Report `forbidden`, and **do not log out**.
+ *   A refresh would not help, and signing someone out turns "you cannot see the
+ *   consent log" into "the panel is broken".
  *
  * The backend's `SecurityConfig` has an `exceptionHandling` block specifically to keep
- * these two apart — without it Spring falls back to `Http403ForbiddenEntryPoint` and
- * answers 403 for an *expired* token, which would silently kill every session here at
- * the fifteen-minute mark. If sessions ever start dying on the hour, check that block
- * before looking at this file.
- *
- * Only one replay, never a loop: if a fresh token is still refused, retrying cannot
- * change the answer and would only turn a dead session into a hot loop against the API.
+ * these apart — without it Spring falls back to `Http403ForbiddenEntryPoint` and
+ * answers 403 for an *expired* token. If sessions ever start dying on the
+ * fifteen-minute mark, check that block before looking at this file.
  */
 export async function apiRequest<T>(
   path: string,
   options: RequestOptions = {}
 ): Promise<ApiResult<T>> {
-  let session = await readSession();
+  const session = await readSession();
   if (!session) return { kind: "unauthorized" };
 
-  const send = (token: string) =>
-    fetch(`${requireBase()}${path}`, {
+  let res: Response;
+  try {
+    res = await fetch(`${requireBase()}${path}`, {
       method: options.method ?? "GET",
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${session.accessToken}`,
         ...(options.body !== undefined ? { "Content-Type": "application/json" } : {}),
       },
       body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
       cache: options.cache ?? "no-store",
       signal: options.signal,
     });
-
-  let res: Response;
-  try {
-    res = await send(session.accessToken);
   } catch {
     return { kind: "error", status: 0, message: "Sunucuya ulaşılamadı." };
   }
 
   if (res.status === 401) {
-    const refreshed = await refreshSession(session);
-    if (!refreshed) {
-      await clearSession();
-      return { kind: "unauthorized" };
-    }
-    session = refreshed;
-    try {
-      res = await send(session.accessToken);
-    } catch {
-      return { kind: "error", status: 0, message: "Sunucuya ulaşılamadı." };
-    }
-    if (res.status === 401) {
-      await clearSession();
-      return { kind: "unauthorized" };
-    }
+    return { kind: "unauthorized" };
   }
 
-  // Deliberately after the 401 branch and deliberately not falling into it.
+  // Deliberately a separate branch from 401 and deliberately not falling into it.
   if (res.status === 403) {
     return { kind: "forbidden", message: await readError(res) };
   }
