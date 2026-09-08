@@ -170,5 +170,16 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|logo.png).*)"],
+  /*
+   * Everything except Next's own assets and static image files.
+   *
+   * The image exclusion is not an optimisation, it is required: the login page is
+   * rendered while signed out, so if middleware ran on `/emblem.png` it would redirect
+   * that request to `/login` and the login screen would show a broken logo. This was
+   * previously spelled as the single filename `logo.png`, which quietly stopped
+   * covering it the moment the asset was renamed — hence the extension match.
+   */
+  matcher: [
+    "/((?!_next/static|_next/image|favicon\\.ico|.*\\.png|.*\\.svg|.*\\.ico|.*\\.webp).*)",
+  ],
 };

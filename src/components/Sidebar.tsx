@@ -29,14 +29,17 @@ export function Sidebar({
   return (
     <aside className={styles.sidebar}>
       <div className={styles.brand}>
+        {/* Decorative — the wordmark below states the brand in real text. */}
         <Image
-          className={styles.logo}
-          src="/logo-white.png"
-          alt="House Sixty"
+          className={styles.emblem}
+          src="/emblem-white.png"
+          alt=""
+          aria-hidden="true"
           width={210}
-          height={217}
+          height={187}
           priority
         />
+        <div className={styles.wordmark}>House Sixty</div>
         <span className={styles.brandSub}>CRM</span>
       </div>
 

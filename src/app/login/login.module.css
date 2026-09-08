@@ -31,13 +31,29 @@
   margin-bottom: 30px;
 }
 
-.logo {
-  height: 62px;
+/*
+ * The emblem alone — no baked-in wordmark. The mark and the "HOUSE SIXTY" wordmark
+ * are separate here, exactly as the mockup draws them, so the type is real text: it
+ * scales with the page, stays selectable and searchable, and can be letterspaced to
+ * match the brand without shipping a second image.
+ */
+.emblem {
+  height: 46px;
   width: auto;
 }
 
+.wordmark {
+  margin-top: 14px;
+  font-family: var(--font-serif);
+  font-size: 19px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text);
+  line-height: 1;
+}
+
 .subtitle {
-  margin-top: 12px;
+  margin-top: 7px;
   color: var(--accent);
   font-size: 11px;
   /* The letterspaced "CRM Paneli" under the wordmark, as drawn in the mockup. */

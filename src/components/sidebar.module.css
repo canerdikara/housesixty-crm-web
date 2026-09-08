@@ -18,19 +18,34 @@
 /* ── Brand ────────────────────────────────────────────────────────────────── */
 
 .brand {
-  padding: 26px 22px 24px;
+  padding: 24px 20px 22px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 9px;
+  gap: 10px;
 }
 
-.logo {
-  height: 44px;
+/*
+ * White recolour of the same emblem the login card uses, generated from the source
+ * mark's alpha channel so the silhouette is identical rather than a redrawn variant.
+ * The original is dark maroon and would be invisible against the charcoal here.
+ */
+.emblem {
+  height: 30px;
   width: auto;
 }
 
+.wordmark {
+  color: #fff;
+  font-family: var(--font-serif);
+  font-size: 14px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
 .brandSub {
+  margin-top: -4px;
   color: var(--sand);
   font-size: 9.5px;
   letter-spacing: 0.32em;
