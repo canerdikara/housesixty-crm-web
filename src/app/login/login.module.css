@@ -1,0 +1,192 @@
+/*
+ * Login — mockup screen 1.
+ *
+ * A cream card centred on the charcoal sidebar colour. The dark ground is the only
+ * place in the panel where the page background is not --page; it is what makes the
+ * login read as outside the application rather than as one more screen inside it.
+ */
+
+.screen {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  background: var(--sidebar);
+  padding: 24px;
+}
+
+.card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--card);
+  border-radius: 14px;
+  padding: 40px 40px 32px;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.logo {
+  height: 62px;
+  width: auto;
+}
+
+.subtitle {
+  margin-top: 12px;
+  color: var(--accent);
+  font-size: 11px;
+  /* The letterspaced "CRM Paneli" under the wordmark, as drawn in the mockup. */
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.field {
+  margin-bottom: 16px;
+}
+
+.label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.input {
+  width: 100%;
+  padding: 11px 12px;
+  background: var(--card-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+}
+
+.input::placeholder {
+  color: var(--text-faint);
+}
+
+.input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 0;
+  border-color: var(--accent);
+}
+
+/* Room for the reveal toggle so a long password never runs under the icon. */
+.passwordWrap {
+  position: relative;
+}
+
+.passwordWrap .input {
+  padding-right: 44px;
+}
+
+.reveal {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.reveal:hover {
+  color: var(--text);
+}
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 4px 0 18px;
+}
+
+.remember {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.checkbox {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.forgot {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.submit {
+  width: 100%;
+  padding: 13px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  border: 0;
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.submit:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.submit:disabled {
+  opacity: 0.65;
+  cursor: default;
+}
+
+/*
+ * Errors carry an icon and a border as well as the colour, never colour alone —
+ * the same rule the chart spec sets for status, and for the same reason.
+ */
+.error {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  background: var(--crit-bg);
+  border: 1px solid var(--crit);
+  border-radius: var(--radius-sm);
+  color: var(--crit);
+  font-size: 13px;
+}
+
+.errorIcon {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+.notice {
+  margin: 22px 0 0;
+  color: var(--text-faint);
+  font-size: 11.5px;
+  line-height: 1.55;
+}

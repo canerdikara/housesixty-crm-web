@@ -1,0 +1,98 @@
+/*
+ * House Sixty CRM — design tokens.
+ *
+ * Values are from CRM.md §7.3, cross-checked against the 18 mockup screens. They are
+ * **provisional**: they were derived from the iOS brand palette names rather than from
+ * a brand document, and open question §14.7 (the real logo file and exact brand hex
+ * values) is still unanswered. When the real values arrive, change them here and
+ * re-validate the series colours for contrast — nothing else in the app hardcodes a
+ * colour.
+ *
+ * Light only. The panel does not follow the system light/dark setting, matching the
+ * rest of the House Sixty estate where every app pins its appearance: member apps
+ * light, admin apps dark, none of them following the OS. The panel is a light design
+ * with a dark sidebar, which is what all 18 mockups show.
+ */
+
+:root {
+  /* ── Surfaces ─────────────────────────────────────────────────────────────── */
+  --page: #e8e3da;      /* the app background behind the cards */
+  --card: #f5f2ec;      /* every panel card */
+  --card-2: #fbf9f5;    /* raised surface inside a card — inputs, nested rows */
+  --border: #d9d2c6;
+  --grid: #e0d9cd;      /* chart gridlines only, never a border */
+  --chip: #ede8df;      /* neutral pill background */
+
+  /* ── Text ─────────────────────────────────────────────────────────────────── */
+  --text: #262320;
+  --text-muted: #6e675c;
+  --text-faint: #948b7e;
+
+  /* ── Brand ────────────────────────────────────────────────────────────────── */
+  --accent: #b0621f;    /* primary action, active nav, links */
+  --accent-ink: #ffffff;
+  --accent-hover: #9a5419;
+  --sand: #c9a961;
+
+  /* ── Sidebar ──────────────────────────────────────────────────────────────── */
+  --sidebar: #262320;
+  --sidebar-on: #3a342d; /* active row background */
+  --sidebar-text: #cfc7b8;
+  --sidebar-text-dim: #8d8578;
+
+  /*
+   * Chart series — a FIXED order, never cycled.
+   *
+   * A series colour belongs to the entity, not to its rank in the current sort. If a
+   * filter drops Gym from a chart, Pilates must stay green rather than sliding up into
+   * blue — otherwise the same colour means a different thing between two screenshots
+   * of the same screen.
+   */
+  --s1: #be6220;  /* padel / primary */
+  --s2: #0070a3;  /* gym */
+  --s3: #89902b;  /* pilates / score */
+  --s4: #a32b57;  /* spa */
+
+  /*
+   * Ordinal ramp — one hue, light to dark, for funnel stages and other ordered
+   * sequences. Used on the lead pipeline conversion bar (mockup screen 4).
+   */
+  --o1: #d49a6a;
+  --o2: #c58549;
+  --o3: #b56e2e;
+  --o4: #a2591f;
+  --o5: #88491a;
+
+  /*
+   * Status — reserved. These three never appear as a series colour, so "green" always
+   * means good and never means "the third thing in this chart".
+   */
+  --good: #3f7a4a;
+  --warn: #a87c10;
+  --crit: #a93a31;
+
+  --good-bg: #eaf1ea;
+  --warn-bg: #f6f0dc;
+  --crit-bg: #f7e9e7;
+
+  /* ── Type ─────────────────────────────────────────────────────────────────── */
+  /*
+   * Serif for headings and figures, sans for UI.
+   *
+   * Jubilat and Neue Haas Grotesk are the brand faces but are NOT bundled — open
+   * question §14.5 is whether their licences cover web use. Until that is answered
+   * these stacks fall back the way the mockups did, to Cambria/Georgia and to the
+   * system UI sans. Both are named first so that adding the webfonts later is a
+   * @font-face block and nothing else.
+   */
+  --font-serif: Jubilat, Cambria, Georgia, "Times New Roman", serif;
+  --font-sans: "Neue Haas Grotesk Display Pro", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Helvetica, Arial, sans-serif;
+
+  /* ── Shape ────────────────────────────────────────────────────────────────── */
+  --radius: 10px;
+  --radius-sm: 6px;
+  --radius-pill: 999px;
+  --shadow-card: 0 1px 2px rgba(38, 35, 32, 0.04);
+  --sidebar-w: 232px;
+}
