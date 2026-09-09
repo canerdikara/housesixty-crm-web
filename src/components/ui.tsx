@@ -112,12 +112,21 @@ export function Pagination({
   totalElements,
   size,
   hrefFor,
+  noun = "kayıt",
 }: {
   page: number;
   totalPages: number;
   totalElements: number;
   size: number;
   hrefFor: (page: number) => string;
+  /**
+   * What is being counted, in the genitive: "63 adayın 1–18 arası".
+   *
+   * Parameterised because this was hardcoded to "adayın" and the members screen reads
+   * "428 adayın" for a list of members — the kind of wrong that survives because it is
+   * grammatical and nobody reads the footer twice.
+   */
+  noun?: string;
 }) {
   const from = totalElements === 0 ? 0 : page * size + 1;
   const to = Math.min((page + 1) * size, totalElements);
@@ -133,7 +142,7 @@ export function Pagination({
       <span>
         {totalElements === 0
           ? "Kayıt yok"
-          : `${totalElements} adayın ${from}–${to} arası`}
+          : `${totalElements} ${noun} ${from}–${to} arası`}
       </span>
 
       {totalPages > 1 && (

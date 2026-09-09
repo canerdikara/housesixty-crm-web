@@ -120,3 +120,39 @@ export const INTERACTION_TYPES: InteractionType[] = [
 ];
 
 export const CONSENT_CHANNELS: ConsentChannel[] = ["EMAIL", "SMS", "WHATSAPP", "PHONE", "ALL"];
+
+
+/** Renewal state of a membership term — separate from the term's own status. */
+export function renewalStatusLabel(v: string): string {
+  switch (v) {
+    case "NOT_CONTACTED": return "Görüşülmedi";
+    case "CONTACTED": return "Görüşüldü";
+    case "PROPOSAL_SENT": return "Teklif gönderildi";
+    case "RENEWED": return "Yenilendi";
+    case "DECLINED": return "Yenilemedi";
+    default: return v;
+  }
+}
+
+export function termStatusLabel(v: string): string {
+  switch (v) {
+    case "ACTIVE": return "Aktif";
+    case "COMPLETED": return "Tamamlandı";
+    case "CANCELLED": return "İptal";
+    default: return v;
+  }
+}
+
+/**
+ * "2026-08" → "Ağu".
+ *
+ * Formatted from a UTC-anchored date so the month name cannot drift: the key is
+ * already an İzmir month computed on the server, and re-interpreting it in the
+ * browser's zone is exactly how it would move.
+ */
+export function monthShortLabel(key: string): string {
+  const [y, m] = key.split("-").map(Number);
+  if (!y || !m) return key;
+  return new Intl.DateTimeFormat("tr-TR", { month: "short", timeZone: "UTC" })
+    .format(new Date(Date.UTC(y, m - 1, 1)));
+}

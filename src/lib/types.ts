@@ -95,3 +95,79 @@ export type SourceConversion = {
   won: number;
   rate: number | null;
 };
+
+
+// ── Phase 2: members ───────────────────────────────────────────────────────────
+
+export type MemberListItem = {
+  userId: string;
+  fullName: string;
+  email: string;
+  phone: string | null;
+  membershipType: string | null;
+  membershipStart: string | null;
+  membershipEnd: string | null;
+  lastVisitAt: string | null;
+  visitCount30d: number;
+  /** Derived server-side: no turnstile pass in 45 days, or none ever. */
+  atRisk: boolean;
+};
+
+export type MemberProfile = {
+  birthDate: string | null;
+  gender: string | null;
+  occupation: string | null;
+  company: string | null;
+  city: string | null;
+  instagramHandle: string | null;
+  linkedinUrl: string | null;
+  padelLevel: string | null;
+  preferredChannel: ConsentChannel | null;
+  notes: string | null;
+};
+
+export type MembershipTerm = {
+  id: string;
+  membershipType: string;
+  startDate: string;
+  endDate: string;
+  status: "ACTIVE" | "COMPLETED" | "CANCELLED";
+  renewalStatus: "NOT_CONTACTED" | "CONTACTED" | "PROPOSAL_SENT" | "RENEWED" | "DECLINED";
+  renewalNote: string | null;
+  lastRenewalContactAt: string | null;
+};
+
+export type MonthCount = { month: string; count: number };
+
+export type MemberUsage = {
+  lastVisitAt: string | null;
+  visitCountTotal: number;
+  visitCount30d: number;
+  visitCount90d: number;
+  visitsByMonth: MonthCount[];
+  reservationCount: number;
+  tournamentCount: number;
+  lessonCount: number;
+  guestCount: number;
+};
+
+export type MemberDetail = {
+  userId: string;
+  fullName: string;
+  email: string;
+  phone: string | null;
+  joinedAt: string;
+  /** Null when the viewer is not an ADMIN — "may not see" is distinct from "none". */
+  hasHealthIssues: boolean | null;
+  membershipType: string | null;
+  membershipStart: string | null;
+  membershipEnd: string | null;
+  atRisk: boolean;
+  profile: MemberProfile | null;
+  interests: { category: InterestCategory; level: number }[];
+  preferences: { key: string; value: string }[];
+  terms: MembershipTerm[];
+  usage: MemberUsage;
+  interactions: Interaction[];
+  consents: ConsentRecord[];
+};

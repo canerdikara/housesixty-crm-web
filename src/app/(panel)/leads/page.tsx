@@ -195,6 +195,7 @@ export default async function LeadsPage({
               totalPages={result.data.totalPages}
               totalElements={result.data.totalElements}
               size={result.data.size}
+              noun="adayın"
               hrefFor={(p) => hrefWith({ page: String(Math.max(0, p)) })}
             />
           </>

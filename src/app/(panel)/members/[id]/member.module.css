@@ -1,0 +1,226 @@
+/*
+ * Üye 360 — mockup screen 7.
+ *
+ * Reuses the lead detail's hero and column shape deliberately: the two screens answer
+ * the same question about different people, and making them look like siblings is the
+ * point.
+ */
+
+.columns {
+  display: grid;
+  grid-template-columns: 1fr 1.35fr 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+}
+
+.cardTitle {
+  font-size: 16px;
+  margin: 0 0 3px;
+}
+
+.cardSub {
+  color: var(--text-muted);
+  font-size: 12.5px;
+  margin: 0 0 16px;
+}
+
+/* ── Visit frequency ──────────────────────────────────────────────────────── */
+
+/*
+ * A bar chart drawn in CSS rather than pulled from a library.
+ *
+ * Six bars with one series does not justify a charting dependency, and building it
+ * here keeps it inside the token system — the bars are --s1, the same colour padel
+ * carries everywhere else, rather than whatever a library's default palette picks.
+ */
+.chart {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  align-items: end;
+  gap: 10px;
+  height: 150px;
+  padding-top: 18px;
+}
+
+.chartCol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  justify-content: flex-end;
+  gap: 6px;
+  min-width: 0;
+}
+
+.chartValue {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.chartBar {
+  width: 100%;
+  max-width: 34px;
+  background: var(--s1);
+  border-radius: 3px 3px 0 0;
+  /* A zero month still shows a hairline, so the column reads as "none" rather than
+     as a missing bar. */
+  min-height: 2px;
+}
+
+.chartLabel {
+  font-size: 11px;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+/* ── Stat strip ───────────────────────────────────────────────────────────── */
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.stat {
+  text-align: center;
+  padding: 12px 6px;
+  background: var(--card-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.statValue {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.statLabel {
+  margin-top: 5px;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+/* ── Interests ────────────────────────────────────────────────────────────── */
+
+.interests {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/*
+ * Interest strength shown as opacity on one hue, not as three different colours.
+ * Three colours would read as three categories; this reads as one thing, more or
+ * less strongly — which is what a 1–3 level actually means.
+ */
+.interestL1 { opacity: 0.55; }
+.interestL2 { opacity: 0.78; }
+.interestL3 { opacity: 1; }
+
+/* ── Timeline (shared shape with the lead screen) ─────────────────────────── */
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+}
+
+.entry {
+  display: flex;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.entry:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.entryType {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  padding: 2px 9px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--s2);
+  color: var(--s2);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.entryTypeSystem {
+  border-color: var(--border);
+  color: var(--text-faint);
+}
+
+.entryMain { flex: 1; min-width: 0; }
+
+.entryWhen {
+  color: var(--text-faint);
+  font-size: 11.5px;
+  margin-bottom: 3px;
+}
+
+.entryNote {
+  font-size: 13.5px;
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ── Terms ────────────────────────────────────────────────────────────────── */
+
+.term {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.term:last-child { border-bottom: 0; padding-bottom: 0; }
+
+.termName { font-weight: 600; font-size: 13.5px; }
+
+.termDates { color: var(--text-muted); font-size: 12px; }
+
+/* ── Health flag ──────────────────────────────────────────────────────────── */
+
+/*
+ * Special-category data under KVKK. Boxed rather than dropped into a definition row
+ * so it is visibly different from the rest of the profile, and never shown at all to
+ * anyone but an admin — the API sends null.
+ */
+.health {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--warn);
+  background: var(--warn-bg);
+  color: var(--warn);
+  font-size: 12.5px;
+  margin-top: 12px;
+}
+
+@media (max-width: 1240px) {
+  .columns { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 860px) {
+  .columns { grid-template-columns: 1fr; }
+  .stats { grid-template-columns: repeat(2, 1fr); }
+}
