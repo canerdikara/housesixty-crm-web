@@ -5,7 +5,8 @@ import { Avatar, EmptyState, Tag, ui } from "@/components/ui";
 import { apiRequest } from "@/lib/api";
 import { daysSinceLabel } from "@/lib/dates";
 import { interestLabel, leadSourceLabel, leadStatusLabel } from "@/lib/labels";
-import type { Pipeline } from "@/lib/types";
+import { leadSourceLabel as sourceLabel } from "@/lib/labels";
+import type { Pipeline, SourceConversion } from "@/lib/types";
 import styles from "./pipeline.module.css";
 
 export const metadata = { title: "Satış hunisi · House Sixty CRM" };
@@ -24,8 +25,19 @@ const RAMP = ["var(--o1)", "var(--o2)", "var(--o3)", "var(--o4)", "var(--o5)"];
 const FUNNEL = ["NEW", "CONTACTED", "VISITED", "PROPOSAL_SENT", "WON"] as const;
 
 export default async function PipelinePage() {
-  const result = await apiRequest<Pipeline>("/api/v1/crm/leads/pipeline?cardsPerStage=8");
+  // Both in one round trip's worth of wall clock rather than two.
+  const [result, sourcesResult] = await Promise.all([
+    apiRequest<Pipeline>("/api/v1/crm/leads/pipeline?cardsPerStage=8"),
+    apiRequest<SourceConversion[]>("/api/v1/crm/leads/stats/conversion"),
+  ]);
   if (result.kind === "unauthorized") redirect("/login");
+  // Sorted by volume: the question this answers is "which sources are worth the
+  // effort", and that reads off a list ordered by how much each one actually brings.
+  const sources =
+    sourcesResult.kind === "ok"
+      ? [...sourcesResult.data].sort((a, b) => b.total - a.total)
+      : [];
+  const maxSource = sources.reduce((m, s) => Math.max(m, s.total), 0);
 
   if (result.kind !== "ok") {
     return (
@@ -104,6 +116,47 @@ export default async function PipelinePage() {
           </div>
         </Card>
       </div>
+
+      {sources.length > 0 && (
+        <div style={{ marginBottom: 18 }}>
+          <Card>
+            <h2 style={{ fontSize: 16, marginBottom: 4 }}>Kaynak bazında dönüşüm</h2>
+            <p className={ui.muted} style={{ margin: "0 0 14px", fontSize: 13 }}>
+              Hangi kaynak üyeye dönüşüyor
+            </p>
+            <p className={styles.sourceLegend}>
+              <span><span className={`${styles.swatch} ${styles.swatchFaint}`} />Toplam aday</span>
+              <span><span className={styles.swatch} />Üye oldu</span>
+            </p>
+            <div className={styles.sources}>
+              {sources.map((s) => (
+                <div key={s.source} className={styles.sourceRow}>
+                  <span className={styles.sourceName}>{sourceLabel(s.source)}</span>
+                  <span className={styles.sourceTrack}>
+                    <span
+                      className={styles.sourceTotal}
+                      style={{ width: maxSource === 0 ? "0%" : `${(s.total / maxSource) * 100}%` }}
+                    />
+                    <span
+                      className={styles.sourceWon}
+                      style={{ width: maxSource === 0 ? "0%" : `${(s.won / maxSource) * 100}%` }}
+                    />
+                  </span>
+                  <span className={styles.sourceFigures}>
+                    {s.won}/{s.total}
+                    {/*
+                      Null rather than 0 when nothing has converted yet — the backend
+                      sends null for a zero total, and rendering "%0" for "no data"
+                      is a plausible wrong number rather than an absent one.
+                    */}
+                    {s.rate !== null && <> · <span className={styles.sourceRate}>%{s.rate}</span></>}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+      )}
 
       <div className={styles.board}>
         {result.data.stages.map((stage, i) => {

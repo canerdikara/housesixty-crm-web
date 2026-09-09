@@ -191,3 +191,88 @@
     gap: 16px;
   }
 }
+
+/* ── Source conversion ────────────────────────────────────────────────────── */
+
+.sources {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.sourceRow {
+  display: grid;
+  grid-template-columns: 130px 1fr auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.sourceName {
+  font-size: 13px;
+  color: var(--text-muted);
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/*
+ * Two bars in one track: total behind, won in front. Not a stacked bar — these are a
+ * part and its whole, and stacking them would read as two additive categories and
+ * make the total look like total+won.
+ */
+.sourceTrack {
+  position: relative;
+  height: 20px;
+  background: var(--grid);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  min-width: 60px;
+}
+
+.sourceTotal {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--s1);
+  opacity: 0.28;
+}
+
+.sourceWon {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--s1);
+}
+
+.sourceFigures {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.sourceRate {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.sourceLegend {
+  display: flex;
+  gap: 16px;
+  margin: 0 0 16px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  margin-right: 6px;
+  vertical-align: -1px;
+  background: var(--s1);
+}
+
+.swatchFaint {
+  opacity: 0.28;
+}
