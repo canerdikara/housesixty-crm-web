@@ -56,6 +56,9 @@ export default async function PipelinePage() {
             <Link className={`${ui.button} ${ui.buttonGhost}`} href="/leads">
               Liste görünümü
             </Link>
+            <Link className={ui.button} href="/leads/new">
+              + Yeni aday
+            </Link>
             {result.data.conversionRate !== null && (
               <span className={ui.chip}>
                 Aday → üye <strong className={ui.chipCount}>%{result.data.conversionRate}</strong>

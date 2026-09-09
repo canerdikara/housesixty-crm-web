@@ -110,6 +110,9 @@ export default async function LeadsPage({
             <Link className={`${ui.button} ${ui.buttonGhost}`} href="/leads/pipeline">
               Satış hunisi
             </Link>
+            <Link className={ui.button} href="/leads/new">
+              + Yeni aday
+            </Link>
           </>
         }
       />

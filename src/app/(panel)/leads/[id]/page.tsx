@@ -14,7 +14,10 @@ import {
   LEAD_STATUS_ORDER,
 } from "@/lib/labels";
 import type { LeadDetail } from "@/lib/types";
+import { AssignOwner, ChangeStatus, ConvertLead, LogInteraction, NextActionAndNotes } from "./LeadActions";
 import styles from "./detail.module.css";
+
+type PanelUser = { id: string; fullName: string; role: string };
 
 export const dynamic = "force-dynamic";
 
@@ -40,8 +43,16 @@ function initials(name: string): string {
 export default async function LeadDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  const result = await apiRequest<LeadDetail>(`/api/v1/crm/leads/${id}`);
+  // Both in parallel — the owner picker needs the staff list and neither depends on
+  // the other, so serialising them would just add a round trip to every page load.
+  const [result, usersResult] = await Promise.all([
+    apiRequest<LeadDetail>(`/api/v1/crm/leads/${id}`),
+    apiRequest<PanelUser[]>("/api/v1/crm/users"),
+  ]);
   if (result.kind === "unauthorized") redirect("/login");
+  // A failed staff list is not a failed page: the picker renders with only the
+  // current owner and everything else on the screen still works.
+  const users = usersResult.kind === "ok" ? usersResult.data : [];
 
   if (result.kind === "error" && result.status === 404) notFound();
 
@@ -223,34 +234,38 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           </Card>
         </div>
 
-        {/* ── Right: next action and notes ──────────────────────────────── */}
+        {/* ── Right: the things you can actually do ─────────────────────── */}
         <div className={styles.stack}>
           <Card>
-            <h2 className={styles.cardTitle}>Sonraki adım</h2>
-            <p className={styles.cardSub}>Planlanan aksiyon</p>
-            {lead.nextActionAt || lead.nextActionNote ? (
-              <div className={styles.rows}>
-                <Row k="Tarih" v={lead.nextActionAt ? formatDate(lead.nextActionAt) : "—"} />
-                <Row k="Durum" v={lead.nextActionAt ? dueLabel(lead.nextActionAt) : "—"} />
-                <Row k="Aksiyon" v={lead.nextActionNote ?? "—"} />
-              </div>
-            ) : (
-              <p className={ui.muted} style={{ margin: 0, fontSize: 13 }}>
-                Planlanmış bir aksiyon yok.
-              </p>
-            )}
+            <h2 className={styles.cardTitle}>Etkileşim ekle</h2>
+            <p className={styles.cardSub}>Arama, ziyaret, not</p>
+            <LogInteraction lead={lead} />
           </Card>
 
           <Card>
-            <h2 className={styles.cardTitle}>Notlar</h2>
-            <p className={styles.cardSub}>Ekip notları</p>
-            {lead.notes ? (
-              <p className={styles.notes}>{lead.notes}</p>
-            ) : (
-              <p className={ui.muted} style={{ margin: 0, fontSize: 13 }}>
-                Not eklenmemiş.
-              </p>
-            )}
+            <h2 className={styles.cardTitle}>Durum</h2>
+            <p className={styles.cardSub}>Huni aşaması</p>
+            <ChangeStatus lead={lead} />
+          </Card>
+
+          <Card>
+            <h2 className={styles.cardTitle}>Sorumlu</h2>
+            <p className={styles.cardSub}>Adayı takip eden kişi</p>
+            <AssignOwner lead={lead} users={users} />
+          </Card>
+
+          <Card>
+            <h2 className={styles.cardTitle}>Sonraki adım ve notlar</h2>
+            <p className={styles.cardSub}>
+              {lead.nextActionAt ? `Planlanan: ${formatDate(lead.nextActionAt)} · ${dueLabel(lead.nextActionAt)}` : "Planlanmış aksiyon yok"}
+            </p>
+            <NextActionAndNotes lead={lead} />
+          </Card>
+
+          <Card>
+            <h2 className={styles.cardTitle}>Üyeye dönüştür</h2>
+            <p className={styles.cardSub}>Huninin son adımı</p>
+            <ConvertLead lead={lead} />
           </Card>
         </div>
       </div>
