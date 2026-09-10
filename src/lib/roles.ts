@@ -38,6 +38,21 @@ export function canAccessPanel(role: string | undefined | null): boolean {
 }
 
 /**
+ * Whether this role may edit member records.
+ *
+ * §6 gives all four panel roles read access to members and gives **ADMIN and SALES
+ * alone** the write access. Marketing and reception see the 360 without its editing
+ * controls.
+ *
+ * Presentation only, like everything else here — the endpoints carry their own
+ * `@PreAuthorize` and answer 403 regardless of what this returns. Hiding the forms is
+ * so a reception user is not invited to fill one in and then refused.
+ */
+export function canWriteMembers(role: string | undefined | null): boolean {
+  return role === ROLE.ADMIN || role === ROLE.SALES;
+}
+
+/**
  * Turkish display name for any backend role.
  *
  * The three non-panel roles are here deliberately, even though they can never own a

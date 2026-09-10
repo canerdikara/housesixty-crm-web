@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { apiRequest } from "@/lib/api";
+import type { FormState } from "@/lib/formState";
 import type { LeadDetail } from "@/lib/types";
 
 /**
@@ -18,10 +19,7 @@ import type { LeadDetail } from "@/lib/types";
  * marking a lead as lost", "An email address is required to create a member").
  */
 
-export type FormState = {
-  error?: string;
-  ok?: string;
-};
+export type { FormState };
 
 /**
  * Turns an `ApiResult` into something a form can render.

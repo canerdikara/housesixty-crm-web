@@ -181,16 +181,28 @@
 
 /* ── Terms ────────────────────────────────────────────────────────────────── */
 
+/*
+ * The divider lives on the wrapper, not on the row.
+ *
+ * Each term is a row plus an optional edit form, and the two have to be separated from
+ * the next term as one unit. Putting the rule on `.term` and relying on `:last-child`
+ * broke in both directions once the wrapper existed: for a role that cannot edit, the
+ * row is its wrapper's only child and *every* divider vanished; for one that can, the
+ * divider drew above the open form instead of below it.
+ */
+.termBlock {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.termBlock:last-child { border-bottom: 0; padding-bottom: 0; }
+
 .term {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--border);
 }
-
-.term:last-child { border-bottom: 0; padding-bottom: 0; }
 
 .termName { font-weight: 600; font-size: 13.5px; }
 

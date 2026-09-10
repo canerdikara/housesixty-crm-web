@@ -12,7 +12,17 @@ import {
   renewalStatusLabel,
   termStatusLabel,
 } from "@/lib/labels";
+import { canWriteMembers } from "@/lib/roles";
+import { readSession } from "@/lib/session";
 import type { MemberDetail } from "@/lib/types";
+import {
+  AddTerm,
+  EditInterests,
+  EditPreferences,
+  EditProfile,
+  EditTerm,
+  TierSuggestions,
+} from "./MemberActions";
 import detail from "../../leads/[id]/detail.module.css";
 import styles from "./member.module.css";
 
@@ -36,6 +46,13 @@ function initials(name: string): string {
 
 export default async function MemberDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+
+  // Read before the fetch so a marketing or reception user gets the 360 without the
+  // editing controls rather than with controls that 403 on submit. The endpoints
+  // enforce it either way; this is so nobody is invited to fill in a form they cannot
+  // save.
+  const session = await readSession();
+  const canWrite = canWriteMembers(session?.user.role);
 
   const result = await apiRequest<MemberDetail>(`/api/v1/crm/members/${id}`);
   if (result.kind === "unauthorized") redirect("/login");
@@ -173,6 +190,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
                 ))}
               </div>
             )}
+            {canWrite && <EditPreferences member={m} />}
           </Card>
 
           <Card>
@@ -190,21 +208,34 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
               </p>
             ) : (
               m.terms.map((t) => (
-                <div key={t.id} className={styles.term}>
-                  <div>
-                    <div className={styles.termName}>{t.membershipType}</div>
-                    <div className={styles.termDates}>
-                      {formatDate(t.startDate)} — {formatDate(t.endDate)}
+                <div key={t.id} className={styles.termBlock}>
+                  <div className={styles.term}>
+                    <div>
+                      <div className={styles.termName}>{t.membershipType}</div>
+                      <div className={styles.termDates}>
+                        {formatDate(t.startDate)} — {formatDate(t.endDate)}
+                      </div>
+                      {t.renewalNote && (
+                        <div className={styles.termDates}>{t.renewalNote}</div>
+                      )}
+                    </div>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                      <Badge tone={t.status === "ACTIVE" ? "good" : "neutral"}>
+                        {termStatusLabel(t.status)}
+                      </Badge>
+                      <Tag muted>{renewalStatusLabel(t.renewalStatus)}</Tag>
                     </div>
                   </div>
-                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                    <Badge tone={t.status === "ACTIVE" ? "good" : "neutral"}>
-                      {termStatusLabel(t.status)}
-                    </Badge>
-                    <Tag muted>{renewalStatusLabel(t.renewalStatus)}</Tag>
-                  </div>
+                  {canWrite && <EditTerm term={t} />}
                 </div>
               ))
+            )}
+            {canWrite && (
+              <>
+                <AddTerm member={m} />
+                {/* One per screen — see TierSuggestions. */}
+                <TierSuggestions />
+              </>
             )}
           </Card>
         </div>
@@ -257,11 +288,43 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
               <Row k="Şirket" v={m.profile?.company ?? "—"} />
               <Row k="Şehir" v={m.profile?.city ?? "—"} />
               <Row k="Padel seviyesi" v={m.profile?.padelLevel ?? "—"} />
+              <Row k="Cinsiyet" v={m.profile?.gender ?? "—"} />
               <Row
                 k="Tercih ettiği kanal"
                 v={m.profile?.preferredChannel ? consentChannelLabel(m.profile.preferredChannel) : "—"}
               />
+              <Row k="Instagram" v={m.profile?.instagramHandle ?? "—"} />
+              <Row
+                k="LinkedIn"
+                v={
+                  m.profile?.linkedinUrl ? (
+                    // rel="noreferrer" as well as noopener: the CRM's own URL leaks the
+                    // member id in the path, and there is no reason to hand that to
+                    // whatever the link points at.
+                    <a href={m.profile.linkedinUrl} target="_blank" rel="noopener noreferrer">
+                      Profil
+                    </a>
+                  ) : (
+                    "—"
+                  )
+                }
+              />
             </div>
+
+            {/*
+              Every field the edit form can write is shown here, including the four that
+              this card used to leave out. The profile endpoint is a PUT, so a field
+              that were editable but invisible would be silently erased by the first
+              save — the read view has to be the whole record for that to be safe.
+            */}
+            {m.profile?.notes && (
+              <p
+                className={ui.muted}
+                style={{ fontSize: 13, marginTop: 12, marginBottom: 0, whiteSpace: "pre-wrap" }}
+              >
+                {m.profile.notes}
+              </p>
+            )}
             {m.hasHealthIssues === true && (
               <p className={styles.health}>
                 <span aria-hidden="true">▲</span>
@@ -271,6 +334,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
                 </span>
               </p>
             )}
+            {canWrite && <EditProfile member={m} />}
           </Card>
 
           <Card>
@@ -298,6 +362,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
                 ))}
               </div>
             )}
+            {canWrite && <EditInterests member={m} />}
           </Card>
 
           <Card>

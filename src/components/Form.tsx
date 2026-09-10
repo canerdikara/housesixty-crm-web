@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
-import type { FormState } from "@/app/(panel)/leads/actions";
+import type { FormState } from "@/lib/formState";
 import styles from "./forms.module.css";
 
 /**
