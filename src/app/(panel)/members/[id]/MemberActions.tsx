@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { ActionForm, SubmitButton, formStyles as f } from "@/components/Form";
+import { ActionForm, Disclosure, SubmitButton, formStyles as f } from "@/components/Form";
 import {
   createTermAction,
   saveInterestsAction,
@@ -87,31 +86,6 @@ function izmirTodayPlusYears(years: number): string {
   return `${Number(y) + years}-${m}-${d}`;
 }
 
-function Disclosure({
-  label,
-  openLabel,
-  children,
-}: {
-  label: string;
-  openLabel?: string;
-  children: React.ReactNode;
-}) {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className={f.disclosure}>
-      <button
-        type="button"
-        className={f.disclosureButton}
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-      >
-        <span aria-hidden="true">{open ? "▾" : "▸"}</span>
-        {open ? (openLabel ?? "Kapat") : label}
-      </button>
-      {open && <div style={{ marginTop: 12 }}>{children}</div>}
-    </div>
-  );
-}
 
 // ── Profile ──────────────────────────────────────────────────────────────────
 

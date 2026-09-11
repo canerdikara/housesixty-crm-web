@@ -171,3 +171,34 @@ export type MemberDetail = {
   interactions: Interaction[];
   consents: ConsentRecord[];
 };
+
+export type RenewalStatus = MembershipTerm["renewalStatus"];
+
+/** One row of the renewals worklist — the term plus who to ring about it. */
+export type RenewalListItem = {
+  termId: string;
+  userId: string;
+  fullName: string;
+  email: string;
+  phone: string | null;
+  membershipType: string;
+  startDate: string;
+  endDate: string;
+  /** Server-computed against İzmir's today, so it does not follow the reader's clock. */
+  daysUntilEnd: number;
+  renewalStatus: RenewalStatus;
+  renewalNote: string | null;
+  lastRenewalContactAt: string | null;
+};
+
+export type RenewalMonth = { month: string; ended: number; renewed: number };
+
+export type RenewalStats = {
+  expiringWithin30Days: number;
+  expiringWithin90Days: number;
+  notContacted: number;
+  /** Null when nothing has ended yet — which is not the same as zero percent. */
+  renewalRate: number | null;
+  byMonth: RenewalMonth[];
+  byStatus: Record<string, number>;
+};

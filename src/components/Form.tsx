@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import type { FormState } from "@/lib/formState";
 import styles from "./forms.module.css";
@@ -87,3 +87,43 @@ export function ActionForm({
 }
 
 export { styles as formStyles };
+
+/**
+ * A labelled show/hide section.
+ *
+ * Moved here from `members/[id]/MemberActions.tsx` when the renewals screen needed the
+ * same affordance — copying it would have been two components free to drift.
+ *
+ * A `<button>` plus state rather than `<details>/<summary>`: the panel styles the
+ * trigger, and `<summary>`'s default marker and focus behaviour vary enough between
+ * browsers to be worth not fighting.
+ *
+ * Both screens use it for the same reason. Each sits *below* a read view rather than
+ * replacing it: the 360 and the renewals worklist are screens people scan, and a screen
+ * of open form fields is a different screen.
+ */
+export function Disclosure({
+  label,
+  openLabel,
+  children,
+}: {
+  label: string;
+  openLabel?: string;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className={styles.disclosure}>
+      <button
+        type="button"
+        className={styles.disclosureButton}
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+      >
+        <span aria-hidden="true">{open ? "▾" : "▸"}</span>
+        {open ? (openLabel ?? "Kapat") : label}
+      </button>
+      {open && <div style={{ marginTop: 12 }}>{children}</div>}
+    </div>
+  );
+}
