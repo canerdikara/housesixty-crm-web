@@ -1,0 +1,48 @@
+# Amplify Hosting build spec for the CRM panel.
+#
+# Unlike `housesixty-web` — where the working spec lives console-side and committing one
+# here would override it and silently break mail delivery — this app is new, so the file
+# in the repo IS the spec. That is the better place for it: it is reviewable, and it
+# travels with the code that depends on it.
+#
+# ⚠️ When an amplify.yml is present, Amplify stops generating build settings and uses
+# this verbatim. Everything below that looks like boilerplate is load-bearing.
+
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        # Amplify matches the SSR runtime to the Node major that built the app, and it
+        # no longer supports 14/16/18 — supported runtimes are 20, 22 and 24. Pin it
+        # rather than inherit whatever the build container currently defaults to: a
+        # container upgrade would otherwise change the Lambda runtime underneath us.
+        # 22 is what this app is verified on locally.
+        - nvm use 22
+        - npm ci --cache .npm --prefer-offline
+    build:
+      commands:
+        # Console-set environment variables do not reliably reach the SSR Lambda at
+        # runtime — the marketing site's spec does exactly this for the same reason.
+        # Writing them into .env.production before the build is what makes them land,
+        # and it is why changing a variable in the console needs a REDEPLOY, not just a
+        # save.
+        #
+        # ⚠️ CRM_API_BASE_URL is scheme and host only, no /api/v1 — src/lib/api.ts
+        # appends the path. The marketing site's API_BASE_URL takes the opposite
+        # convention, and setting both the same way 500'd every live news page once.
+        - env | grep -e CRM_API_BASE_URL -e CRM_FEATURE_WAREHOUSE >> .env.production
+        - npm run build
+  artifacts:
+    # ⚠️ .next, never `out`. `out` is a static export, and a static deployment does not
+    # run middleware — it does not error, it silently skips it, which would leave this
+    # panel with no route guard and no token refresh while still looking like it worked.
+    # Amplify infers this itself when no amplify.yml exists; with one present it is ours
+    # to get right.
+    baseDirectory: .next
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - .next/cache/**/*
+      - .npm/**/*
