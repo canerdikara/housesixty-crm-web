@@ -195,6 +195,20 @@
   min-width: 220px;
 }
 
+/*
+ * A filter bar in a page header — search box, a select, and the submit that applies
+ * them. One form, so both land in the URL together and neither needs JavaScript.
+ *
+ * `flex-wrap` because the header already carries two buttons beside it, and on a
+ * narrow window the row has to fold rather than push them off the edge.
+ */
+.filterForm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .button {
   display: inline-flex;
   align-items: center;

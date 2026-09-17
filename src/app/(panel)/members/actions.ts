@@ -60,6 +60,86 @@ async function write(
   }
 }
 
+/**
+ * The onboarding record — what was collected at the desk (V39).
+ *
+ * A **PUT**, like the profile beside it: an emptied box clears the field. The contract
+ * is deliberately absent from it — a file cannot round-trip through a text form, so
+ * clearing-by-omission would delete a scanned contract every time someone fixed a car
+ * plate. It has its own upload below.
+ *
+ * ADMIN-only at the backend; the panel simply does not render this form for anyone else.
+ */
+export async function saveOnboardingAction(_prev: FormState, form: FormData): Promise<FormState> {
+  const userId = str(form, "userId");
+  const plates = [str(form, "vehiclePlate1"), str(form, "vehiclePlate2")].filter(Boolean);
+
+  return write(
+    `/api/v1/crm/members/${userId}/onboarding`,
+    {
+      emergencyContactName: orNull(form, "emergencyContactName"),
+      emergencyContactPhone: orNull(form, "emergencyContactPhone"),
+      emergencyContactGender: orNull(form, "emergencyContactGender"),
+      paymentMethod: orNull(form, "paymentMethod"),
+      nationalId: orNull(form, "nationalId"),
+      vehiclePlates: plates,
+    },
+    "PUT",
+    "Üyelik kaydı güncellendi."
+  );
+}
+
+/** Uploads or replaces the scanned contract. Replacing deletes the old object. */
+export async function uploadContractAction(_prev: FormState, form: FormData): Promise<FormState> {
+  const userId = str(form, "userId");
+  const file = form.get("contract");
+
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: "Bir dosya seçin." };
+  }
+
+  const body = new FormData();
+  body.append("file", file, file.name);
+  const result = await apiRequest<{ fileName: string }>(
+    `/api/v1/crm/members/${userId}/contract`,
+    { method: "POST", formData: body }
+  );
+
+  if (result.kind === "unauthorized") redirect("/login");
+  if (result.kind !== "ok") {
+    return { error: result.kind === "forbidden" ? `Yetkiniz yok: ${result.message}` : result.message };
+  }
+
+  revalidatePath("/members", "layout");
+  return { ok: `Sözleşme yüklendi: ${result.data.fileName}` };
+}
+
+/**
+ * Fetches a short-lived link to the contract and hands it back for the browser to open.
+ *
+ * The URL is returned rather than stored anywhere: it carries its own authorisation, so
+ * anyone it is forwarded to can open it until it expires. That is also why it is not
+ * part of the 360 payload — a working key to a signed contract would otherwise sit in
+ * every render of the page.
+ */
+export async function contractLinkAction(
+  _prev: FormState,
+  form: FormData
+): Promise<FormState & { url?: string }> {
+  const userId = str(form, "userId");
+  const result = await apiRequest<{ url: string; fileName: string; expiresInSeconds: number }>(
+    `/api/v1/crm/members/${userId}/contract`
+  );
+
+  if (result.kind === "unauthorized") redirect("/login");
+  if (result.kind !== "ok") {
+    return { error: result.kind === "forbidden" ? `Yetkiniz yok: ${result.message}` : result.message };
+  }
+
+  const minutes = Math.max(1, Math.round(result.data.expiresInSeconds / 60));
+  return { ok: `Bağlantı hazır — ${minutes} dakika geçerli.`, url: result.data.url };
+}
+
 export async function saveProfileAction(_prev: FormState, form: FormData): Promise<FormState> {
   const userId = str(form, "userId");
 

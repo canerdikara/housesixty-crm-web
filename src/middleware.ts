@@ -171,15 +171,23 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   /*
-   * Everything except Next's own assets and static image files.
+   * Everything except Next's own assets, static image files, and the web app manifest.
    *
-   * The image exclusion is not an optimisation, it is required: the login page is
-   * rendered while signed out, so if middleware ran on `/emblem.png` it would redirect
-   * that request to `/login` and the login screen would show a broken logo. This was
-   * previously spelled as the single filename `logo.png`, which quietly stopped
-   * covering it the moment the asset was renamed — hence the extension match.
+   * These exclusions are not an optimisation, they are required, and both entries are
+   * the same bug: a browser fetches these **without credentials**, so anything the
+   * guard redirects to `/login` is silently broken rather than loudly denied.
+   *
+   * - Images: the login page renders while signed out, so middleware on `/emblem.png`
+   *   would redirect it and the login screen would show a broken logo. This was once
+   *   spelled as the single filename `logo.png` and quietly stopped covering it the
+   *   moment the asset was renamed — hence the extension match.
+   * - `manifest.webmanifest`: the browser reads it anonymously to decide whether the
+   *   site can be installed as an app. Redirected, it sees the login page's HTML
+   *   instead of JSON, and the **Install** option simply never appears — no error
+   *   anywhere. Nothing in the manifest is private; it is a name, two colours and two
+   *   icon paths.
    */
   matcher: [
-    "/((?!_next/static|_next/image|favicon\\.ico|.*\\.png|.*\\.svg|.*\\.ico|.*\\.webp).*)",
+    "/((?!_next/static|_next/image|favicon\\.ico|manifest\\.webmanifest|.*\\.png|.*\\.svg|.*\\.ico|.*\\.webp).*)",
   ],
 };

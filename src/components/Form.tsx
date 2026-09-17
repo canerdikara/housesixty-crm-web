@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import type { FormState } from "@/lib/formState";
 import styles from "./forms.module.css";
@@ -68,14 +68,43 @@ export function ActionForm({
   action,
   children,
   hiddenFields,
+  keepValuesOnSuccess = false,
 }: {
   action: (prev: FormState, form: FormData) => Promise<FormState>;
   children: React.ReactNode;
   hiddenFields?: Record<string, string>;
+  /**
+   * Leave the fields as they were after a successful save.
+   *
+   * Only for a form whose inputs *are* the saved record — nothing uses it today. The
+   * default is to reset, which is what every form on these screens wants.
+   */
+  keepValuesOnSuccess?: boolean;
 }) {
   const [state, formAction] = useActionState<FormState, FormData>(action, {});
+  const formRef = useRef<HTMLFormElement>(null);
+
+  /*
+   * Empty the form once the save succeeds.
+   *
+   * Without this, typing a note, saving it, and coming back to log a second one starts
+   * with the first one still sitting in the box — which reads as "it did not save", and
+   * invites someone to press the button again.
+   *
+   * `form.reset()` restores each field to the value it was *rendered* with, so a blank
+   * box goes blank and a seeded editor goes back to the record. Both are "as it opened",
+   * which is the behaviour being asked for.
+   *
+   * Keyed on the state object rather than on `state.ok`: `useActionState` returns a new
+   * object per submit, so two saves in a row with the same message still fire, while
+   * ordinary re-renders do not.
+   */
+  useEffect(() => {
+    if (!keepValuesOnSuccess && state.ok) formRef.current?.reset();
+  }, [state, keepValuesOnSuccess]);
+
   return (
-    <form action={formAction} className={styles.form}>
+    <form ref={formRef} action={formAction} className={styles.form}>
       {hiddenFields &&
         Object.entries(hiddenFields).map(([k, v]) => (
           <input key={k} type="hidden" name={k} value={v} />

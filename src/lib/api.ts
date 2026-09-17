@@ -70,6 +70,15 @@ async function readError(res: Response): Promise<string> {
 type RequestOptions = {
   method?: string;
   body?: unknown;
+  /**
+   * A multipart body, for the one endpoint that takes a file (the scanned contract).
+   *
+   * Mutually exclusive with `body`. **`Content-Type` is deliberately not set** when
+   * this is used: fetch has to write it itself so it can append the multipart boundary,
+   * and setting it by hand produces a body the server cannot parse — with an error that
+   * blames the file rather than the header.
+   */
+  formData?: FormData;
   /** Forwarded to fetch. Defaults to no-store — CRM data is never stale-served. */
   cache?: RequestCache;
   signal?: AbortSignal;
@@ -116,7 +125,7 @@ export async function apiRequest<T>(
         Authorization: `Bearer ${session.accessToken}`,
         ...(options.body !== undefined ? { "Content-Type": "application/json" } : {}),
       },
-      body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+      body: options.formData ?? (options.body !== undefined ? JSON.stringify(options.body) : undefined),
       cache: options.cache ?? "no-store",
       signal: options.signal,
     });

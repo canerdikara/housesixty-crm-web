@@ -6,7 +6,7 @@ import { apiRequest } from "@/lib/api";
 import { daysSince, daysSinceLabel, dueLabel, formatDate, formatDateTime } from "@/lib/dates";
 import {
   consentChannelLabel,
-  interactionTypeLabel,
+  interactionTypesLabel,
   interestLabel,
   leadSourceLabel,
   leadStatusLabel,
@@ -14,7 +14,14 @@ import {
   LEAD_STATUS_ORDER,
 } from "@/lib/labels";
 import type { LeadDetail } from "@/lib/types";
-import { AssignOwner, ChangeStatus, ConvertLead, LogInteraction, NextActionAndNotes } from "./LeadActions";
+import {
+  AssignOwner,
+  ChangeStatus,
+  ConvertLead,
+  EditLeadProfile,
+  LogInteraction,
+  NextActionAndNotes,
+} from "./LeadActions";
 import styles from "./detail.module.css";
 
 type PanelUser = { id: string; fullName: string; role: string };
@@ -113,7 +120,15 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           <div className={styles.heroTags}>
             <Badge tone={leadStatusTone(lead.status)}>{leadStatusLabel(lead.status)}</Badge>
             <Tag muted>{ageDays} gündür hunide</Tag>
-            {lead.interestedIn && <Tag>{interestLabel(lead.interestedIn)}</Tag>}
+            {/*
+              Every interest, not just the primary. The list and pipeline still show one
+              chip each because a table cell and a board card have room for one; this is
+              the screen where the whole answer belongs.
+            */}
+            {(lead.interests?.length
+              ? lead.interests
+              : lead.interestedIn ? [lead.interestedIn] : []
+            ).map((c) => <Tag key={c}>{interestLabel(c)}</Tag>)}
             {lead.status === "LOST" && lead.lostReason && <Tag muted>{lead.lostReason}</Tag>}
           </div>
         </div>
@@ -143,13 +158,49 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
             <div className={styles.rows}>
               <Row k="Telefon" v={lead.phone ? <span className="tnum">{lead.phone}</span> : "—"} />
               <Row k="E-posta" v={lead.email ?? "—"} />
-              <Row k="Doğum yılı" v={lead.birthYear ?? "—"} />
+              {/*
+                The date when there is one, the bare year when that is all the source
+                knew — the website form and the importer only ever supply a year, and
+                showing "1 Ocak 1990" for them would be an invention.
+              */}
+              <Row
+                k="Doğum tarihi"
+                v={lead.birthDate ? formatDate(lead.birthDate) : (lead.birthYear ?? "—")}
+              />
               <Row k="Meslek" v={lead.occupation ?? "—"} />
               <Row k="Şirket" v={lead.company ?? "—"} />
               <Row k="Şehir" v={lead.city ?? "—"} />
+              {/* Multi-line by nature, so it keeps the line breaks it was typed with. */}
+              <Row
+                k="Adres"
+                v={lead.address
+                  ? <span style={{ whiteSpace: "pre-wrap" }}>{lead.address}</span>
+                  : "—"}
+              />
+              <Row
+                k="İlgi alanları"
+                v={lead.interests?.length
+                  ? lead.interests.map(interestLabel).join(", ")
+                  : "—"}
+              />
               <Row k="Kaynak" v={leadSourceLabel(lead.source)} />
+              {/*
+                Each of these renders only under the source it belongs to. They are
+                mutually exclusive by construction — the backend stores a referrer only
+                under REFERRAL and an event only under EVENT — so a row is never shown
+                as empty just because the other source was chosen.
+              */}
+              {lead.source === "REFERRAL" && (
+                <Row k="Referans veren" v={lead.referredByName ?? "—"} />
+              )}
+              {lead.source === "EVENT" && (
+                <Row k="Etkinlik" v={lead.eventName ?? "—"} />
+              )}
               <Row k="Sorumlu" v={lead.ownerName ?? "—"} />
             </div>
+
+            {/* Below the read view, not in place of it — as on the Üye 360. */}
+            <EditLeadProfile lead={lead} />
           </Card>
 
           <Card>
@@ -218,7 +269,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
                     <span
                       className={`${styles.entryType} ${entry.type === "SYSTEM" ? styles.entryTypeSystem : ""}`}
                     >
-                      {interactionTypeLabel(entry.type)}
+                      {interactionTypesLabel(entry)}
                     </span>
                     <div className={styles.entryMain}>
                       <div className={styles.entryWhen}>{formatDateTime(entry.occurredAt)}</div>

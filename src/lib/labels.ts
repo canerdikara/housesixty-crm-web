@@ -78,6 +78,19 @@ export function interactionTypeLabel(v: string): string {
   }
 }
 
+/**
+ * The channel labels for one timeline entry, joined.
+ *
+ * Both timelines — the lead detail and the member 360 — render interactions, and both
+ * must say the same thing about a multi-channel one. `types` is absent when the backend
+ * predates V36, so the fallback is the single `type` it has always sent, and an empty
+ * array is treated the same way rather than rendering a blank label.
+ */
+export function interactionTypesLabel(e: { type: string; types?: string[] }): string {
+  const list = e.types?.length ? e.types : [e.type];
+  return list.map(interactionTypeLabel).join(", ");
+}
+
 export function interestLabel(v: string): string {
   switch (v) {
     case "PADEL": return "Padel";
@@ -91,6 +104,7 @@ export function interestLabel(v: string): string {
     case "SUSTAINABILITY": return "Sürdürülebilirlik";
     case "FNB": return "Restoran";
     case "RETAIL": return "Perakende";
+    case "SOCIAL_SCENE": return "Sosyal ortam";
     default: return v;
   }
 }
@@ -110,6 +124,14 @@ export const LEAD_SOURCES: LeadSource[] = [
   "WEBSITE_FORM", "REFERRAL", "WALK_IN", "EVENT", "SOCIAL", "PARTNER", "OTHER",
 ];
 
+/**
+ * Every category the system knows, in category order.
+ *
+ * ⚠️ This is what the member 360's interests editor offers, and that editor is a
+ * **whole-object PUT** — a category missing from this list is a category the next save
+ * silently deletes. Conversion now copies a lead's interests onto the member, so
+ * anything offered on the lead form has to appear here too.
+ */
 export const INTEREST_CATEGORIES: InterestCategory[] = [
   "PADEL", "GYM", "PILATES", "SPA", "WELLNESS", "EVENTS",
   "DESIGN", "ENTREPRENEURSHIP", "SUSTAINABILITY", "FNB", "RETAIL",
@@ -118,6 +140,44 @@ export const INTEREST_CATEGORIES: InterestCategory[] = [
 export const INTERACTION_TYPES: InteractionType[] = [
   "CALL", "WHATSAPP", "EMAIL", "SMS", "MEETING", "VISIT", "NOTE",
 ];
+
+/**
+ * The shorter list the «Yeni Aday» form offers — what the club actually sells.
+ *
+ * A deliberate subset of [INTEREST_CATEGORIES] rather than a second vocabulary: the
+ * values are the same enum, so a lead's interests carry onto the member unchanged. The
+ * member 360 still offers all of them, because a member's interests are recorded over
+ * time by someone who knows them.
+ */
+export const LEAD_INTEREST_CATEGORIES: InterestCategory[] = [
+  "PADEL", "GYM", "SPA", "FNB", "SOCIAL_SCENE",
+];
+
+/** How the membership was paid for, as recorded at the desk (V39). */
+export function paymentMethodLabel(v: string): string {
+  switch (v) {
+    case "NAKIT": return "Nakit";
+    case "KREDI_KARTI_TEK_CEKIM": return "Kredi Kartı — Tek Çekim";
+    case "KREDI_KARTI_3_TAKSIT": return "Kredi Kartı — 3 Taksit";
+    case "KREDI_KARTI_6_TAKSIT": return "Kredi Kartı — 6 Taksit";
+    default: return v;
+  }
+}
+
+/**
+ * The emergency contact's gender, as a closed list (user, 2026-09-16).
+ *
+ * Stored as free text — the column is VARCHAR and `member_profiles.gender` remains open
+ * — so adding a third value here is a one-line change with no migration behind it.
+ */
+export const EMERGENCY_GENDERS = ["Erkek", "Kadın"] as const;
+
+export const PAYMENT_METHODS = [
+  "NAKIT",
+  "KREDI_KARTI_TEK_CEKIM",
+  "KREDI_KARTI_3_TAKSIT",
+  "KREDI_KARTI_6_TAKSIT",
+] as const;
 
 export const CONSENT_CHANNELS: ConsentChannel[] = ["EMAIL", "SMS", "WHATSAPP", "PHONE", "ALL"];
 

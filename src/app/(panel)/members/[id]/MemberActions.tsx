@@ -1,12 +1,16 @@
 "use client";
 
-import { ActionForm, Disclosure, SubmitButton, formStyles as f } from "@/components/Form";
+import { useActionState, useEffect } from "react";
+import { ActionForm, Disclosure, SubmitButton, formStyles as f, FormMessage } from "@/components/Form";
 import {
   createTermAction,
   saveInterestsAction,
   savePreferencesAction,
   saveProfileAction,
   updateTermAction,
+  saveOnboardingAction,
+  uploadContractAction,
+  contractLinkAction,
 } from "../actions";
 import {
   CONSENT_CHANNELS,
@@ -15,7 +19,11 @@ import {
   interestLabel,
   renewalStatusLabel,
   termStatusLabel,
+  PAYMENT_METHODS,
+  paymentMethodLabel,
+  EMERGENCY_GENDERS,
 } from "@/lib/labels";
+import type { FormState } from "@/lib/formState";
 import type { MemberDetail, MembershipTerm } from "@/lib/types";
 
 /**
@@ -95,9 +103,9 @@ export function EditProfile({ member }: { member: MemberDetail }) {
     <Disclosure label="Profili düzenle">
       <ActionForm action={saveProfileAction} hiddenFields={{ userId: member.userId }}>
         {/*
-          Said first and plainly, because it is the opposite of what the lead screen
-          does. This endpoint is a PUT: an emptied box is stored as empty. Someone who
-          has used the lead form will assume otherwise.
+          Said first and plainly: this endpoint is a PUT, so an emptied box is stored as
+          empty. The lead screen's profile editor now works the same way and says the
+          same thing — it is the notes box beside it, a PATCH, that does not.
         */}
         <p className={f.hint}>
           Bu form profilin tamamını kaydeder — boş bıraktığınız alanlar silinir.
@@ -420,5 +428,154 @@ export function EditTerm({ term }: { term: MembershipTerm }) {
         <div className={f.actions}><SubmitButton variant="ghost">Dönemi güncelle</SubmitButton></div>
       </ActionForm>
     </Disclosure>
+  );
+}
+
+
+// ── Onboarding and the contract (ADMIN only) ─────────────────────────────────
+
+/**
+ * The desk record, editable, plus the contract.
+ *
+ * Rendered only when the 360 payload carried an `onboarding` block — which the backend
+ * sends to ADMIN alone. There is no role check here because there is nothing to check:
+ * a non-admin never receives the data this form would edit.
+ */
+export function ContractActions({ member }: { member: MemberDetail }) {
+  const o = member.onboarding;
+  if (!o) return null;
+
+  return (
+    <>
+      <Disclosure label="Üyelik kaydını düzenle">
+        <ActionForm action={saveOnboardingAction} hiddenFields={{ userId: member.userId }}>
+          {/* Same warning as the profile above it, and for the same reason. */}
+          <p className={f.hint}>
+            Bu form kaydın tamamını saklar — boş bıraktığınız alanlar silinir. Sözleşme
+            bu formdan etkilenmez.
+          </p>
+
+          <div className={f.row}>
+            <div className={f.field}>
+              <label className={f.label} htmlFor="o-ec-name">Acil durum kişisi</label>
+              <input id="o-ec-name" name="emergencyContactName" className={f.input}
+                maxLength={160} defaultValue={o.emergencyContactName ?? ""} />
+            </div>
+            <div className={f.field}>
+              <label className={f.label} htmlFor="o-ec-phone">Telefonu</label>
+              <input id="o-ec-phone" name="emergencyContactPhone" className={f.input}
+                inputMode="tel" maxLength={30} defaultValue={o.emergencyContactPhone ?? ""} />
+            </div>
+          </div>
+
+          <div className={f.row}>
+            <div className={f.field}>
+              <label className={f.label} htmlFor="o-ec-gender">Cinsiyeti</label>
+              {/*
+                A closed list, matching the conversion form. `defaultValue` falls back to
+                "" for anything already stored that is not on it — free text predates
+                this — so an unrecognised value shows as "belirtilmedi" rather than
+                silently selecting the wrong option.
+              */}
+              <select id="o-ec-gender" name="emergencyContactGender" className={f.select}
+                defaultValue={
+                  EMERGENCY_GENDERS.includes(
+                    (o.emergencyContactGender ?? "") as (typeof EMERGENCY_GENDERS)[number]
+                  )
+                    ? o.emergencyContactGender!
+                    : ""
+                }>
+                <option value="">— belirtilmedi —</option>
+                {EMERGENCY_GENDERS.map((g) => (
+                  <option key={g} value={g}>{g}</option>
+                ))}
+              </select>
+            </div>
+            <div className={f.field}>
+              <label className={f.label} htmlFor="o-payment">Ödeme şekli</label>
+              <select id="o-payment" name="paymentMethod" className={f.select}
+                defaultValue={o.paymentMethod ?? ""}>
+                <option value="">— belirtilmedi —</option>
+                {PAYMENT_METHODS.map((m) => (
+                  <option key={m} value={m}>{paymentMethodLabel(m)}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className={f.field}>
+            <label className={f.label} htmlFor="o-nid">T.C. Kimlik No. / Pasaport No.</label>
+            <input id="o-nid" name="nationalId" className={f.input} maxLength={40}
+              autoComplete="off" defaultValue={o.nationalId ?? ""} />
+          </div>
+
+          <div className={f.row}>
+            <div className={f.field}>
+              <label className={f.label} htmlFor="o-p1">Araç plakası</label>
+              <input id="o-p1" name="vehiclePlate1" className={f.input} maxLength={20}
+                defaultValue={o.vehiclePlates[0] ?? ""} />
+            </div>
+            <div className={f.field}>
+              <label className={f.label} htmlFor="o-p2">İkinci araç plakası</label>
+              <input id="o-p2" name="vehiclePlate2" className={f.input} maxLength={20}
+                defaultValue={o.vehiclePlates[1] ?? ""} />
+            </div>
+          </div>
+
+          <div className={f.actions}><SubmitButton>Kaydı kaydet</SubmitButton></div>
+        </ActionForm>
+      </Disclosure>
+
+      <Disclosure label={o.hasContract ? "Sözleşmeyi değiştir" : "Sözleşme yükle"}>
+        <ActionForm action={uploadContractAction} hiddenFields={{ userId: member.userId }}>
+          {o.hasContract && (
+            <p className={f.hint}>
+              Yeni dosya yüklerseniz mevcut sözleşme silinir ve yerine bu geçer.
+            </p>
+          )}
+          <div className={f.field}>
+            <label className={f.label} htmlFor="o-contract">Taranmış sözleşme</label>
+            <input id="o-contract" name="contract" type="file" className={f.input}
+              accept="application/pdf,image/jpeg,image/png" required />
+            <p className={f.hint}>PDF, JPEG veya PNG · en fazla 20 MB.</p>
+          </div>
+          <div className={f.actions}><SubmitButton>Yükle</SubmitButton></div>
+        </ActionForm>
+      </Disclosure>
+
+      {o.hasContract && <ContractLink userId={member.userId} />}
+    </>
+  );
+}
+
+/**
+ * Fetches an expiring link and opens it, rather than rendering an `<a href>`.
+ *
+ * A rendered link would put a working key to somebody's signed contract into the page
+ * source, the browser history and any screenshot of the screen — and it would be stale
+ * within minutes anyway. This asks for one at the moment it is wanted.
+ */
+function ContractLink({ userId }: { userId: string }) {
+  const [state, action] = useActionState<FormState & { url?: string }, FormData>(
+    contractLinkAction,
+    {}
+  );
+
+  // Opened from an effect, not from the action: a server action's result arrives after
+  // the render, and window.open during render is neither allowed nor reachable on the
+  // server. The dependency is the URL itself, so the same link is not reopened on an
+  // unrelated re-render.
+  useEffect(() => {
+    if (state.url) window.open(state.url, "_blank", "noopener,noreferrer");
+  }, [state.url]);
+
+  return (
+    <form action={action} style={{ marginTop: 12 }}>
+      <input type="hidden" name="userId" value={userId} />
+      <FormMessage state={state} />
+      <SubmitButton variant="ghost" pendingLabel="Bağlantı alınıyor…">
+        Sözleşmeyi görüntüle
+      </SubmitButton>
+    </form>
   );
 }

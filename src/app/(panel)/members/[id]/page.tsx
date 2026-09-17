@@ -6,11 +6,12 @@ import { apiRequest } from "@/lib/api";
 import { daysSinceLabel, formatDate, formatDateTime } from "@/lib/dates";
 import {
   consentChannelLabel,
-  interactionTypeLabel,
+  interactionTypesLabel,
   interestLabel,
   monthShortLabel,
   renewalStatusLabel,
   termStatusLabel,
+  paymentMethodLabel,
 } from "@/lib/labels";
 import { canWriteMembers } from "@/lib/roles";
 import { readSession } from "@/lib/session";
@@ -19,6 +20,7 @@ import {
   AddTerm,
   EditInterests,
   EditPreferences,
+  ContractActions,
   EditProfile,
   EditTerm,
   TierSuggestions,
@@ -258,7 +260,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
                     <span
                       className={`${styles.entryType} ${e.type === "SYSTEM" ? styles.entryTypeSystem : ""}`}
                     >
-                      {interactionTypeLabel(e.type)}
+                      {interactionTypesLabel(e)}
                     </span>
                     <div className={styles.entryMain}>
                       <div className={styles.entryWhen}>{formatDateTime(e.occurredAt)}</div>
@@ -336,6 +338,73 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
             )}
             {canWrite && <EditProfile member={m} />}
           </Card>
+
+          {/*
+            ADMIN only. `onboarding` is null for every other role — "may not see", not
+            "nothing recorded" — so the card is absent rather than empty for them, which
+            is the honest rendering of a permission they do not have.
+          */}
+          {m.onboarding && (
+            <Card>
+              <h2 className={styles.cardTitle}>Üyelik kaydı</h2>
+              <p className={styles.cardSub}>
+                Üyeliğe geçişte alınan bilgiler · yalnızca yöneticiler
+              </p>
+              <div className={detail.rows}>
+                <Row k="Acil durum kişisi" v={m.onboarding.emergencyContactName ?? "—"} />
+                <Row
+                  k="Acil durum telefonu"
+                  v={
+                    m.onboarding.emergencyContactPhone
+                      ? <span className="tnum">{m.onboarding.emergencyContactPhone}</span>
+                      : "—"
+                  }
+                />
+                <Row k="Acil durum kişisi cinsiyeti" v={m.onboarding.emergencyContactGender ?? "—"} />
+                <Row
+                  k="Ödeme şekli"
+                  v={m.onboarding.paymentMethod ? paymentMethodLabel(m.onboarding.paymentMethod) : "—"}
+                />
+                <Row
+                  k="T.C. Kimlik / Pasaport"
+                  v={m.onboarding.nationalId ? <span className="tnum">{m.onboarding.nationalId}</span> : "—"}
+                />
+                <Row
+                  k="Araç plakası"
+                  v={m.onboarding.vehiclePlates.length > 0 ? m.onboarding.vehiclePlates.join(" · ") : "—"}
+                />
+                <Row
+                  k="Sözleşme"
+                  v={
+                    m.onboarding.hasContract ? (
+                      <>
+                        {m.onboarding.contractFileName}
+                        {m.onboarding.contractUploadedAt && (
+                          <span className={ui.faint}>
+                            {" "}· {formatDate(m.onboarding.contractUploadedAt)}
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      "—"
+                    )
+                  }
+                />
+              </div>
+
+              <p className={styles.health}>
+                <span aria-hidden="true">▲</span>
+                <span>
+                  <strong>Kimlik ve sözleşme bilgileri.</strong> KVKK kapsamında
+                  korunur; yalnızca yöneticiler görebilir.
+                </span>
+              </p>
+
+              {/* The link is fetched on demand and expires in minutes, so it is never
+                  part of this payload — see MemberOnboardingResponse. */}
+              <ContractActions member={m} />
+            </Card>
+          )}
 
           <Card>
             <h2 className={styles.cardTitle}>İlgi alanları</h2>

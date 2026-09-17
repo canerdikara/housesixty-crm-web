@@ -18,7 +18,9 @@ export type InteractionType =
 
 export type InterestCategory =
   | "PADEL" | "GYM" | "PILATES" | "SPA" | "WELLNESS" | "EVENTS"
-  | "DESIGN" | "ENTREPRENEURSHIP" | "SUSTAINABILITY" | "FNB" | "RETAIL";
+  | "DESIGN" | "ENTREPRENEURSHIP" | "SUSTAINABILITY" | "FNB" | "RETAIL"
+  /** "Sosyal ortam" — the club as a place to be among people. Not social *media*. */
+  | "SOCIAL_SCENE";
 
 export type ConsentChannel = "EMAIL" | "SMS" | "WHATSAPP" | "PHONE" | "ALL";
 
@@ -48,7 +50,14 @@ export type LeadListItem = {
 
 export type Interaction = {
   id: string;
+  /** The primary channel. Always present. */
   type: InteractionType;
+  /**
+   * Every channel this interaction used, primary first — one entry for almost every
+   * row. Optional because a backend older than V36 does not send it; render it through
+   * `interactionTypesLabel`, which falls back to `type`.
+   */
+  types?: InteractionType[];
   note: string;
   occurredAt: string;
   createdByUserId: string | null;
@@ -65,10 +74,20 @@ export type ConsentRecord = {
 };
 
 export type LeadDetail = LeadListItem & {
+  /** Derived from `birthDate` when there is one; otherwise whatever the source knew. */
   birthYear: number | null;
+  /** Full date of birth, ISO. Null for a lead whose source only asked for a year. */
+  birthDate: string | null;
   occupation: string | null;
   company: string | null;
   city: string | null;
+  address: string | null;
+  /** Everything the lead is interested in, primary first. `interestedIn` is that primary. */
+  interests: InterestCategory[];
+  /** Only ever set when `source` is REFERRAL — the backend refuses it under any other. */
+  referredByName: string | null;
+  /** Only ever set when `source` is EVENT. */
+  eventName: string | null;
   lostReason: string | null;
   convertedUserId: string | null;
   convertedAt: string | null;
@@ -151,6 +170,36 @@ export type MemberUsage = {
   guestCount: number;
 };
 
+export type MembershipPaymentMethod =
+  | "NAKIT" | "KREDI_KARTI_TEK_CEKIM" | "KREDI_KARTI_3_TAKSIT" | "KREDI_KARTI_6_TAKSIT";
+
+/** A membership tier, for the conversion form's «Üyelik Tipi». */
+export type MembershipTier = {
+  id: string;
+  name: string;
+};
+
+/**
+ * What an admin collected at the desk when the lead became a member (V39).
+ *
+ * ⚠️ **ADMIN-only.** The backend sends `null` for every other role, and null means
+ * "may not see" rather than "there is none" — the same shape as `hasHealthIssues`.
+ */
+export type MemberOnboarding = {
+  emergencyContactName: string | null;
+  emergencyContactPhone: string | null;
+  emergencyContactGender: string | null;
+  paymentMethod: MembershipPaymentMethod | null;
+  /** TC Kimlik or passport number. */
+  nationalId: string | null;
+  /** Up to two. */
+  vehiclePlates: string[];
+  /** Whether a contract exists — the link is fetched separately and expires. */
+  hasContract: boolean;
+  contractFileName: string | null;
+  contractUploadedAt: string | null;
+};
+
 export type MemberDetail = {
   userId: string;
   fullName: string;
@@ -164,6 +213,8 @@ export type MemberDetail = {
   membershipEnd: string | null;
   atRisk: boolean;
   profile: MemberProfile | null;
+  /** Null for every role except ADMIN — "may not see", not "none recorded". */
+  onboarding: MemberOnboarding | null;
   interests: { category: InterestCategory; level: number }[];
   preferences: { key: string; value: string }[];
   terms: MembershipTerm[];

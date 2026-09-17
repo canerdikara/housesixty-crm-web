@@ -28,6 +28,17 @@ const CHIPS = [
   { key: "proposal", label: "Teklif bekleyen", params: { status: "PROPOSAL_SENT" } },
 ];
 
+/**
+ * The dropdown's sentinel for "nobody owns this".
+ *
+ * Not a real id, and it must not collide with one — the backend takes `unassigned=true`
+ * as a separate parameter from `ownerUserId`, so this value is translated rather than
+ * forwarded.
+ */
+const OWNER_UNASSIGNED = "unassigned";
+
+type PanelUser = { id: string; fullName: string; role: string };
+
 type SearchParams = Record<string, string | string[] | undefined>;
 
 const one = (v: string | string[] | undefined): string | undefined =>
@@ -45,18 +56,45 @@ export default async function LeadsPage({
   const q = one(sp.q) ?? "";
   const source = one(sp.source) ?? "";
   const status = one(sp.status) ?? "";
+  /** "" · "unassigned" · a panel user's id. See OWNER_UNASSIGNED. */
+  const owner = one(sp.owner) ?? "";
   const page = Math.max(0, Number(one(sp.page) ?? 0) || 0);
 
   // The chip's own params first, so an explicit dropdown selection can override them.
   const query = new URLSearchParams({ ...chip.params });
   if (status) query.set("status", status);
   if (source) query.set("source", source);
+
+  /*
+   * «Sorumlu» and the "Bana atanan" chip are two ways of asking the same question, and
+   * the backend resolves `mine` *instead of* `ownerUserId` — so sending both would make
+   * the chip silently win and the dropdown appear broken. An explicit choice from the
+   * dropdown is the more specific statement, so it takes precedence and `mine` is
+   * dropped; the chip is de-highlighted below to match.
+   */
+  if (owner) {
+    query.delete("mine");
+    if (owner === OWNER_UNASSIGNED) query.set("unassigned", "true");
+    else query.set("ownerUserId", owner);
+  }
+
   if (q.trim()) query.set("q", q.trim());
   query.set("page", String(page));
   query.set("size", String(PAGE_SIZE));
 
-  const result = await apiRequest<Paged<LeadListItem>>(`/api/v1/crm/leads?${query}`);
+  // Both in one round trip. The owner list is small and cached by nothing, but it is a
+  // single indexed read and the page cannot render its filter without it.
+  const [result, owners] = await Promise.all([
+    apiRequest<Paged<LeadListItem>>(`/api/v1/crm/leads?${query}`),
+    apiRequest<PanelUser[]>("/api/v1/crm/users"),
+  ]);
   if (result.kind === "unauthorized") redirect("/login");
+
+  // A failure here costs the dropdown its names, not the page its list.
+  const ownerOptions = owners.kind === "ok" ? owners.data : [];
+
+  // The chip cannot be active while an explicit owner overrides it (see above).
+  const activeChip = owner && chipKey === "mine" ? "all" : chipKey;
 
   /** Rebuilds this screen's URL, preserving everything except what changed. */
   const hrefWith = (patch: Record<string, string | undefined>) => {
@@ -66,6 +104,7 @@ export default async function LeadsPage({
       q,
       source,
       status,
+      owner,
       page: String(page),
     };
     for (const [k, v] of Object.entries({ ...base, ...patch })) {
@@ -94,7 +133,7 @@ export default async function LeadsPage({
               needs no JavaScript. The hidden inputs carry the current filters through,
               which a bare form would otherwise drop.
             */}
-            <form method="GET" action="/leads" role="search">
+            <form method="GET" action="/leads" role="search" className={ui.filterForm}>
               {chipKey !== "all" && <input type="hidden" name="chip" value={chipKey} />}
               {status && <input type="hidden" name="status" value={status} />}
               {source && <input type="hidden" name="source" value={source} />}
@@ -106,6 +145,31 @@ export default async function LeadsPage({
                 placeholder="İsim, telefon veya e-posta"
                 aria-label="Adaylarda ara"
               />
+              {/*
+                A plain <select> in the same GET form as the search box, so picking an
+                owner lands in the URL exactly like every other filter on this screen —
+                bookmarkable, shareable, and needing no JavaScript. That is why there is
+                a visible submit button rather than an onChange handler: submitting on
+                change would make this the one control on the page that requires a
+                client component.
+              */}
+              <select
+                className={ui.select}
+                name="owner"
+                defaultValue={owner}
+                aria-label="Sorumluya göre filtrele"
+              >
+                <option value="">Tüm sorumlular</option>
+                {/* First, and deliberately: "nobody has picked this up" is the most
+                    actionable state on the screen. */}
+                <option value={OWNER_UNASSIGNED}>Atanmamış</option>
+                {ownerOptions.map((u) => (
+                  <option key={u.id} value={u.id}>{u.fullName}</option>
+                ))}
+              </select>
+              <button type="submit" className={`${ui.button} ${ui.buttonGhost}`}>
+                Filtrele
+              </button>
             </form>
             <Link className={`${ui.button} ${ui.buttonGhost}`} href="/leads/pipeline">
               Satış hunisi
@@ -122,7 +186,7 @@ export default async function LeadsPage({
           <FilterChip
             key={c.key}
             href={hrefWith({ chip: c.key === "all" ? "" : c.key, page: undefined })}
-            active={c.key === chipKey}
+            active={c.key === activeChip}
           >
             {c.label}
           </FilterChip>
@@ -136,7 +200,7 @@ export default async function LeadsPage({
           <EmptyState title="Liste yüklenemedi">{result.message}</EmptyState>
         ) : result.data.content.length === 0 ? (
           <EmptyState title="Aday bulunamadı">
-            {q || status || source || chipKey !== "all"
+            {q || status || source || owner || chipKey !== "all"
               ? "Bu filtrelere uyan aday yok. Filtreleri temizleyip tekrar deneyin."
               : "Web sitesi formundan gelen adaylar burada listelenecek."}
           </EmptyState>
