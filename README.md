@@ -57,6 +57,18 @@ asking first.
 
 ## Deployment
 
+**Live at `https://crm.housesixty.com`** since 2026-09-17 — Amplify app `d6b0szz1v0cm1`,
+branch `main`, behind Amplify **basic auth**. The build spec is `amplify.yml` in this
+repo (not console-side, unlike the marketing site). Pushing to `main` deploys.
+
+The panel is **installable as a desktop app**: manifest plus icons, no service worker.
+⚠️ The manifest is a static `public/manifest.webmanifest` with a hand-written
+`<link rel="manifest" … crossOrigin="use-credentials">` in `layout.tsx`, and it has to
+stay that way. A browser fetches a manifest with credentials omitted unless told
+otherwise, so behind basic auth it 401s and Chrome silently offers no Install. Next's
+Metadata API cannot set that attribute, so **do not reintroduce `app/manifest.ts`** — it
+injects a second, credential-less link and restores the bug.
+
 Amplify, as its own app, pointed at this repository.
 
 **It must be deployed as compute (SSR), not as a static export.** A static deployment
