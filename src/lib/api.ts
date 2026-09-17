@@ -117,9 +117,15 @@ export async function apiRequest<T>(
   const session = await readSession();
   if (!session) return { kind: "unauthorized" };
 
+  // OUTSIDE the try, deliberately. Inside it, a missing CRM_API_BASE_URL was caught by
+  // the same handler as a network failure and reported as "Sunucuya ulaşılamadı" — so a
+  // configuration mistake wore the costume of an outage, and the loud message this
+  // function exists to produce never reached anybody.
+  const base = requireBase();
+
   let res: Response;
   try {
-    res = await fetch(`${requireBase()}${path}`, {
+    res = await fetch(`${base}${path}`, {
       method: options.method ?? "GET",
       headers: {
         Authorization: `Bearer ${session.accessToken}`,
@@ -129,7 +135,13 @@ export async function apiRequest<T>(
       cache: options.cache ?? "no-store",
       signal: options.signal,
     });
-  } catch {
+  } catch (err) {
+    // The panel still tells the user only that the server is unreachable, but the
+    // reason now reaches the server log. Without this the failure is invisible: the
+    // catch returns a friendly string and nothing is ever written down, which is how a
+    // deployment can fail for half an hour with an empty CloudWatch group.
+    // Path and error only — never the session, the body or the token.
+    console.error("[api] request failed:", options.method ?? "GET", path, String(err));
     return { kind: "error", status: 0, message: "Sunucuya ulaşılamadı." };
   }
 
@@ -170,15 +182,20 @@ export async function login(
   email: string,
   password: string
 ): Promise<ApiResult<AuthResponse>> {
+  // Outside the try for the same reason as [apiRequest] — see the note there.
+  const base = requireBase();
+
   let res: Response;
   try {
-    res = await fetch(`${requireBase()}/api/v1/auth/login`, {
+    res = await fetch(`${base}/api/v1/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
       cache: "no-store",
     });
-  } catch {
+  } catch (err) {
+    // Never the email and never the password — this is the one call that has both.
+    console.error("[api] login request failed:", String(err));
     return { kind: "error", status: 0, message: "Sunucuya ulaşılamadı." };
   }
 
