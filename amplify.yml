@@ -31,7 +31,18 @@ frontend:
         # ⚠️ CRM_API_BASE_URL is scheme and host only, no /api/v1 — src/lib/api.ts
         # appends the path. The marketing site's API_BASE_URL takes the opposite
         # convention, and setting both the same way 500'd every live news page once.
-        - env | grep -e CRM_API_BASE_URL -e CRM_FEATURE_WAREHOUSE >> .env.production
+        #
+        # Checked explicitly first, because the panel is useless without it and the
+        # failure would otherwise arrive at runtime as an unexplained 500 on every
+        # screen. A build that stops here with a readable line is the cheaper outcome.
+        - test -n "$CRM_API_BASE_URL" || { echo "CRM_API_BASE_URL is not set on the Amplify app — set it in App settings > Environment variables, unquoted, scheme and host only"; exit 1; }
+        # ⚠️ `|| true` is not laziness. grep exits 1 when it matches NOTHING, and
+        # Amplify fails a build on any non-zero exit — so with the variables unset this
+        # line killed job 1 with nothing but "Command failed with exit code 1", which
+        # reads like a broken build rather than a missing setting. The one variable that
+        # must exist is asserted above; CRM_FEATURE_WAREHOUSE is optional and defaults
+        # false, so its absence must not take the build down.
+        - env | grep -e CRM_API_BASE_URL -e CRM_FEATURE_WAREHOUSE >> .env.production || true
         - npm run build
   artifacts:
     # ⚠️ .next, never `out`. `out` is a static export, and a static deployment does not
