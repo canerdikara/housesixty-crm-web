@@ -312,3 +312,68 @@ export type Dashboard = {
   atRisk: AtRiskMember[];
   atRiskTotal: number;
 };
+
+
+// ── Segments — V41, mockup screens 9 and 10 ─────────────────────────────────────
+
+export type SegmentRule = { field: string; op: string; value: string };
+
+export type SegmentListItem = {
+  id: string;
+  name: string;
+  description: string | null;
+  isDynamic: boolean;
+  rules: SegmentRule[];
+  /** Null until it has been run once — which is not the same as a count of zero. */
+  lastRunAt: string | null;
+  lastCount: number | null;
+  createdByName: string | null;
+  createdAt: string;
+};
+
+export type SegmentList = {
+  segments: SegmentListItem[];
+  /** Every active member, so a segment's size can be read as a share of the club. */
+  totalMembers: number;
+};
+
+export type SegmentMemberItem = {
+  userId: string;
+  fullName: string;
+  email: string;
+  phone: string | null;
+  membershipType: string | null;
+  membershipEnd: string | null;
+  lastVisitAt: string | null;
+  daysSinceLastVisit: number | null;
+};
+
+export type SegmentPreview = {
+  matched: number;
+  totalMembers: number;
+  /** Null on an empty club, never 0. */
+  share: number | null;
+  /** Tier name to count; `""` is the no-membership column. */
+  byMembershipType: Record<string, number>;
+  sample: SegmentMemberItem[];
+};
+
+export type SegmentDetail = {
+  segment: SegmentListItem;
+  preview: SegmentPreview;
+};
+
+/**
+ * One field the builder may offer.
+ *
+ * Served by the backend rather than listed here, so the builder and the whitelist in
+ * `SegmentQueryBuilder` cannot drift: a field added there appears in the builder with no
+ * change to this repo, and a field invented here is refused.
+ */
+export type SegmentField = {
+  field: string;
+  /** `NUMBER` — a number box. `CHOICE` / `SET` — a select over `values`. */
+  kind: "NUMBER" | "CHOICE" | "SET";
+  operators: string[];
+  values: string[] | null;
+};

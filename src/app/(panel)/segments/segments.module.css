@@ -1,0 +1,460 @@
+/*
+ * Segments — mockup screens 9 (the list) and 10 (the builder).
+ *
+ * Same approach as the dashboard: CSS and nothing else. The only chart here is a row of
+ * bars and a column of bars, and the panel still has no client-side dependencies beyond
+ * React itself.
+ */
+
+.cardTitle { font-size: 16px; margin: 0; }
+
+.cardSub {
+  margin: 3px 0 0;
+  color: var(--text-muted);
+  font-size: 12.5px;
+}
+
+.help {
+  margin: 8px 0 0;
+  color: var(--text-muted);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+/* ── List — the segment cards ──────────────────────────────────────────────── */
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+/*
+ * A column, so the footer can be pushed to the bottom.
+ *
+ * The grid already stretches the cards in a row to the same height, but that only
+ * aligns their edges — a name that wraps to two lines still pushed its own count and
+ * timestamp lower than its neighbours'. The numbers are meant to be read across the row.
+ */
+.segmentCard {
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  padding: 16px 18px 14px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.segmentCard:hover {
+  border-color: var(--accent);
+  text-decoration: none;
+}
+
+.segmentHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.segmentName {
+  font-size: 15.5px;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.typeBadge {
+  flex: none;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 9px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background: var(--chip);
+  color: var(--text-muted);
+}
+
+/* A live segment reads as live. A static one is deliberately the quieter of the two. */
+.typeBadgeDynamic {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: transparent;
+}
+
+.segmentRules {
+  margin: 10px 0 14px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  /* Two lines, then an ellipsis — a five-rule segment must not make a taller card. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2.9em;
+}
+
+.segmentFoot {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.segmentCount {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  line-height: 1;
+}
+
+.segmentCountUnit {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-left: 5px;
+}
+
+.segmentRun {
+  font-size: 11.5px;
+  color: var(--text-faint);
+  text-align: right;
+}
+
+/* ── List — the sizes chart ────────────────────────────────────────────────── */
+
+.sizes {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  margin-top: 16px;
+}
+
+.sizeRow {
+  display: grid;
+  grid-template-columns: minmax(110px, 200px) 1fr auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.sizeName {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sizeTrack {
+  height: 18px;
+  background: var(--card-2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.sizeFill {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 3px;
+  min-width: 2px;
+}
+
+.sizeValue {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  min-width: 22px;
+}
+
+/* ── Builder layout ────────────────────────────────────────────────────────── */
+
+.builder {
+  display: grid;
+  grid-template-columns: 1fr minmax(300px, 400px);
+  grid-template-areas: "main side" "foot side";
+  align-items: start;
+  gap: 16px;
+}
+
+.builderMain { grid-area: main; display: flex; flex-direction: column; gap: 16px; }
+.builderSide { grid-area: side; display: flex; flex-direction: column; gap: 16px; }
+
+.builderFoot {
+  grid-area: foot;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 1100px) {
+  .builder {
+    grid-template-columns: 1fr;
+    grid-template-areas: "main" "side" "foot";
+  }
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  padding: 18px 20px;
+}
+
+/* ── Builder — type toggle ─────────────────────────────────────────────────── */
+
+.typeToggle { display: inline-flex; gap: 8px; }
+
+.typeButton {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 20px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--card-2);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.typeButtonOn {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.typeFixed {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.typeFixedNote {
+  display: block;
+  font-weight: 400;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+
+/* ── Builder — rules ───────────────────────────────────────────────────────── */
+
+.rules { display: flex; flex-direction: column; gap: 9px; margin-top: 16px; }
+
+.rule {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) minmax(0, 150px) minmax(0, 190px) 30px;
+  align-items: center;
+  gap: 10px;
+  background: var(--card-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 9px 11px;
+}
+
+@media (max-width: 760px) {
+  .rule { grid-template-columns: 1fr 30px; }
+  .conj { grid-column: 1 / -1; }
+}
+
+.conj {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+}
+
+/* A negated row is still a rule, not an error — it borrows the warn ink, not the crit. */
+.conjNot { color: var(--warn); }
+
+.ruleField, .ruleOp, .ruleValue {
+  font: inherit;
+  font-size: 13px;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  color: var(--text);
+  min-width: 0;
+  width: 100%;
+}
+
+.ruleField { font-weight: 600; }
+.ruleOp { color: var(--text-muted); }
+
+.ruleRemove {
+  font: inherit;
+  font-size: 17px;
+  line-height: 1;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-faint);
+  cursor: pointer;
+}
+
+.ruleRemove:hover { color: var(--crit); border-color: var(--crit); }
+
+.addRule {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 11px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  width: 100%;
+}
+
+.addRule:hover { border-color: var(--accent); background: var(--card-2); }
+
+/* ── Builder — preview ─────────────────────────────────────────────────────── */
+
+.previewHead { margin-bottom: 4px; }
+
+.previewCount {
+  font-family: var(--font-serif);
+  font-size: 46px;
+  line-height: 1.05;
+  margin: 14px 0 0;
+}
+
+.previewCountUnit {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-left: 9px;
+}
+
+.previewShare {
+  margin: 5px 0 0;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.previewError {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: 14px 0 0;
+  padding: 9px 11px;
+  border-radius: var(--radius-sm);
+  background: var(--warn-bg);
+  border: 1px solid var(--warn);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+/* ── Builder — tier chart ──────────────────────────────────────────────────── */
+
+.tierChart {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  gap: 10px;
+  height: 150px;
+  margin-top: 22px;
+}
+
+.tierCol {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  flex: 1;
+  height: 100%;
+  min-width: 0;
+}
+
+.tierValue { font-size: 12px; margin-bottom: 5px; }
+
+.tierBar {
+  width: 100%;
+  max-width: 56px;
+  background: var(--s2);
+  border-radius: 3px 3px 0 0;
+}
+
+.tierLabel {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  margin-top: 7px;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+/* ── Builder — sample table ────────────────────────────────────────────────── */
+
+.sampleTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  margin-top: 14px;
+}
+
+.sampleTable th {
+  text-align: left;
+  font-weight: 600;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  padding: 0 8px 7px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.sampleTable td {
+  padding: 9px 8px 9px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.sampleTable tr:last-child td { border-bottom: none; }
+
+.sampleName { font-weight: 600; }
+.sampleName a { color: inherit; text-decoration: none; }
+.sampleName a:hover { color: var(--accent); text-decoration: underline; }
+
+/* ── Detail header actions ─────────────────────────────────────────────────── */
+
+.headActions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.headMessage {
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.deleteConfirm {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--crit);
+  background: var(--crit);
+  color: #fff;
+  cursor: pointer;
+}
+
+.saveError {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 0 auto 0 0;
+  font-size: 12.5px;
+  color: var(--crit);
+}

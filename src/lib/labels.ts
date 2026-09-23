@@ -11,7 +11,7 @@
  * how a row silently loses its meaning.
  */
 
-import type { LeadSource, LeadStatus, InteractionType, InterestCategory, ConsentChannel } from "./types";
+import type { LeadSource, LeadStatus, InteractionType, InterestCategory, ConsentChannel, SegmentRule } from "./types";
 
 /** Pipeline stages in board order. Do not sort — this is the sales process. */
 export const LEAD_STATUS_ORDER: LeadStatus[] = [
@@ -249,4 +249,82 @@ export function facilityTypeColor(v: string): string {
     case "SPA": return "var(--s4)";
     default: return "var(--s3)";
   }
+}
+
+
+// ── Segments ─────────────────────────────────────────────────────────────────────
+
+/**
+ * What a segment field is called on screen.
+ *
+ * The backend serves the field *names*; the Turkish is here, like every other enum in
+ * this file. An unmapped field falls back to its raw name rather than to a blank — a
+ * field added to the whitelist should look unfamiliar in the builder, not invisible.
+ */
+export function segmentFieldLabel(v: string): string {
+  switch (v) {
+    case "last_visit_days": return "Son ziyaret (gün)";
+    case "visit_count_30d": return "Ziyaret sayısı · 30 gün";
+    case "visit_count_90d": return "Ziyaret sayısı · 90 gün";
+    case "visit_time_bucket": return "Ziyaret saati";
+    case "facility_used": return "Tesis kullanımı";
+    case "guest_count_6m": return "Misafir sayısı · 6 ay";
+    case "membership_type": return "Üyelik tipi";
+    case "membership_status": return "Üyelik durumu";
+    case "membership_end_days": return "Üyelik bitişine (gün)";
+    case "join_date_days": return "Üyelik yaşı (gün)";
+    case "interest": return "İlgi alanı";
+    case "tournament_count": return "Turnuva katılımı";
+    case "lesson_count": return "Ders katılımı";
+    default: return v;
+  }
+}
+
+export function segmentOperatorLabel(v: string): string {
+  switch (v) {
+    case "eq": return "eşittir";
+    case "ne": return "eşit değildir";
+    case "lt": return "küçüktür";
+    case "lte": return "en fazla";
+    case "gt": return "büyüktür";
+    case "gte": return "en az";
+    case "includes": return "içerir";
+    case "excludes": return "içermez";
+    default: return v;
+  }
+}
+
+/**
+ * The value side of a rule, in Turkish.
+ *
+ * One function rather than one per field, because the builder renders a `<select>`
+ * without knowing which vocabulary a field's values come from — facility types,
+ * interests, membership statuses and visit buckets all arrive as plain strings. A
+ * membership tier is already Turkish and falls through unchanged, which is why the
+ * default returns the raw value.
+ */
+export function segmentValueLabel(v: string): string {
+  switch (v) {
+    case "MORNING": return "Sabah (12:00 öncesi)";
+    case "AFTERNOON": return "Öğleden sonra (12:00–17:00)";
+    case "EVENING": return "Akşam (17:00 sonrası)";
+    case "ACTIVE": return "Aktif";
+    case "EXPIRED": return "Süresi doldu";
+    case "CANCELLED": return "İptal";
+    case "PADEL_COURT": return "Padel";
+    case "SPA": return "Spa";
+    default: return interestLabel(v);
+  }
+}
+
+/**
+ * A rule as one sentence — the summary line on a segment card.
+ *
+ * Negations read as "değil" at the end rather than as a separate prefix, because the
+ * card has one line per segment and not one row per rule.
+ */
+export function segmentRuleSentence(rule: SegmentRule): string {
+  const value = rule.value.trim();
+  const shown = /^-?\d+$/.test(value) ? value : segmentValueLabel(value);
+  return `${segmentFieldLabel(rule.field)} ${segmentOperatorLabel(rule.op)} ${shown}`;
 }
