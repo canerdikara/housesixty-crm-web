@@ -253,3 +253,62 @@ export type RenewalStats = {
   byMonth: RenewalMonth[];
   byStatus: Record<string, number>;
 };
+
+
+// ── Dashboard — «Genel Bakış», mockup screen 2 ──────────────────────────────────
+
+export type DashboardSummary = {
+  /** Holding a live membership. */
+  activeMembers: number;
+  /** Every member account. Differs from `activeMembers` once a term lapses. */
+  totalMembers: number;
+  membersJoinedThisMonth: number;
+  newLeads: number;
+  newLeadsPreviousPeriod: number;
+  /**
+   * All time, not the selected window — see the backend DTO. Null on zero leads, which
+   * is not a nought-percent conversion rate.
+   */
+  conversionRate: number | null;
+  convertedLeads: number;
+  totalLeads: number;
+  /** Null for RECEPTION, which §6 gives no access to membership terms — not zero. */
+  renewalsDue30Days: number | null;
+};
+
+export type FacilityUsageMonth = {
+  /** `"2026-09"`. */
+  month: string;
+  /** `FacilityType` name to reservation count. Every type present, zeroes included. */
+  counts: Record<string, number>;
+  total: number;
+};
+
+export type AtRiskMember = {
+  userId: string;
+  fullName: string;
+  phone: string | null;
+  lastVisitAt: string | null;
+  /** Null when they have never visited — the worse case, not a missing value. */
+  daysSinceLastVisit: number | null;
+  membershipEnd: string | null;
+};
+
+export type Dashboard = {
+  generatedAt: string;
+  periodDays: number;
+  summary: DashboardSummary;
+  /** Series order for `facilityUsage`, from the backend's own enum. */
+  facilityTypes: string[];
+  facilityUsage: FacilityUsageMonth[];
+  turnstileEntriesInPeriod: number;
+  /**
+   * Passes ever recorded. Zero means the at-risk list flags everyone by definition and
+   * says nothing — the screen explains that rather than drawing a list of red rows.
+   */
+  turnstileEntriesEver: number;
+  leadSources: SourceConversion[];
+  activeMembersByMonth: MonthCount[];
+  atRisk: AtRiskMember[];
+  atRiskTotal: number;
+};

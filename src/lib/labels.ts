@@ -216,3 +216,37 @@ export function monthShortLabel(key: string): string {
   return new Intl.DateTimeFormat("tr-TR", { month: "short", timeZone: "UTC" })
     .format(new Date(Date.UTC(y, m - 1, 1)));
 }
+
+
+/**
+ * Facility types, as the platform actually defines them.
+ *
+ * Only two exist. Mockup screen 2 stacks Padel / Gym / Pilates / Spa, but the gym is
+ * entered through the turnstile and has no bookable slots, and pilates is not a
+ * facility at all — so neither can appear on a chart built from reservations. The
+ * fallback returns the raw value, so a facility type added later shows up looking
+ * unfamiliar rather than blank.
+ */
+export function facilityTypeLabel(v: string): string {
+  switch (v) {
+    case "PADEL_COURT": return "Padel";
+    case "SPA": return "Spa";
+    default: return v;
+  }
+}
+
+/**
+ * The series colour for a facility type.
+ *
+ * Tied to the entity, never to its position in the list (§7.4): spa stays magenta
+ * whether or not padel is on the chart. The token names already reserve `--s2` for the
+ * gym and `--s3` for pilates, so a facility type arriving for either lands on the
+ * colour the design already gave it.
+ */
+export function facilityTypeColor(v: string): string {
+  switch (v) {
+    case "PADEL_COURT": return "var(--s1)";
+    case "SPA": return "var(--s4)";
+    default: return "var(--s3)";
+  }
+}
