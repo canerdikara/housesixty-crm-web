@@ -546,3 +546,25 @@ export type DailyReport = {
   people: ReportPerson[];
   turnstileEverUsed: boolean;
 };
+
+// ── Turnstile simulator (V43) ───────────────────────────────────────────────────
+
+export type EntryPoint = "MAIN_GATE" | "SPA_ENTRANCE" | "GYM_ENTRANCE";
+export type TurnstileDirection = "ENTRY" | "EXIT";
+
+/**
+ * What `POST /access/qr/validate` answers.
+ *
+ * `message` is the **backend's own English string** ("Access granted", "Invalid or
+ * already used token", "Token has expired"). It is shown verbatim as a secondary line
+ * rather than translated: this is a test tool standing in for a gate, and the exact
+ * string a real integrator would receive is the useful part. The big Turkish verdict
+ * above it is derived from `valid`, not from matching on this text — which would break
+ * the day somebody rewords it.
+ */
+export type TurnstileResult = {
+  valid: boolean;
+  userId: string | null;
+  memberName: string | null;
+  message: string;
+};

@@ -1,0 +1,226 @@
+/*
+ * Turnike simülatörü — a camera standing in for the gate.
+ *
+ * The only screen in the panel with a live video element on it, and the only one whose
+ * colour changes on its own: a pass turns the stage green, a refusal red, the way a real
+ * reader's light does.
+ */
+
+/* ── The "this is a test tool" banner ──────────────────────────────────────── */
+
+/*
+ * Warn-coloured rather than neutral, and above the card rather than inside it.
+ *
+ * Every scan here writes a real, permanent row that shows up on both report screens.
+ * Somebody opening a page called "simulator" could reasonably assume the opposite, and
+ * this is the sentence that stops them finding out afterwards.
+ */
+.banner {
+  padding: 13px 16px;
+  border: 1px solid var(--warn);
+  border-radius: var(--radius-sm);
+  background: var(--warn-bg);
+  font-size: 12.5px;
+  line-height: 1.65;
+  margin-bottom: 18px;
+}
+
+/* ── Layout ────────────────────────────────────────────────────────────────── */
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 940px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ── Controls ──────────────────────────────────────────────────────────────── */
+
+.controls {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.control { display: flex; flex-direction: column; gap: 5px; }
+.controlLabel { font-size: 12px; color: var(--text-muted); }
+
+.select {
+  padding: 8px 11px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card-2);
+  color: var(--text);
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.startButton,
+.stopButton {
+  padding: 9px 18px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.stopButton {
+  background: transparent;
+  color: var(--accent);
+}
+
+/* ── The camera stage ──────────────────────────────────────────────────────── */
+
+/*
+ * A fixed 4:3 box, so the layout does not jump when the stream arrives and the video
+ * element suddenly has intrinsic dimensions.
+ */
+.stage {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  /*
+   * Capped in both units on purpose.
+   *
+   * `aspect-ratio` alone makes the stage as tall as the column is wide, which on a wide
+   * monitor is most of a metre of video for a phone screen held up at arm's length. A
+   * `vh` cap alone is not enough either — it does nothing when the viewport is itself
+   * tall, which is exactly the case on the desk tablet this is meant for.
+   */
+  max-height: min(62vh, 520px);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--sidebar);
+  border: 3px solid var(--border);
+  transition: border-color 120ms ease;
+}
+
+.stageOk { border-color: var(--good); }
+.stageBad { border-color: var(--crit); }
+
+.video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 24px;
+  text-align: center;
+  background: var(--sidebar);
+  color: var(--sidebar-text);
+}
+
+.overlayTitle { margin: 0; font-size: 15px; font-weight: 600; }
+.overlayText { margin: 0; font-size: 12.5px; line-height: 1.6; max-width: 42ch; color: var(--sidebar-text-dim); }
+
+/* ── The verdict ───────────────────────────────────────────────────────────── */
+
+/*
+ * Over the video, not beside it. A member holds up a phone and looks at the screen; a
+ * result rendered below the fold on a laptop is a result nobody sees before it clears.
+ */
+.verdict {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  text-align: center;
+  padding: 20px;
+  background: rgba(38, 35, 32, 0.82);
+  color: #fff;
+}
+
+.verdictMark { margin: 0; font-size: 58px; line-height: 1; }
+.verdictName { margin: 6px 0 0; font-size: 20px; font-family: var(--font-serif); }
+.verdictMessage { margin: 2px 0 0; font-size: 12px; opacity: 0.75; }
+
+.hint {
+  margin: 12px 0 0;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+/* ── Session log ───────────────────────────────────────────────────────────── */
+
+.logCard {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card-2);
+  padding: 14px 16px;
+}
+
+.logTitle { margin: 0 0 10px; font-size: 13.5px; }
+.logEmpty { margin: 0; font-size: 12.5px; color: var(--text-muted); }
+
+.log { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+
+.logRow {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr) max-content;
+  gap: 9px;
+  align-items: baseline;
+  font-size: 12px;
+}
+
+.logTime { color: var(--text-faint); font-variant-numeric: tabular-nums; }
+.logName { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.logOk { color: var(--good); font-weight: 600; }
+.logBad { color: var(--crit); font-weight: 600; }
+
+.logNote {
+  margin: 12px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+/* ── The integrator's note ─────────────────────────────────────────────────── */
+
+.helpTitle { margin: 0 0 6px; font-size: 15px; }
+.helpText { margin: 0 0 12px; font-size: 12.5px; color: var(--text-muted); line-height: 1.6; }
+
+.code {
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card-2);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.helpList {
+  margin: 14px 0 0;
+  padding-left: 18px;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--text-muted);
+}
+
+.helpList li + li { margin-top: 7px; }
+.helpList strong { color: var(--text); }

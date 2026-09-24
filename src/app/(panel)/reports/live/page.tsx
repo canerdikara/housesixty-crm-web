@@ -97,6 +97,16 @@ export default async function LiveReportPage() {
         </p>
         <AreaBreakdown areas={d.areas} turnstileEverUsed={d.turnstileEverUsed} />
         <TurnstileNotice used={d.turnstileEverUsed} />
+        {/*
+          The simulator is linked from here rather than from the sidebar: it is a test
+          tool, not one of the ten designed screens, and this is where somebody is
+          standing when they want the turnstile column to stop being an em dash.
+        */}
+        <p className={styles.simLink}>
+          Gerçek turnike bağlanana kadar{" "}
+          <Link href="/turnstile">turnike simülatörüyle</Link> QR okutarak giriş ve çıkış
+          kaydı oluşturabilirsiniz.
+        </p>
       </Card>
 
       <Card>

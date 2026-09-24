@@ -400,3 +400,13 @@ export function shortTime(v: string | null | undefined): string {
   if (!v) return "—";
   return v.slice(0, 5);
 }
+
+/** Which reader a simulated scan claims to be. */
+export function entryPointLabel(v: string): string {
+  switch (v) {
+    case "MAIN_GATE": return "Ana giriş";
+    case "SPA_ENTRANCE": return "Spa girişi";
+    case "GYM_ENTRANCE": return "Salon girişi";
+    default: return v;
+  }
+}
