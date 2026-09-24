@@ -1,0 +1,281 @@
+/*
+ * «Anlık rapor» and «Günlük rapor».
+ *
+ * CSS and nothing else, like every other chart in this panel. The hour histogram is
+ * twenty-four divs.
+ */
+
+.cardTitle { font-size: 16px; margin: 0; }
+
+.cardSub {
+  margin: 3px 0 0;
+  color: var(--text-muted);
+  font-size: 12.5px;
+}
+
+.headerActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* ── The headline numbers ──────────────────────────────────────────────────── */
+
+.headline {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.headlineCard {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  padding: 16px 18px 14px;
+}
+
+.headlineValue {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 34px;
+  line-height: 1;
+}
+
+.headlineLabel { margin: 8px 0 0; font-size: 13px; }
+.headlineNote { margin: 4px 0 0; font-size: 11.5px; color: var(--text-muted); }
+
+/* ── Area breakdown ────────────────────────────────────────────────────────── */
+
+.areas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.area {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card-2);
+  padding: 12px 14px;
+}
+
+.areaName { margin: 0; font-size: 13px; font-weight: 600; }
+
+.areaTotal {
+  margin: 6px 0 0;
+  font-family: var(--font-serif);
+  font-size: 26px;
+  line-height: 1;
+}
+
+/*
+ * The two numbers stacked, never on one line with a slash between them.
+ *
+ * "8 / 5" invites being read as a fraction or a score. They are two independent counts
+ * of different things and each gets its own labelled row.
+ */
+.areaSplit {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 8px;
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.areaNum { font-weight: 600; color: var(--text); }
+
+/* ── The turnstile explanation ─────────────────────────────────────────────── */
+
+.notice {
+  margin: 16px 0 0;
+  padding: 11px 13px;
+  border-radius: var(--radius-sm);
+  background: var(--warn-bg);
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+/* ── People table ──────────────────────────────────────────────────────────── */
+
+.role {
+  margin-left: 7px;
+  font-size: 11px;
+  color: var(--text-faint);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 1px 7px;
+}
+
+.bookingCell { font-size: 12.5px; }
+
+.slot {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-faint);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Daily layout ──────────────────────────────────────────────────────────── */
+
+.dailyLayout {
+  display: grid;
+  grid-template-columns: 290px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.dailyMain { min-width: 0; }
+
+@media (max-width: 1000px) {
+  .dailyLayout { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ── Calendar ──────────────────────────────────────────────────────────────── */
+
+.calendar { margin-top: 14px; }
+
+.calHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.calMonth { font-size: 13.5px; font-weight: 600; }
+
+.calNav {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  text-decoration: none;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.calNav:hover { border-color: var(--accent); color: var(--accent); text-decoration: none; }
+
+.calNavOff { opacity: 0.35; pointer-events: none; }
+
+.calGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+
+.calWeekday {
+  text-align: center;
+  font-size: 10.5px;
+  color: var(--text-faint);
+  padding-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.calDay {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+  color: var(--text);
+  text-decoration: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.calDay:hover { background: var(--chip); text-decoration: none; }
+
+.calDayOn,
+.calDayOn:hover {
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+
+/*
+ * Today, when it is not the selected day: an underline rather than a second fill, so it
+ * cannot be mistaken for a second selection.
+ */
+.calDayToday:not(.calDayOn) {
+  box-shadow: inset 0 -2px 0 var(--sand);
+}
+
+.calDayOff {
+  color: var(--text-faint);
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* ── Hour histogram ────────────────────────────────────────────────────────── */
+
+.hours {
+  display: grid;
+  grid-template-columns: repeat(24, 1fr);
+  gap: 3px;
+  margin-top: 18px;
+  align-items: end;
+}
+
+.hourCol { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+
+/*
+ * A fixed-height track with the bar growing from the bottom.
+ *
+ * `display: block` and an explicit height are both load-bearing: these are spans, and an
+ * inline element ignores height — the same mistake that turned the campaign funnel into
+ * a row of pills.
+ */
+.hourTrack {
+  display: block;
+  width: 100%;
+  height: 92px;
+  /*
+   * Barely-there, and a baseline rather than a filled column.
+   *
+   * At `var(--grid)` the twenty-four tracks were solid blocks the same width as the bars
+   * and the chart read as "every hour was busy", with the actual bars hiding inside
+   * them. Six bars among twenty-four hours is the shape worth seeing; the empty hours
+   * only need to hold their place.
+   */
+  background: linear-gradient(to top, var(--grid) 0 2px, transparent 2px);
+  border-radius: 3px;
+  position: relative;
+}
+
+.hourFill {
+  display: block;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--accent);
+  border-radius: 3px;
+}
+
+/*
+ * ⚠️ A minimum height only where there is something to show.
+ *
+ * `min-height: 2px` on every fill drew a 2px orange line under every empty hour, which
+ * on a chart about footfall says "one person came at 3am" twenty-four times over. It
+ * applies only to hours with at least one entry, so that a single entry is visible and a
+ * nought is genuinely nothing.
+ */
+.hourFillHasValue { min-height: 3px; }
+
+.hourLabel {
+  font-size: 10px;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+  height: 12px;
+}

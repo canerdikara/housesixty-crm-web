@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PageBody, PageHeader, Card } from "@/components/Page";
-import { EmptyState, FilterChip, ChipRow } from "@/components/ui";
+import { EmptyState, FilterChip, ChipRow, ui } from "@/components/ui";
 import { apiRequest } from "@/lib/api";
 import { formatDate } from "@/lib/dates";
 import {
@@ -66,6 +66,29 @@ export default async function DashboardPage({
     </ChipRow>
   );
 
+  /*
+   * The two report screens.
+   *
+   * Their own pages rather than a modal, for three reasons that all point the same way:
+   * the daily one carries a calendar and a table that can run to hundreds of rows, the
+   * chosen day lives in the URL so a particular day can be sent to a colleague (the
+   * convention every filter in this panel follows), and the live one is a screen the
+   * front desk leaves open — which a dialog over a dashboard is not.
+   *
+   * Above the period chips, because they are a different kind of thing: the chips change
+   * what this screen shows, these leave it.
+   */
+  const reportButtons = (
+    <div className={styles.reportLinks}>
+      <Link className={ui.button} href="/reports/live">
+        Anlık rapor
+      </Link>
+      <Link className={`${ui.button} ${ui.buttonGhost}`} href="/reports/daily">
+        Günlük rapor
+      </Link>
+    </div>
+  );
+
   if (result.kind !== "ok") {
     return (
       <PageBody>
@@ -93,7 +116,12 @@ export default async function DashboardPage({
       <PageHeader
         title="Genel Bakış"
         subtitle={`Hoş geldiniz, ${firstName(session.user.fullName)} · son ${days} gün`}
-        actions={periodChips}
+        actions={
+          <div className={styles.headerActions}>
+            {reportButtons}
+            {periodChips}
+          </div>
+        }
       />
 
       {/* ── The four tiles ───────────────────────────────────────────────────── */}

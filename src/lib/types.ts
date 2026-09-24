@@ -485,3 +485,64 @@ export type CampaignDetail = {
   /** Null when it can be sent; otherwise why not, in Turkish. */
   sendBlockedReason: string | null;
 };
+
+// ── Facility reports — «Anlık rapor» and «Günlük rapor» (V43) ───────────────────
+
+/** `PADEL` · `SPA` · `GYM` · `OTHER`. */
+export type ReportArea = "PADEL" | "SPA" | "GYM" | "OTHER";
+
+/**
+ * One person in the building, or expected in it.
+ *
+ * `booked` and `checkedIn` are **independent flags, not a status** — all four
+ * combinations mean something the club acts on differently, and the two that matter most
+ * are booked-and-not-arrived (a no-show) and arrived-with-nothing-booked (a walk-in).
+ */
+export type ReportPerson = {
+  userId: string;
+  fullName: string;
+  role: string;
+  area: ReportArea;
+  booked: boolean;
+  checkedIn: boolean;
+  bookings: string[];
+  /** İzmir wall-clock `HH:mm:ss`. Null when they have nothing booked. */
+  slotStart: string | null;
+  slotEnd: string | null;
+  /** Real instants. Null until the turnstile records them. */
+  enteredAt: string | null;
+  leftAt: string | null;
+};
+
+export type ReportAreaCount = {
+  area: ReportArea;
+  booked: number;
+  checkedIn: number;
+  /** Distinct people, so somebody both booked and checked in counts once. */
+  total: number;
+};
+
+export type ReportHour = { hour: number; entries: number };
+
+export type LiveReport = {
+  asOf: string;
+  date: string;
+  bookedTotal: number;
+  checkedInTotal: number;
+  areas: ReportAreaCount[];
+  people: ReportPerson[];
+  /** False until the turnstile has ever recorded a pass — on production, it has not. */
+  turnstileEverUsed: boolean;
+};
+
+export type DailyReport = {
+  date: string;
+  bookedTotal: number;
+  checkedInTotal: number;
+  noShowTotal: number;
+  walkInTotal: number;
+  areas: ReportAreaCount[];
+  hours: ReportHour[];
+  people: ReportPerson[];
+  turnstileEverUsed: boolean;
+};

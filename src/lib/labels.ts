@@ -374,3 +374,29 @@ export function deliveryStateLabel(v: string): string {
     default: return v;
   }
 }
+
+// ── Facility reports — V43 ──────────────────────────────────────────────────────
+
+/**
+ * ⚠️ `OTHER` is «Diğer», never «Salon».
+ *
+ * A member who walks through the main gate to use the gym is indistinguishable from one
+ * coming to sit in the cafe, so the bucket is honestly named after what is known — that
+ * they are in the building — rather than after the most likely guess. `GYM` fills only
+ * when a reader is fitted at that door.
+ */
+export function reportAreaLabel(v: string): string {
+  switch (v) {
+    case "PADEL": return "Padel";
+    case "SPA": return "Spa";
+    case "GYM": return "Salon";
+    case "OTHER": return "Diğer";
+    default: return v;
+  }
+}
+
+/** "18:00:00" → "18:00". The backend sends İzmir wall-clock with seconds. */
+export function shortTime(v: string | null | undefined): string {
+  if (!v) return "—";
+  return v.slice(0, 5);
+}

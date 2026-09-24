@@ -354,3 +354,24 @@
   color: var(--text-muted);
   line-height: 1.55;
 }
+
+/* ── The two report entry points ───────────────────────────────────────────── */
+
+/*
+ * Buttons above, period chips below. They change different things — the chips re-filter
+ * this screen, the buttons leave it — and a single row mixing the two invites the
+ * reading that «Anlık rapor» is another period.
+ */
+.headerActions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.reportLinks {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
