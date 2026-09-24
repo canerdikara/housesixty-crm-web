@@ -1,0 +1,328 @@
+/*
+ * Campaigns — mockup screens 11 (the list) and 12 (the result).
+ *
+ * CSS and nothing else, like the dashboard and the segment screens. The funnel is five
+ * bars and the panel still has no client-side dependency beyond React.
+ */
+
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ── List — the four tiles ─────────────────────────────────────────────────── */
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.tile {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  padding: 15px 18px 14px;
+}
+
+.tileLabel {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.tileValue {
+  margin: 6px 0 0;
+  font-family: var(--font-serif);
+  font-size: 30px;
+  line-height: 1;
+}
+
+.tileNote {
+  margin: 7px 0 0;
+  font-size: 11.5px;
+  color: var(--good);
+}
+
+/* ── List — the table ──────────────────────────────────────────────────────── */
+
+.subject {
+  margin-top: 3px;
+  font-size: 12px;
+  color: var(--text-faint);
+  /* One line. A long subject must not make one row twice the height of its neighbours. */
+  max-width: 34ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The mockup's outlined channel pill. Outlined rather than filled so it does not
+   compete with the status badge at the other end of the row. */
+.channel {
+  display: inline-block;
+  font-size: 11.5px;
+  padding: 2px 9px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+}
+
+.segment { color: var(--text-muted); font-size: 12.5px; }
+
+/* ── Detail — the header strip ─────────────────────────────────────────────── */
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.mark {
+  flex: none;
+  width: 54px;
+  height: 54px;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-family: var(--font-serif);
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.headMain { flex: 1 1 260px; min-width: 0; }
+.headName { margin: 0; font-size: 21px; line-height: 1.25; }
+.headMeta { margin: 4px 0 10px; font-size: 12.5px; color: var(--text-muted); }
+.headTags { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.headRates {
+  display: flex;
+  gap: 26px;
+  padding-left: 22px;
+  border-left: 1px solid var(--border);
+}
+
+.rate { text-align: right; }
+.rateValue { margin: 0; font-family: var(--font-serif); font-size: 24px; line-height: 1; }
+.rateLabel { margin: 5px 0 0; font-size: 11.5px; color: var(--text-muted); }
+
+/* ── Detail — the funnel ───────────────────────────────────────────────────── */
+
+.cardTitle { font-size: 16px; margin: 0; }
+
+.cardSub {
+  margin: 3px 0 0;
+  color: var(--text-muted);
+  font-size: 12.5px;
+}
+
+.funnel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 20px;
+  margin-top: 18px;
+}
+
+/*
+ * ⚠️ `display: block` is load-bearing, not tidiness.
+ *
+ * This is a `<span>`, and an inline element ignores `height` — so without it the track
+ * took its height from the line box and the four bars rendered as fat pills, with the
+ * value and label beneath each one overlapping them. It looked like a spacing bug and
+ * was a display-type one, and it was invisible in every unit of the API: the numbers
+ * were right the whole time. Only a screenshot showed it.
+ */
+.stageTrack {
+  display: block;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--grid);
+  overflow: hidden;
+}
+
+.stageFill { display: block; height: 100%; border-radius: var(--radius-pill); }
+
+.stageValue {
+  margin: 12px 0 0;
+  font-family: var(--font-serif);
+  font-size: 26px;
+  line-height: 1;
+}
+
+.stageLabel { margin: 6px 0 0; font-size: 12.5px; color: var(--text-muted); }
+.stagePct { margin-left: 6px; color: var(--text-faint); }
+
+/*
+ * Suppressions sit apart from the funnel, not in it.
+ *
+ * Those messages were never sent, so folding them into a stage would overstate the
+ * reach and understate every rate below it. The rule is on the screen because somebody
+ * reading "142 gönderildi · 9 gönderilmedi" has to be able to tell that the 9 are not
+ * part of the 142.
+ */
+.suppressNote {
+  margin: 18px 0 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--warn-bg);
+  color: var(--text);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+/* ── Detail — two columns ──────────────────────────────────────────────────── */
+
+/*
+ * The two cards are a pair, so they share a height.
+ *
+ * `align-items: start` (the obvious choice, and what this had first) leaves the content
+ * card sitting short beside a recipients table thirteen rows deep, with a metre of page
+ * background under it. Stretching is what the mockup draws and what makes them read as
+ * one row rather than two unrelated cards.
+ */
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 18px;
+  align-items: stretch;
+}
+
+@media (max-width: 1080px) {
+  .split { grid-template-columns: minmax(0, 1fr); }
+  .headRates { padding-left: 0; border-left: none; }
+}
+
+/* ── Detail — the rendered message ─────────────────────────────────────────── */
+
+.envelope {
+  margin-top: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card-2);
+  overflow: hidden;
+}
+
+.envelopeHead {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 4px 14px;
+  font-size: 12.5px;
+}
+
+.envelopeKey { color: var(--text-muted); }
+.envelopeValue { font-weight: 600; overflow-wrap: anywhere; }
+
+/*
+ * The body, as the member would see it.
+ *
+ * ⚠️ Rendered as **text, not HTML** — see the note in the page component. The campaign
+ * body is written by a member of staff, but it is stored and re-served, and a panel that
+ * runs it as markup is one pasted snippet away from executing a script in an ADMIN
+ * session that can read the KVKK consent log.
+ */
+.envelopeBody {
+  padding: 16px 14px;
+  font-size: 13px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--text);
+  max-height: 460px;
+  overflow-y: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.mergeNote {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.mergeNote code {
+  background: var(--chip);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 11.5px;
+}
+
+/* ── Detail — recipients ───────────────────────────────────────────────────── */
+
+.address { color: var(--text-muted); font-size: 12.5px; overflow-wrap: anywhere; }
+.reason { color: var(--text-faint); font-size: 11.5px; margin-top: 2px; }
+
+/* ── Actions ───────────────────────────────────────────────────────────────── */
+
+.actionBar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 14px;
+}
+
+/*
+ * The send confirmation.
+ *
+ * Deliberately loud and deliberately not a `confirm()`: this is the one control in the
+ * panel that reaches real people's inboxes, and it names the number it is about to
+ * write to before anybody can press it.
+ */
+.danger {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--crit);
+  border-radius: var(--radius-sm);
+  background: var(--crit-bg);
+}
+
+.dangerTitle { margin: 0 0 6px; font-size: 13.5px; font-weight: 600; }
+.dangerText { margin: 0 0 12px; font-size: 12.5px; line-height: 1.6; }
+
+.hint {
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+/* ── Editor ────────────────────────────────────────────────────────────────── */
+
+/*
+ * The vertical rhythm `components/Form.tsx` normally supplies.
+ *
+ * `formStyles.field` carries no outside margin — the gap between fields comes from
+ * `.form`, and this editor is not a `<form>` (it posts through a transition, not an
+ * action). Without this the labels sat flush against the box above them.
+ */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.editorGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 18px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .editorGrid { grid-template-columns: minmax(0, 1fr); }
+}
+
+.audience {
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card-2);
+}
+
+.audienceValue { margin: 6px 0 0; font-family: var(--font-serif); font-size: 30px; line-height: 1; }
+.audienceLabel { margin: 0; font-size: 12.5px; color: var(--text-muted); }
+.audienceNote { margin: 8px 0 0; font-size: 11.5px; color: var(--text-faint); line-height: 1.5; }

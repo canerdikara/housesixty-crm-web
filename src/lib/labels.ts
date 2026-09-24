@@ -328,3 +328,49 @@ export function segmentRuleSentence(rule: SegmentRule): string {
   const shown = /^-?\d+$/.test(value) ? value : segmentValueLabel(value);
   return `${segmentFieldLabel(rule.field)} ${segmentOperatorLabel(rule.op)} ${shown}`;
 }
+
+// ── Campaigns — V42 ─────────────────────────────────────────────────────────────
+
+export function campaignChannelLabel(v: string): string {
+  switch (v) {
+    case "EMAIL": return "E-posta";
+    case "WHATSAPP": return "WhatsApp";
+    case "SMS": return "SMS";
+    case "PUSH": return "Push";
+    default: return v;
+  }
+}
+
+export function campaignStatusLabel(v: string): string {
+  switch (v) {
+    case "DRAFT": return "Taslak";
+    case "SCHEDULED": return "Zamanlandı";
+    case "SENDING": return "Gönderiliyor";
+    case "COMPLETED": return "Tamamlandı";
+    case "FAILED": return "Başarısız";
+    case "CANCELLED": return "İptal edildi";
+    default: return v;
+  }
+}
+
+/**
+ * What became of one copy.
+ *
+ * ⚠️ «Gönderilmedi» for SUPPRESSED, not «Engellendi» or «Atlandı». The row means the
+ * club deliberately did not write to this person because consent had been withdrawn,
+ * and the word on the screen has to say that plainly — a staff member reading it needs
+ * to understand it was a decision, not a delivery problem.
+ */
+export function deliveryStateLabel(v: string): string {
+  switch (v) {
+    case "QUEUED": return "Sırada";
+    case "SENT": return "Gönderildi";
+    case "DELIVERED": return "Teslim";
+    case "OPENED": return "Açıldı";
+    case "CLICKED": return "Tıklandı";
+    case "BOUNCED": return "Geri döndü";
+    case "FAILED": return "Başarısız";
+    case "SUPPRESSED": return "Gönderilmedi (izin yok)";
+    default: return v;
+  }
+}

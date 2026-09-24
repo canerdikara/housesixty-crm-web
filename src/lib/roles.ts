@@ -53,6 +53,24 @@ export function canWriteMembers(role: string | undefined | null): boolean {
 }
 
 /**
+ * Whether this role may create, edit and **send** campaigns.
+ *
+ * §6's campaigns row is the first in the matrix where one panel role is read-only:
+ * ADMIN full · SALES **read** · MARKETING full · RECEPTION none. So this is not
+ * [canWriteMembers] with a different name — the two roles it admits are a different
+ * pair, and writing `role !== RECEPTION` would hand SALES the send button.
+ *
+ * Presentation only, like everything else here. `CrmCampaignController` carries its own
+ * `@PreAuthorize` on every write and answers 403 regardless of what this returns.
+ * Hiding the button matters more on this screen than elsewhere, though: the action
+ * behind it emails the membership, and offering it to somebody who will be refused
+ * invites them to press it and wonder what happened.
+ */
+export function canWriteCampaigns(role: string | undefined | null): boolean {
+  return role === ROLE.ADMIN || role === ROLE.MARKETING;
+}
+
+/**
  * Turkish display name for any backend role.
  *
  * The three non-panel roles are here deliberately, even though they can never own a

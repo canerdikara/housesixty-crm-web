@@ -377,3 +377,111 @@ export type SegmentField = {
   operators: string[];
   values: string[] | null;
 };
+
+// ── Campaigns — V42, mockup screens 11 and 12 ───────────────────────────────────
+
+export type CampaignChannel = "EMAIL" | "WHATSAPP" | "SMS" | "PUSH";
+
+export type CampaignStatus =
+  | "DRAFT"
+  | "SCHEDULED"
+  | "SENDING"
+  | "COMPLETED"
+  | "FAILED"
+  | "CANCELLED";
+
+export type DeliveryState =
+  | "QUEUED"
+  | "SENT"
+  | "DELIVERED"
+  | "OPENED"
+  | "CLICKED"
+  | "BOUNCED"
+  | "FAILED"
+  | "SUPPRESSED";
+
+export type CampaignListItem = {
+  id: string;
+  name: string;
+  channel: CampaignChannel;
+  status: CampaignStatus;
+  segmentId: string | null;
+  segmentName: string | null;
+  subject: string | null;
+  scheduledAt: string | null;
+  sentAt: string | null;
+  /**
+   * Rows actually written — 0 for a draft, and **not** a live segment count.
+   *
+   * The mockup shows a number beside a draft too; that would have to be a preview that
+   * changes under the reader between visits, which is not what the column means beside a
+   * sent campaign. Drafts render an em dash.
+   */
+  recipientCount: number;
+  openedCount: number;
+  clickedCount: number;
+  createdByName: string | null;
+  createdAt: string;
+};
+
+/** The four tiles above the list, over a fixed window. */
+export type CampaignStats = {
+  sentCampaigns: number;
+  /** Deduplicated across campaigns — one member emailed three times is one. */
+  membersReached: number;
+  /** Null when nothing was delivered, never 0. */
+  openRate: number | null;
+  clickRate: number | null;
+  windowDays: number;
+};
+
+export type CampaignList = {
+  content: CampaignListItem[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  stats: CampaignStats;
+};
+
+/**
+ * The funnel on the result screen. Nests by construction — everyone who clicked also
+ * opened. `suppressed` sits outside it: those were never sent.
+ */
+export type CampaignFunnel = {
+  sent: number;
+  delivered: number;
+  opened: number;
+  clicked: number;
+  bounced: number;
+  failed: number;
+  suppressed: number;
+  deliveryRate: number | null;
+  openRate: number | null;
+  clickRate: number | null;
+};
+
+export type CampaignRecipient = {
+  id: string;
+  userId: string | null;
+  leadId: string | null;
+  fullName: string | null;
+  /** The address at send time, not the member's current one. */
+  address: string;
+  state: DeliveryState;
+  deliveredAt: string | null;
+  openedAt: string | null;
+  clickedAt: string | null;
+  failureReason: string | null;
+};
+
+export type CampaignDetail = {
+  campaign: CampaignListItem;
+  body: string | null;
+  funnel: CampaignFunnel;
+  recipients: CampaignRecipient[];
+  /** The live segment count, and only while the campaign can still be sent. */
+  audiencePreview: number | null;
+  /** Null when it can be sent; otherwise why not, in Turkish. */
+  sendBlockedReason: string | null;
+};
