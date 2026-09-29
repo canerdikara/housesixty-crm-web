@@ -1,8 +1,13 @@
 import Link from "next/link";
-import styles from "../reports.module.css";
+import styles from "@/app/(panel)/reports/reports.module.css";
 
 /**
- * A month grid for picking the day to report on.
+ * A month grid for picking a day.
+ *
+ * Shared by «Günlük rapor» and the reservations calendar, which want opposite halves of
+ * the year: a report can only be run on a day that has happened, and a court can only be
+ * booked on one that has not. [maxDate] and [minDate] are what separate them — a screen
+ * passes the bound that is true for it and the grid disables the rest.
  *
  * ## Links, not a date input
  *
@@ -30,12 +35,24 @@ const MONTHS = [
 export function Calendar({
   selected,
   today,
+  hrefFor,
+  maxDate,
+  minDate,
 }: {
-  /** `YYYY-MM-DD`, the day being reported on. The grid shows its month. */
+  /** `YYYY-MM-DD`, the day being shown. The grid opens on its month. */
   selected: string;
-  /** `YYYY-MM-DD` in İzmir. Days after this are not selectable. */
+  /** `YYYY-MM-DD` in İzmir. Marked, so "today" is findable whatever else is selectable. */
   today: string;
+  /** The link a day cell points at. Keeps this component route-agnostic. */
+  hrefFor: (date: string) => string;
+  /** Latest selectable day, inclusive. Omit for no upper bound. */
+  maxDate?: string;
+  /** Earliest selectable day, inclusive. Omit for no lower bound. */
+  minDate?: string;
 }) {
+  /** Outside the bounds this screen allows — drawn, but not a link. */
+  const disabled = (iso: string) =>
+    (maxDate !== undefined && iso > maxDate) || (minDate !== undefined && iso < minDate);
   const [year, month] = selected.split("-").map(Number) as [number, number, number];
 
   // UTC throughout: Date.UTC and getUTCDay never consult the local zone, so this grid is
@@ -47,8 +64,13 @@ export function Calendar({
 
   const prev = shiftMonth(year, month, -1);
   const next = shiftMonth(year, month, +1);
-  // A month entirely in the future has no day worth opening.
-  const nextIsFuture = `${next.y}-${pad(next.m)}-01` > today;
+  // A month with no selectable day in it is not worth navigating to. Checked at the
+  // month's near edge in each direction — its first day going forward, its last going
+  // back — so a partially-selectable month still opens.
+  const nextIsOff = maxDate !== undefined && `${next.y}-${pad(next.m)}-01` > maxDate;
+  const prevIsOff =
+    minDate !== undefined &&
+    `${prev.y}-${pad(prev.m)}-${pad(new Date(Date.UTC(prev.y, prev.m, 0)).getUTCDate())}` < minDate;
 
   const cells: (string | null)[] = [
     ...Array<null>(leading).fill(null),
@@ -58,17 +80,23 @@ export function Calendar({
   return (
     <div className={styles.calendar}>
       <div className={styles.calHead}>
-        <Link
-          className={styles.calNav}
-          href={`/reports/daily?date=${clampToMonth(prev.y, prev.m, selected, today)}`}
-          aria-label="Önceki ay"
-        >
-          ‹
-        </Link>
+        {prevIsOff ? (
+          <span className={`${styles.calNav} ${styles.calNavOff}`} aria-disabled="true">
+            ‹
+          </span>
+        ) : (
+          <Link
+            className={styles.calNav}
+            href={hrefFor(clampToMonth(prev.y, prev.m, selected, maxDate, minDate))}
+            aria-label="Önceki ay"
+          >
+            ‹
+          </Link>
+        )}
         <span className={styles.calMonth}>
           {MONTHS[month - 1]} {year}
         </span>
-        {nextIsFuture ? (
+        {nextIsOff ? (
           // Disabled rather than hidden: a control that vanishes at the end of the month
           // reads as a rendering fault.
           <span className={`${styles.calNav} ${styles.calNavOff}`} aria-disabled="true">
@@ -77,7 +105,7 @@ export function Calendar({
         ) : (
           <Link
             className={styles.calNav}
-            href={`/reports/daily?date=${clampToMonth(next.y, next.m, selected, today)}`}
+            href={hrefFor(clampToMonth(next.y, next.m, selected, maxDate, minDate))}
             aria-label="Sonraki ay"
           >
             ›
@@ -94,17 +122,19 @@ export function Calendar({
         {cells.map((iso, i) =>
           iso === null ? (
             <span key={`pad-${i}`} />
-          ) : iso > today ? (
-            // The backend refuses a future day, and it should: a "report" on tomorrow is
-            // a schedule with an empty attendance column, which looks exactly like a day
-            // when nobody turned up.
+          ) : disabled(iso) ? (
+            // Out of this screen's range. «Günlük rapor» passes maxDate=today, because a
+            // "report" on tomorrow is a schedule with an empty attendance column and looks
+            // exactly like a day when nobody turned up. The reservations calendar passes
+            // no bound at all — yesterday's courts are worth looking at and tomorrow's are
+            // the whole point.
             <span key={iso} className={`${styles.calDay} ${styles.calDayOff}`} aria-disabled="true">
               {Number(iso.slice(8))}
             </span>
           ) : (
             <Link
               key={iso}
-              href={`/reports/daily?date=${iso}`}
+              href={hrefFor(iso)}
               className={`${styles.calDay} ${iso === selected ? styles.calDayOn : ""} ${
                 iso === today ? styles.calDayToday : ""
               }`}
@@ -135,9 +165,25 @@ function shiftMonth(y: number, m: number, by: number): { y: number; m: number } 
  * back to the last day of a shorter month, and never lands past today — stepping into
  * the current month from the future would otherwise pick a date the backend refuses.
  */
-function clampToMonth(y: number, m: number, selected: string, today: string): string {
+/**
+ * The day the month arrows land on: the same day-of-month where that exists, pulled back
+ * to the month's last day where it does not (the 31st of a 30-day month), and then held
+ * inside whatever bounds the screen set.
+ *
+ * Without the clamp, stepping to a month that is only partly selectable lands on a
+ * disabled day and the grid opens on something that cannot be chosen.
+ */
+function clampToMonth(
+  y: number,
+  m: number,
+  selected: string,
+  maxDate?: string,
+  minDate?: string,
+): string {
   const wanted = Number(selected.slice(8));
   const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
   const iso = `${y}-${pad(m)}-${pad(Math.min(wanted, lastDay))}`;
-  return iso > today ? today : iso;
+  if (maxDate !== undefined && iso > maxDate) return maxDate;
+  if (minDate !== undefined && iso < minDate) return minDate;
+  return iso;
 }

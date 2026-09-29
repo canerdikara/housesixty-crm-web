@@ -21,6 +21,25 @@
 const ZONE = "Europe/Istanbul";
 const LOCALE = "tr-TR";
 
+/**
+ * Today in İzmir, as `YYYY-MM-DD`.
+ *
+ * `en-CA` is not a locale choice — it is the one widely-supported locale whose short date
+ * format *is* ISO-8601, which makes this the shortest correct way to ask Intl for a
+ * zone-pinned calendar date. The alternative, `toISOString().slice(0, 10)`, is UTC and
+ * therefore wrong for three hours every night.
+ *
+ * Both callers default a screen to "today" and compare `YYYY-MM-DD` strings against it,
+ * which works because that format sorts lexically.
+ */
+export function izmirToday(now: Date = new Date()): string {
+  return isoDayFmt.format(now);
+}
+
+const isoDayFmt = new Intl.DateTimeFormat("en-CA", {
+  timeZone: ZONE, year: "numeric", month: "2-digit", day: "2-digit",
+});
+
 const dateFmt = new Intl.DateTimeFormat(LOCALE, {
   timeZone: ZONE, day: "numeric", month: "short", year: "numeric",
 });

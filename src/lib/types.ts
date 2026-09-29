@@ -575,3 +575,58 @@ export type TurnstileResult = {
   memberName: string | null;
   message: string;
 };
+
+// ── The reservations calendar — V46 ──────────────────────────────────────────────
+
+export type FacilityType = "PADEL_COURT" | "SPA";
+export type SlotStatus = "AVAILABLE" | "BOOKED" | "BLOCKED";
+export type ReservationStatus = "PENDING" | "CONFIRMED" | "CANCELLED" | "NO_SHOW";
+
+export type CalendarReservation = {
+  id: string;
+  userId: string;
+  fullName: string;
+  phone: string | null;
+  status: ReservationStatus;
+  bookedAt: string;
+  /** The booker plus any named players — a padel reservation is up to four people. */
+  playerCount: number;
+  /**
+   * Whether a member of staff booked this at the desk rather than the member booking it.
+   *
+   * ⚠️ **Read this, never the status alone.** `CONFIRMED` has meant "a card payment was
+   * verified" since V44 and also means "the desk said so" since V46; this is the only
+   * thing that separates them.
+   */
+  bookedAtDesk: boolean;
+  bookedByName: string | null;
+  deskNote: string | null;
+};
+
+export type CalendarSlot = {
+  slotId: string;
+  startTime: string;
+  endTime: string;
+  status: SlotStatus;
+  price: string;
+  memberDiscountPercent: number;
+  /** Null for a free or blocked slot. */
+  reservation: CalendarReservation | null;
+};
+
+export type CalendarFacility = {
+  id: string;
+  name: string;
+  capacity: number;
+  slots: CalendarSlot[];
+};
+
+export type ReservationCalendar = {
+  date: string;
+  facilityType: FacilityType;
+  facilities: CalendarFacility[];
+  /** Every distinct start time on the day, ascending — the grid's rows. */
+  times: string[];
+  bookedCount: number;
+  availableCount: number;
+};

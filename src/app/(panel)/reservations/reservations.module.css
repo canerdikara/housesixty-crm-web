@@ -1,0 +1,311 @@
+/*
+ * «Rezervasyonlar» — the day grid and the panel beside it.
+ *
+ * CSS grid and a table, no chart library and no date picker dependency, like everything
+ * else in this panel.
+ */
+
+/*
+ * Grid on the left, month picker on the right — until there is no room for both.
+ *
+ * The breakpoint is on the *content*, not on a device: below about 1100px the six court
+ * columns and a 7-column month cannot both be read, so the picker drops beneath. The grid
+ * keeps its own horizontal scroller either way.
+ */
+.layout {
+  display: grid;
+  /* 340px, not 300: the right column now also holds the booking form, and a member search
+     with its results list below 320px starts wrapping names onto two lines. */
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+}
+
+.side {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  /* Follows the page down a long day, so a cell clicked at 20:00 still shows its form
+     without scrolling back up. `top` clears the sticky page header. */
+  position: sticky;
+  top: 16px;
+}
+
+/* The grid gets a scroller of its own so the page body never scrolls sideways. */
+.scroller {
+  overflow-x: auto;
+  margin: -4px;
+  padding: 4px;
+}
+
+.grid {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 4px;
+  /* Equal columns whatever the court names are: a long name must not make its court
+     twice as wide as the one beside it and skew the whole read. */
+  table-layout: fixed;
+  min-width: 520px;
+}
+
+.timeHead,
+.facHead {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  font-weight: 600;
+  text-align: left;
+  padding: 0 4px 6px;
+}
+
+.timeHead { width: 62px; }
+
+.facHead { display: table-cell; }
+
+.facName {
+  display: block;
+  font-size: 13px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text);
+}
+
+.facCap {
+  display: block;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-faint);
+}
+
+.timeCell {
+  font-family: var(--font-serif);
+  font-size: 13px;
+  color: var(--text-muted);
+  text-align: right;
+  padding-right: 8px;
+  font-weight: 400;
+  white-space: nowrap;
+  /* tnum so the hours form a column rather than a ragged edge. */
+  font-variant-numeric: tabular-nums;
+}
+
+.cell { padding: 0; }
+
+/* A facility with no slot at this hour — drawn, so the grid keeps its shape. */
+.cellNone {
+  padding: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 5px,
+    var(--grid) 5px,
+    var(--grid) 6px
+  );
+  border-radius: var(--radius-sm);
+  opacity: 0.5;
+}
+
+.free,
+.blocked,
+.freeBtn,
+.booked {
+  display: block;
+  width: 100%;
+  min-height: 46px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  padding: 6px 8px;
+  font: inherit;
+  font-size: 12.5px;
+  text-align: left;
+}
+
+.free {
+  background: var(--card-2);
+  color: var(--text-faint);
+}
+
+.blocked {
+  background: var(--chip);
+  color: var(--text-muted);
+}
+
+.freeBtn {
+  background: var(--card-2);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.freeBtn:hover {
+  background: var(--card);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/*
+ * A taken court.
+ *
+ * Accent-tinted rather than a status colour: a booking is the normal, wanted state of a
+ * court, and green would read as "good" against an empty slot's implied "bad" when the
+ * opposite is true for the club.
+ */
+.booked {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+  cursor: pointer;
+}
+
+.booked:hover { background: var(--accent-hover); }
+
+.cellOn {
+  outline: 2px solid var(--text);
+  outline-offset: 1px;
+}
+
+.who {
+  display: block;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meta {
+  display: block;
+  font-size: 11px;
+  opacity: 0.85;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── The panel beside the grid ─────────────────────────────────────────────── */
+
+.panel {
+  background: var(--card-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px 16px;
+}
+
+.panelHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.panelTitle {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 16px;
+}
+
+.panelSub {
+  margin: 2px 0 0;
+  color: var(--text-muted);
+  font-size: 12.5px;
+}
+
+.close {
+  background: none;
+  border: 0;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--text-faint);
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.close:hover { color: var(--text); }
+
+.detail > .who {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  color: var(--text);
+  white-space: normal;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 5px 14px;
+  margin: 12px 0 16px;
+  font-size: 13px;
+}
+
+.facts dt {
+  color: var(--text-faint);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding-top: 2px;
+}
+
+.facts dd { margin: 0; }
+
+/* ── The booking form ──────────────────────────────────────────────────────── */
+
+.bookForm { display: block; }
+
+.picked {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 9px 11px;
+  font-size: 13.5px;
+}
+
+.clear {
+  background: none;
+  border: 0;
+  color: var(--accent);
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.results {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  /* Capped so a broad search cannot push the submit button off the screen. */
+  max-height: 210px;
+  overflow-y: auto;
+  border-radius: var(--radius-sm);
+}
+
+.result {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 11px;
+  margin-bottom: 4px;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.result:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}

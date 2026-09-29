@@ -37,6 +37,20 @@ export const NAV: readonly NavItem[] = [
   { href: "/leads", label: "Adaylar", roles: ALL },
   { href: "/members", label: "Üyeler", roles: ALL },
 
+  /*
+   * Not in §7.1's order, because it is not in the spec at all — the calendar is new scope
+   * asked for after the mockups (2026-09-29). Placed with Üyeler rather than appended at
+   * the end: it is day-to-day work on existing members, and the front desk lives on it, so
+   * burying it under the outreach group would put the most-used screen in the panel below
+   * the least-used ones.
+   *
+   * All four roles see it. Only ADMIN and RECEPTION can book or cancel, and that is
+   * enforced at the endpoint — the page renders read-only for everyone else rather than
+   * being withheld, because "who has court three at six" is a question anyone at the club
+   * may reasonably ask.
+   */
+  { href: "/reservations", label: "Rezervasyonlar", roles: ALL },
+
   // Membership terms: reception has no access at all.
   { href: "/renewals", label: "Yenilemeler", roles: [ROLE.ADMIN, ROLE.SALES, ROLE.MARKETING] },
 

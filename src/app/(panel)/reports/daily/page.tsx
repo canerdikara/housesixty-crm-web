@@ -3,10 +3,10 @@ import { redirect } from "next/navigation";
 import { PageBody, PageHeader, Card } from "@/components/Page";
 import { EmptyState, ui } from "@/components/ui";
 import { apiRequest } from "@/lib/api";
-import { formatDate } from "@/lib/dates";
+import { formatDate, izmirToday } from "@/lib/dates";
 import type { DailyReport } from "@/lib/types";
 import { AreaBreakdown, PeopleTable, TurnstileNotice } from "../ReportParts";
-import { Calendar } from "./Calendar";
+import { Calendar } from "@/components/Calendar";
 import styles from "../reports.module.css";
 
 export const metadata = { title: "Günlük rapor · House Sixty CRM" };
@@ -36,12 +36,7 @@ export default async function DailyReportPage({
   const params = await searchParams;
   // İzmir's today, not the server's and not the viewer's — the same rule lib/dates.ts
   // follows for display, applied to the default.
-  const today = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Europe/Istanbul",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date());
+  const today = izmirToday();
 
   const requested = params.date;
   // Validated here as well as on the backend, which refuses a future day with a 400:
@@ -95,7 +90,14 @@ export default async function DailyReportPage({
         <Card>
           <h2 className={styles.cardTitle}>Gün seçin</h2>
           <p className={styles.cardSub}>Gelecek günler için rapor alınamaz</p>
-          <Calendar selected={date} today={today} />
+          <Calendar
+            selected={date}
+            today={today}
+            hrefFor={(d) => `/reports/daily?date=${d}`}
+            // A report can only be run on a day that has already happened — the backend
+            // refuses a future one with a 400.
+            maxDate={today}
+          />
         </Card>
 
         <div className={styles.dailyMain}>
