@@ -54,6 +54,14 @@ export const NAV: readonly NavItem[] = [
   // Membership terms: reception has no access at all.
   { href: "/renewals", label: "Yenilemeler", roles: [ROLE.ADMIN, ROLE.SALES, ROLE.MARKETING] },
 
+  /*
+   * ⚠️ ADMIN alone — narrower than every other entry here, which admit at least two roles.
+   * Club-wide revenue is the most commercially sensitive figure the platform holds, and it
+   * is needed to work neither a lead, a renewal nor a campaign. Not in §7.1's order because
+   * it is not in the spec: new scope, asked for 2026-09-29.
+   */
+  { href: "/income", label: "Gelirler", roles: [ROLE.ADMIN] },
+
   { href: "/segments", label: "Segmentler", roles: [ROLE.ADMIN, ROLE.SALES, ROLE.MARKETING] },
   { href: "/campaigns", label: "Kampanyalar", roles: [ROLE.ADMIN, ROLE.SALES, ROLE.MARKETING] },
   { href: "/events", label: "Etkinlikler", roles: ALL },

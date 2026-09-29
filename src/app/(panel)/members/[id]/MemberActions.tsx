@@ -355,9 +355,19 @@ export function AddTerm({ member }: { member: MemberDetail }) {
 
         <TermStatusFields />
 
-        <div className={f.field}>
-          <label className={f.label} htmlFor="t-new-note">Yenileme notu</label>
-          <input id="t-new-note" name="renewalNote" className={f.input} maxLength={2000} />
+        <div className={f.row}>
+          <div className={f.field}>
+            <label className={f.label} htmlFor="t-new-amount">Tahsil edilen tutar (₺)</label>
+            <input id="t-new-amount" name="amountPaid" className={f.input}
+              inputMode="decimal" placeholder="örn. 12000" />
+            {/* Blank is not zero — «Gelirler» counts it as nothing AND reports the sale as
+                unpriced, so an empty box cannot masquerade as a free membership. */}
+            <p className={f.hint}>Boş bırakılırsa gelir raporuna yazılmaz.</p>
+          </div>
+          <div className={f.field}>
+            <label className={f.label} htmlFor="t-new-note">Yenileme notu</label>
+            <input id="t-new-note" name="renewalNote" className={f.input} maxLength={2000} />
+          </div>
         </div>
 
         {/*
@@ -417,10 +427,20 @@ export function EditTerm({ term }: { term: MembershipTerm }) {
 
         <TermStatusFields term={term} />
 
-        <div className={f.field}>
-          <label className={f.label} htmlFor={`t-${term.id}-note`}>Yenileme notu</label>
-          <input id={`t-${term.id}-note`} name="renewalNote" className={f.input} maxLength={2000}
-            defaultValue={term.renewalNote ?? ""} />
+        <div className={f.row}>
+          <div className={f.field}>
+            <label className={f.label} htmlFor={`t-${term.id}-amount`}>Tahsil edilen tutar (₺)</label>
+            <input id={`t-${term.id}-amount`} name="amountPaid" className={f.input}
+              inputMode="decimal" defaultValue={term.amountPaid ?? ""} placeholder="girilmemiş" />
+            {/* ⚠️ Clearing this box does NOT clear the stored amount — absent means "leave
+                alone" at the backend, so a recorded sale cannot be blanked by accident. */}
+            <p className={f.hint}>Boşaltmak kayıtlı tutarı silmez.</p>
+          </div>
+          <div className={f.field}>
+            <label className={f.label} htmlFor={`t-${term.id}-note`}>Yenileme notu</label>
+            <input id={`t-${term.id}-note`} name="renewalNote" className={f.input} maxLength={2000}
+              defaultValue={term.renewalNote ?? ""} />
+          </div>
         </div>
         <p className={f.hint}>
           Yenileme durumunu değiştirmek «son yenileme teması» tarihini bugüne çeker.

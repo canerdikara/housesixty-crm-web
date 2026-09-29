@@ -257,6 +257,22 @@ export async function savePreferencesAction(_prev: FormState, form: FormData): P
   );
 }
 
+/**
+ * A money field as the API wants it, or null when the box was left empty.
+ *
+ * ⚠️ Empty must become **null, not 0** (V47). «Gelirler» counts a null as nothing *and*
+ * reports how many sales are unpriced; a 0 would silently claim the membership was free and
+ * be indistinguishable from one that genuinely was.
+ *
+ * Accepts a comma as the decimal separator, because a Turkish keyboard types "1250,50" and
+ * refusing it would be the form being pedantic about something it can simply understand.
+ */
+const money = (f: FormData, k: string): string | null => {
+  const raw = String(f.get(k) ?? "").trim().replace(/\s/g, "").replace(",", ".");
+  if (!raw) return null;
+  return Number.isFinite(Number(raw)) ? raw : null;
+};
+
 export async function createTermAction(_prev: FormState, form: FormData): Promise<FormState> {
   const userId = str(form, "userId");
   const membershipType = str(form, "membershipType");
@@ -279,6 +295,7 @@ export async function createTermAction(_prev: FormState, form: FormData): Promis
       status: str(form, "status") || "ACTIVE",
       renewalStatus: str(form, "renewalStatus") || "NOT_CONTACTED",
       renewalNote: orNull(form, "renewalNote"),
+      amountPaid: money(form, "amountPaid"),
     },
     "POST",
     "Dönem eklendi."
@@ -322,6 +339,14 @@ export async function updateTermAction(_prev: FormState, form: FormData): Promis
     status: str(form, "status"),
     renewalNote: str(form, "renewalNote"),
   };
+  /*
+   * Only sent when something was typed. The backend treats absent as "leave alone", so
+   * there is deliberately no way to un-price a term from here: an accidental blank
+   * silently changing reported income is worse than a correction having to go through a
+   * number.
+   */
+  const amount = money(form, "amountPaid");
+  if (amount !== null) body.amountPaid = amount;
   if (renewalStatus && renewalStatus !== renewalStatusWas) {
     body.renewalStatus = renewalStatus;
   }

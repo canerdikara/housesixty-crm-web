@@ -1,0 +1,297 @@
+/*
+ * «Gelirler». CSS only — no chart library, like every other chart in this panel.
+ *
+ * The three source colours come from the reserved chart series (--o1..--o5), never from
+ * the status colours: green here would mean "good", and a padel court is not good news
+ * relative to a spa room.
+ */
+
+.headline {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.headlineCard {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  padding: 16px 18px 14px;
+}
+
+.headlineTitle {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  font-weight: 600;
+}
+
+.headlineSub {
+  margin: 2px 0 10px;
+  color: var(--text-muted);
+  font-size: 12.5px;
+}
+
+.headlineValue {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 30px;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.headlineLabel {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/*
+ * Collected sits under booked, smaller and separated by a rule — deliberately NOT beside
+ * it at the same weight. They are different questions, and equal prominence invites the
+ * reader to compare them as if one were a correction of the other.
+ */
+.collected {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.collectedValue {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.collectedLabel {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+.note {
+  margin: 10px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-muted);
+  background: var(--warn-bg);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+}
+
+.sources {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 12px 0 0;
+}
+
+.sources div { margin: 0; }
+
+.sources dt {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.sources dd {
+  margin: 1px 0 0;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.counts {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+/* ── Layout ────────────────────────────────────────────────────────────────── */
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+}
+
+.main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+.cardTitle { font-size: 16px; margin: 0; }
+
+.cardSub {
+  margin: 3px 0 14px;
+  color: var(--text-muted);
+  font-size: 12.5px;
+}
+
+/* ── The monthly chart ─────────────────────────────────────────────────────── */
+
+.chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  /* Its own scroller: twelve months at a readable width can exceed a narrow card, and the
+     page body must never scroll sideways. */
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.col {
+  flex: 1 1 0;
+  min-width: 42px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.barWrap {
+  width: 100%;
+  height: 150px;
+  display: flex;
+  align-items: flex-end;
+}
+
+/*
+ * ⚠️ display:flex, and the segments are divs with a height percentage.
+ *
+ * A <span> ignores height — that is how four funnel bars once rendered as overlapping
+ * pills, invisible to all 78 API assertions. Anything with a bar gets looked at.
+ */
+.barStack {
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: flex-start;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--grid);
+}
+
+/*
+ * A month that earned nothing. A baseline rule, not a column — see MonthChart: a filled
+ * grey column is read as a value, and on a club that has just opened most months are empty.
+ */
+.barEmpty {
+  width: 100%;
+  height: 2px;
+  background: var(--grid);
+  border-radius: var(--radius-pill);
+}
+
+.segPadel  { background: var(--o2); width: 100%; }
+.segSpa    { background: var(--o4); width: 100%; }
+.segMember { background: var(--sand); width: 100%; }
+
+.colLabel {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.colValue {
+  font-size: 10.5px;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.empty {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+/* ── The source split ──────────────────────────────────────────────────────── */
+
+.split {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.splitHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.splitPct {
+  color: var(--text-faint);
+  margin-left: 8px;
+  font-size: 12px;
+}
+
+.splitTrack {
+  height: 8px;
+  background: var(--grid);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+.splitTrack > div {
+  height: 100%;
+  border-radius: var(--radius-pill);
+}
+
+/* ── The range picker ──────────────────────────────────────────────────────── */
+
+.pickRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.pickBtn {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card-2);
+  color: var(--text-muted);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.pickBtn strong {
+  font-size: 13px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text);
+}
+
+/* The end the month grid below is currently setting. */
+.pickOn {
+  border-color: var(--accent);
+  background: var(--card);
+}
+
+.pickOn strong { color: var(--accent); }

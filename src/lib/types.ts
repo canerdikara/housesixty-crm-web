@@ -161,6 +161,13 @@ export type MembershipTerm = {
   renewalStatus: "NOT_CONTACTED" | "CONTACTED" | "PROPOSAL_SENT" | "RENEWED" | "DECLINED";
   renewalNote: string | null;
   lastRenewalContactAt: string | null;
+  /**
+   * What the member paid for this term (V47), or null when nobody has recorded it.
+   *
+   * ⚠️ Null is not zero. «Gelirler» counts it as nothing and separately reports how many
+   * sales are unpriced, so a blank cannot masquerade as a free membership.
+   */
+  amountPaid: string | null;
 };
 
 export type MonthCount = { month: string; count: number };
@@ -659,4 +666,54 @@ export type ReservationCalendar = {
   times: string[];
   bookedCount: number;
   availableCount: number;
+};
+
+// ── «Gelirler» — income, V47 ─────────────────────────────────────────────────────
+
+/**
+ * ⚠️ `booked` and `collected` are NEVER added or averaged.
+ *
+ * `booked` is what was billed — courts played and memberships sold. `collected` is what
+ * reached the bank, and is **0 on production** until a sanal POS is configured. They sit
+ * side by side because the gap between them is the useful part.
+ */
+export type IncomeTotals = {
+  padel: string;
+  spa: string;
+  membership: string;
+  /** padel + spa + membership. Billed, not banked. */
+  booked: string;
+  collected: string;
+  reservationCount: number;
+  membershipCount: number;
+};
+
+export type IncomeMonth = {
+  /** `YYYY-MM`. */
+  month: string;
+  padel: string;
+  spa: string;
+  membership: string;
+  booked: string;
+  collected: string;
+};
+
+export type Income = {
+  from: string;
+  to: string;
+  /** The selected range. */
+  period: IncomeTotals;
+  /** Today in İzmir, whatever range is selected. */
+  today: IncomeTotals;
+  /** Oldest first. Empty months included. */
+  months: IncomeMonth[];
+  /**
+   * Membership sales in the range carrying no amount.
+   *
+   * ⚠️ Both tiers are priced ₺0, so an unpriced sale is the normal state until somebody
+   * records a figure. Rendered, so the membership total is never read as a confident zero.
+   */
+  unpricedMembershipSales: number;
+  /** True while no payment has ever been collected — i.e. no sanal POS is configured. */
+  nothingEverCollected: boolean;
 };
