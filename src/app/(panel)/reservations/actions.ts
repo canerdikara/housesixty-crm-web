@@ -42,6 +42,14 @@ export async function bookSlotAction(_prev: FormState, form: FormData): Promise<
    */
   const seats = [str(form, "player2"), str(form, "player3"), str(form, "player4")];
   const isOpen = seats.includes(OPEN_SEAT);
+  /*
+   * Guests may be allowed to see and request an open game — but only an open one. Sent as
+   * `isOpen &&` here as well as enforced at the backend, so the checkbox cannot leave a
+   * stale `true` behind if somebody ticks it and then un-marks every open seat. That exact
+   * shape of bug shipped once in the member app, where `guestsAllowed` was computed off a
+   * control that had been hidden rather than reset.
+   */
+  const guestsAllowed = isOpen && str(form, "guestsAllowed") === "on";
   const [player2Id, player3Id, player4Id] = seats.map((v) =>
     v && v !== OPEN_SEAT ? v : null
   );
@@ -55,7 +63,10 @@ export async function bookSlotAction(_prev: FormState, form: FormData): Promise<
 
   const result = await apiRequest<{ fullName: string }>("/api/v1/crm/reservations", {
     method: "POST",
-    body: { timeSlotId, userId, player2Id, player3Id, player4Id, isOpen, note: note || null },
+    body: {
+      timeSlotId, userId, player2Id, player3Id, player4Id,
+      isOpen, guestsAllowed, note: note || null,
+    },
   });
 
   if (result.kind === "unauthorized") redirect("/login");
@@ -71,7 +82,11 @@ export async function bookSlotAction(_prev: FormState, form: FormData): Promise<
     ok:
       `${result.data.fullName} için rezervasyon oluşturuldu` +
       (others > 0 ? ` (+${others} oyuncu)` : "") +
-      (isOpen ? " · boş yerler üyelere açık." : "."),
+      (isOpen
+        ? guestsAllowed
+          ? " · boş yerler üyelere ve misafirlere açık."
+          : " · boş yerler üyelere açık."
+        : "."),
   };
 }
 

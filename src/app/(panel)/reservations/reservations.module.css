@@ -339,3 +339,24 @@
 }
 
 .openBtn:hover { color: var(--accent-hover); }
+
+/*
+ * The guest-visibility choice. A real checkbox rather than a styled div: it is the one
+ * control on this form that widens who can see a member's booking, and the browser's own
+ * checkbox is the affordance everyone already recognises as a deliberate opt-in.
+ */
+.guestToggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 2px 0 6px;
+  font-size: 13px;
+  line-height: 1.35;
+  cursor: pointer;
+}
+
+.guestToggle input {
+  margin: 2px 0 0;
+  flex: none;
+  accent-color: var(--accent);
+}

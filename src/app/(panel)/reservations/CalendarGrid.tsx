@@ -288,7 +288,12 @@ function BookingDetail({
           <ol className={styles.seats}>
             {reservation.players.map((p) => (
               <li key={p.seat} className={p.fullName ? undefined : styles.seatEmpty}>
-                {p.fullName ?? (p.isOpen ? "Açık — üyelere" : "—")}
+                {p.fullName ??
+                  (p.isOpen
+                    ? reservation.guestsAllowed
+                      ? "Açık — üyelere ve misafirlere"
+                      : "Açık — üyelere"
+                    : "—")}
               </li>
             ))}
           </ol>
@@ -428,7 +433,10 @@ function SeatPicker({
         </div>
       ) : open ? (
         <div className={styles.picked}>
-          <span className={ui.muted}>Açık — üyeler katılabilir</span>
+          {/* Deliberately does not say WHO may join: that is the booking-level guest
+              choice below, which can still be changed after this seat is marked. Saying
+              "üyeler" here was wrong the moment the guest box was ticked. */}
+          <span className={ui.muted}>Açık — katılıma açık</span>
           <button type="button" className={styles.clear} onClick={() => onToggleOpen?.(false)}>
             geri al
           </button>
@@ -524,11 +532,33 @@ function BookingForm({ slotId }: { slotId: string }) {
         />
       ))}
 
+      {/*
+        Booking-level, not seat-level — shown once, under the seats, and only when at least
+        one seat is open. Putting the guest choice beside a single seat would imply it
+        belongs to that seat; it belongs to the booking, exactly as `isOpen` does.
+
+        ⚠️ Unmounted rather than hidden when no seat is open. A hidden-but-present checkbox
+        keeps its checked state and would submit a stale `true` — which is precisely the bug
+        the member app shipped, where `guestsAllowed` was computed off a control that had
+        been hidden instead of reset. The action also re-applies `isOpen &&`.
+      */}
       {anyOpen && (
-        <p className={f.hint}>
-          ⚠️ «Açık» işaretlenen rezervasyonda <strong>boş kalan tüm yerler</strong> üyelere
-          açılır — katılan kişi ilk boş yere yerleşir. Misafir hesaplara açılmaz.
-        </p>
+        <div className={f.field}>
+          <p className={f.hint}>
+            ⚠️ «Açık» işaretlenen rezervasyonda <strong>boş kalan tüm yerler</strong>{" "}
+            açılır — katılan kişi ilk boş yere yerleşir.
+          </p>
+          <label className={styles.guestToggle}>
+            <input type="checkbox" name="guestsAllowed" />
+            <span>
+              Misafir hesaplar da görebilsin ve katılmak için istek gönderebilsin
+            </span>
+          </label>
+          <p className={f.hint}>
+            İşaretlenmezse oyunu yalnızca üyeler görür. Misafiri bu formdan oyuncu olarak
+            <strong> ekleyemezsiniz</strong> — misafir açık oyuna kendi isteğiyle katılır.
+          </p>
+        </div>
       )}
 
       <div className={f.field}>
