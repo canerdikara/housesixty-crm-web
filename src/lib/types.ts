@@ -582,6 +582,20 @@ export type FacilityType = "PADEL_COURT" | "SPA";
 export type SlotStatus = "AVAILABLE" | "BOOKED" | "BLOCKED";
 export type ReservationStatus = "PENDING" | "CONFIRMED" | "CANCELLED" | "NO_SHOW";
 
+/**
+ * One seat on a booking.
+ *
+ * `fullName` is null for an empty seat; `isOpen` then separates "on offer to other
+ * members" from "simply unfilled", which is the choice the desk makes with «Açık».
+ */
+export type CalendarPlayer = {
+  /** 1–4. Seat one is the owner. */
+  seat: number;
+  userId: string | null;
+  fullName: string | null;
+  isOpen: boolean;
+};
+
 export type CalendarReservation = {
   id: string;
   userId: string;
@@ -591,6 +605,22 @@ export type CalendarReservation = {
   bookedAt: string;
   /** The booker plus any named players — a padel reservation is up to four people. */
   playerCount: number;
+  /** Always four entries for a padel court, empty seats included. Seat one is the owner. */
+  players: CalendarPlayer[];
+  /**
+   * Whether the empty seats are offered to other members — «Açık».
+   *
+   * ⚠️ One flag for the whole booking, not one per seat: a join request fills the first
+   * empty seat, so an open booking offers every empty seat on it.
+   */
+  isOpen: boolean;
+  /**
+   * Whether GUEST accounts may request to join, not just members.
+   *
+   * The desk cannot set this — only a member can, from their own app. It is shown because
+   * a booking that carries it is visible to people outside the membership.
+   */
+  guestsAllowed: boolean;
   /**
    * Whether a member of staff booked this at the desk rather than the member booking it.
    *

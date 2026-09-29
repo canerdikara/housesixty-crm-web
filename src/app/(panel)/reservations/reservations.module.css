@@ -309,3 +309,33 @@
   border-color: var(--accent);
   color: var(--accent);
 }
+
+/* ── Seats ─────────────────────────────────────────────────────────────────── */
+
+.seats {
+  list-style: decimal inside;
+  margin: 0;
+  padding: 0;
+}
+
+.seats li { margin-bottom: 2px; }
+
+.seatEmpty { color: var(--text-faint); }
+
+/*
+ * «Açık» is offered as a link-ish button under the search box rather than as a third
+ * option in a select: the common case by far is typing a name, and a select would make
+ * every booking a two-step choice to serve the rarer one.
+ */
+.openBtn {
+  background: none;
+  border: 0;
+  padding: 4px 0 0;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.openBtn:hover { color: var(--accent-hover); }

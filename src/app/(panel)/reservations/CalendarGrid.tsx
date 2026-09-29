@@ -6,6 +6,7 @@ import { Badge, ui } from "@/components/ui";
 import type { FormState } from "@/lib/formState";
 import type { CalendarReservation, CalendarSlot, ReservationCalendar } from "@/lib/types";
 import { bookSlotAction, cancelReservationAction, searchMembersAction } from "./actions";
+import { GUEST_SEATS, OPEN_SEAT } from "./constants";
 import styles from "./reservations.module.css";
 
 /**
@@ -153,7 +154,10 @@ function Cell({
         >
           <span className={styles.who}>{r.fullName}</span>
           <span className={styles.meta}>
-            {r.playerCount > 1 ? `${r.playerCount} kişi` : "1 kişi"}
+            {/* «Açık» leads: a desk scanning the grid is looking for a game somebody can
+                still be put into, and that matters more at a glance than the headcount. */}
+            {r.isOpen && "Açık · "}
+            {`${r.playerCount}/4`}
             {/* The desk mark, because CONFIRMED alone no longer says how it got there. */}
             {r.bookedAtDesk && " · resepsiyon"}
           </span>
@@ -274,8 +278,33 @@ function BookingDetail({
             : "Üyenin kendi rezervasyonu"}
         </dd>
 
-        <dt>Kişi</dt>
-        <dd>{reservation.playerCount}</dd>
+        <dt>Oyuncular</dt>
+        <dd>
+          {/*
+            All four seats, empties included. A padel court takes four and the desk's whole
+            reason for asking was the record of who was on it — an omitted empty seat reads
+            as a court that only takes three.
+          */}
+          <ol className={styles.seats}>
+            {reservation.players.map((p) => (
+              <li key={p.seat} className={p.fullName ? undefined : styles.seatEmpty}>
+                {p.fullName ?? (p.isOpen ? "Açık — üyelere" : "—")}
+              </li>
+            ))}
+          </ol>
+        </dd>
+
+        {reservation.guestsAllowed && (
+          <>
+            <dt>Görünürlük</dt>
+            {/*
+              Only a member can set this, from their own app — the desk cannot. It is shown
+              because it means the game is visible to accounts outside the membership, which
+              is not otherwise apparent from anything on this screen.
+            */}
+            <dd>⚠️ Misafir hesaplara da açık</dd>
+          </>
+        )}
 
         {reservation.deskNote && (
           <>
@@ -320,22 +349,48 @@ function BookingDetail({
  * a dropdown of everybody: the club's list will not stay short, and a `<select>` of every
  * member is both a slow payload and a worse way to find the person on the phone.
  */
-function BookingForm({ slotId }: { slotId: string }) {
-  const [state, action] = useActionState<FormState, FormData>(bookSlotAction, {});
+type Picked = { id: string; fullName: string };
+
+/**
+ * One seat's control: search for a member, or mark the seat «Açık».
+ *
+ * The same component for all four seats — seat one just never offers «Açık», because the
+ * owner is who the court is under and a booking with nobody on it is a blocked slot, which
+ * is a different thing with its own status.
+ */
+function SeatPicker({
+  seat,
+  name,
+  picked,
+  onPick,
+  open,
+  onToggleOpen,
+  taken,
+}: {
+  seat: number;
+  name: string;
+  picked: Picked | null;
+  onPick: (p: Picked | null) => void;
+  /** Whether this seat is marked «Açık». Seat one never is. */
+  open: boolean;
+  onToggleOpen: ((v: boolean) => void) | null;
+  /** Ids already seated, so the same person cannot be offered twice. */
+  taken: string[];
+}) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<{ id: string; fullName: string; phone: string | null }[]>([]);
-  const [picked, setPicked] = useState<{ id: string; fullName: string } | null>(null);
   const [searching, setSearching] = useState(false);
+  const id = `res-seat-${seat}`;
 
   /*
    * Debounced, and every stale response is discarded.
    *
    * `cancelled` is what stops a slow search for "ah" landing after a fast one for "ahmet"
    * and replacing the right results with the wrong ones — the classic out-of-order race,
-   * and one that looks like a flickering bug rather than a logic error.
+   * which looks like a flickering bug rather than a logic error.
    */
   useEffect(() => {
-    if (picked || query.trim().length < 2) {
+    if (picked || open || query.trim().length < 2) {
       setResults([]);
       return;
     }
@@ -352,55 +407,129 @@ function BookingForm({ slotId }: { slotId: string }) {
       cancelled = true;
       clearTimeout(t);
     };
-  }, [query, picked]);
+  }, [query, picked, open]);
+
+  // The value the action reads: an id, the open sentinel, or nothing at all.
+  const value = picked ? picked.id : open ? OPEN_SEAT : "";
 
   return (
-    <form action={action} className={styles.bookForm}>
-      <input type="hidden" name="timeSlotId" value={slotId} />
-      <input type="hidden" name="userId" value={picked?.id ?? ""} />
+    <div className={f.field}>
+      <label className={f.label} htmlFor={id}>
+        {seat === 1 ? "1. oyuncu · rezervasyon sahibi" : `${seat}. oyuncu`}
+      </label>
+      <input type="hidden" name={name} value={value} />
 
-      <div className={f.field}>
-        <label className={f.label} htmlFor="res-member">
-          Üye
-        </label>
-        {picked ? (
-          <div className={styles.picked}>
-            <span>{picked.fullName}</span>
-            <button type="button" className={styles.clear} onClick={() => setPicked(null)}>
-              değiştir
-            </button>
-          </div>
-        ) : (
-          <>
-            <input
-              id="res-member"
-              className={f.input}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="İsim, telefon veya e-posta"
-              autoComplete="off"
-            />
-            {searching && <p className={f.hint}>Aranıyor…</p>}
-            {!searching && query.trim().length >= 2 && results.length === 0 && (
-              <p className={f.hint}>Eşleşen üye yok.</p>
-            )}
-            <ul className={styles.results}>
-              {results.map((m) => (
+      {picked ? (
+        <div className={styles.picked}>
+          <span>{picked.fullName}</span>
+          <button type="button" className={styles.clear} onClick={() => onPick(null)}>
+            değiştir
+          </button>
+        </div>
+      ) : open ? (
+        <div className={styles.picked}>
+          <span className={ui.muted}>Açık — üyeler katılabilir</span>
+          <button type="button" className={styles.clear} onClick={() => onToggleOpen?.(false)}>
+            geri al
+          </button>
+        </div>
+      ) : (
+        <>
+          <input
+            id={id}
+            className={f.input}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={seat === 1 ? "İsim, telefon veya e-posta" : "Boş bırakılabilir"}
+            autoComplete="off"
+          />
+          {searching && <p className={f.hint}>Aranıyor…</p>}
+          {!searching && query.trim().length >= 2 && results.length === 0 && (
+            <p className={f.hint}>Eşleşen üye yok.</p>
+          )}
+          <ul className={styles.results}>
+            {results
+              // Already seated elsewhere on this booking — offering them again only leads
+              // to the duplicate error, so they are filtered out rather than refused later.
+              .filter((m) => !taken.includes(m.id))
+              .map((m) => (
                 <li key={m.id}>
                   <button
                     type="button"
                     className={styles.result}
-                    onClick={() => setPicked({ id: m.id, fullName: m.fullName })}
+                    onClick={() => onPick({ id: m.id, fullName: m.fullName })}
                   >
                     <span>{m.fullName}</span>
                     {m.phone && <span className={ui.muted}>{m.phone}</span>}
                   </button>
                 </li>
               ))}
-            </ul>
-          </>
-        )}
-      </div>
+          </ul>
+          {onToggleOpen && !query && (
+            <button
+              type="button"
+              className={styles.openBtn}
+              onClick={() => onToggleOpen(true)}
+            >
+              veya bu yeri «Açık» bırak
+            </button>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+function BookingForm({ slotId }: { slotId: string }) {
+  const [state, action] = useActionState<FormState, FormData>(bookSlotAction, {});
+  const [seats, setSeats] = useState<(Picked | null)[]>([null, null, null, null]);
+  const [openSeats, setOpenSeats] = useState<boolean[]>([false, false, false, false]);
+
+  const setSeat = (i: number, p: Picked | null) =>
+    setSeats((prev) => prev.map((v, n) => (n === i ? p : v)));
+  const setOpen = (i: number, v: boolean) => {
+    setOpenSeats((prev) => prev.map((o, n) => (n === i ? v : o)));
+    // A seat cannot be both somebody and open.
+    if (v) setSeat(i, null);
+  };
+
+  const taken = seats.filter(Boolean).map((p) => p!.id);
+  const anyOpen = openSeats.some(Boolean);
+
+  return (
+    <form action={action} className={styles.bookForm}>
+      <input type="hidden" name="timeSlotId" value={slotId} />
+
+      <SeatPicker
+        seat={1}
+        name="userId"
+        picked={seats[0]}
+        onPick={(p) => setSeat(0, p)}
+        open={false}
+        // Seat one is the owner: the court is under their name and cannot be «Açık».
+        onToggleOpen={null}
+        taken={taken.filter((id) => id !== seats[0]?.id)}
+      />
+
+      {GUEST_SEATS.map((seat, i) => (
+        <SeatPicker
+          key={seat}
+          seat={seat}
+          name={`player${seat}`}
+          picked={seats[i + 1]}
+          onPick={(p) => setSeat(i + 1, p)}
+          open={openSeats[i + 1]}
+          onToggleOpen={(v) => setOpen(i + 1, v)}
+          taken={taken.filter((id) => id !== seats[i + 1]?.id)}
+        />
+      ))}
+
+      {anyOpen && (
+        <p className={f.hint}>
+          ⚠️ «Açık» işaretlenen rezervasyonda <strong>boş kalan tüm yerler</strong> üyelere
+          açılır — katılan kişi ilk boş yere yerleşir. Misafir hesaplara açılmaz.
+        </p>
+      )}
 
       <div className={f.field}>
         <label className={f.label} htmlFor="res-note">
@@ -421,9 +550,10 @@ function BookingForm({ slotId }: { slotId: string }) {
 
       <FormMessage state={state} />
       <div className={f.actions}>
-        {/* Disabled until somebody is chosen: the action refuses an empty member anyway,
-            and an enabled button that always errors is worse than one that waits. */}
-        {picked ? (
+        {/* Disabled until the owner is chosen: the action refuses an empty seat one anyway,
+            and an enabled button that always errors is worse than one that waits. Seats two
+            to four are genuinely optional, so they gate nothing. */}
+        {seats[0] ? (
           <SubmitButton pendingLabel="Oluşturuluyor…">Rezervasyon oluştur</SubmitButton>
         ) : (
           <button type="button" className={f.submit} disabled>

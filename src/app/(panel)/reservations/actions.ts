@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { apiRequest } from "@/lib/api";
 import type { FormState } from "@/lib/formState";
+import { OPEN_SEAT } from "./constants";
 
 /**
  * The two writes the reservations calendar makes.
@@ -32,9 +33,29 @@ export async function bookSlotAction(_prev: FormState, form: FormData): Promise<
 
   if (!userId) return { error: "Bir üye seçin." };
 
+  /*
+   * Seats two to four. Each arrives as either a member id, the sentinel below, or empty.
+   *
+   * ⚠️ «Açık» collapses to ONE flag. `Reservation.isOpen` is per booking, not per seat —
+   * a join request fills the first empty seat — so marking any seat open opens all the
+   * empty ones. The form says so; this is where the collapse happens.
+   */
+  const seats = [str(form, "player2"), str(form, "player3"), str(form, "player4")];
+  const isOpen = seats.includes(OPEN_SEAT);
+  const [player2Id, player3Id, player4Id] = seats.map((v) =>
+    v && v !== OPEN_SEAT ? v : null
+  );
+
+  // Caught here as well as at the backend, because the message is better: the form knows
+  // which seat is the duplicate and the API only knows that one exists.
+  const named = [userId, player2Id, player3Id, player4Id].filter(Boolean);
+  if (new Set(named).size !== named.length) {
+    return { error: "Aynı kişi birden fazla oyuncu olarak seçilemez." };
+  }
+
   const result = await apiRequest<{ fullName: string }>("/api/v1/crm/reservations", {
     method: "POST",
-    body: { timeSlotId, userId, note: note || null },
+    body: { timeSlotId, userId, player2Id, player3Id, player4Id, isOpen, note: note || null },
   });
 
   if (result.kind === "unauthorized") redirect("/login");
@@ -45,7 +66,13 @@ export async function bookSlotAction(_prev: FormState, form: FormData): Promise<
   }
 
   revalidatePath("/reservations", "layout");
-  return { ok: `${result.data.fullName} için rezervasyon oluşturuldu.` };
+  const others = named.length - 1;
+  return {
+    ok:
+      `${result.data.fullName} için rezervasyon oluşturuldu` +
+      (others > 0 ? ` (+${others} oyuncu)` : "") +
+      (isOpen ? " · boş yerler üyelere açık." : "."),
+  };
 }
 
 /**
