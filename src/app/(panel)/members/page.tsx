@@ -17,15 +17,17 @@ const PAGE_SIZE = 25;
  * Links carrying their own query, like the lead screen — the filter lives in the URL,
  * so "riskli üyeler" is bookmarkable and sendable, and none of it needs JavaScript.
  *
- * "Misafir getiren" from the mockup is absent: the backend can count guests per member
- * on the 360, but filtering the whole list by it needs an index-friendly query that
- * does not exist yet. Better absent than present and slow.
+ * All five of the mockup's chips are here now. **"Misafir getiren" is 180 days**, matching
+ * `guest_count_6m` in the segment builder so the chip and any segment written on the same
+ * idea return the same people — six months is what "misafir getiren" means on this screen,
+ * and a member who brought somebody two years ago is not the club's introducer.
  */
 const CHIPS = [
   { key: "all", label: "Tümü", params: {} as Record<string, string> },
   { key: "renewing", label: "Yenilemesi yaklaşan", params: { renewingWithinDays: "30" } },
   { key: "risky", label: "Riskli", params: { atRisk: "true" } },
   { key: "new", label: "Yeni · 90 gün", params: { newWithinDays: "90" } },
+  { key: "guests", label: "Misafir getiren", params: { broughtGuestWithinDays: "180" } },
 ];
 
 type SearchParams = Record<string, string | string[] | undefined>;

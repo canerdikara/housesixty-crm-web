@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { ActionForm, Disclosure, SubmitButton, formStyles as f, FormMessage } from "@/components/Form";
 import {
   createTermAction,
@@ -11,6 +11,7 @@ import {
   saveOnboardingAction,
   uploadContractAction,
   contractLinkAction,
+  deleteContractAction,
 } from "../actions";
 import {
   CONSENT_CHANNELS,
@@ -543,8 +544,62 @@ export function ContractActions({ member }: { member: MemberDetail }) {
         </ActionForm>
       </Disclosure>
 
-      {o.hasContract && <ContractLink userId={member.userId} />}
+      {o.hasContract && (
+        <>
+          <ContractLink userId={member.userId} />
+          <ContractDelete userId={member.userId} />
+        </>
+      )}
     </>
+  );
+}
+
+/**
+ * «Sözleşmeyi sil» — two taps, no modal.
+ *
+ * The same idiom as deleting a segment, and here it carries more weight: a segment is
+ * cheap to rebuild, whereas this is the club's only copy of a signed document and the
+ * button sits directly beneath «Sözleşmeyi görüntüle». An inline confirm is honest about
+ * what the second tap does, and the panel has no dialog primitive to reach for instead.
+ *
+ * Rendered only when there is a contract — the caller checks `hasContract`, so the
+ * backend's 404 for "nothing on file" is not a state this button can normally reach. If
+ * it does, the screen was stale and the message says so rather than claiming a success.
+ */
+function ContractDelete({ userId }: { userId: string }) {
+  const [state, action] = useActionState<FormState, FormData>(deleteContractAction, {});
+  const [confirming, setConfirming] = useState(false);
+
+  // Back to the safe label once the delete has happened, so a second render of the card
+  // is never sitting on a primed destructive button.
+  useEffect(() => {
+    if (state.ok) setConfirming(false);
+  }, [state.ok]);
+
+  return (
+    <form action={action} style={{ marginTop: 12 }}>
+      <input type="hidden" name="userId" value={userId} />
+      <FormMessage state={state} />
+      {confirming ? (
+        <>
+          <p className={f.hint}>
+            Sözleşme kalıcı olarak silinir ve geri alınamaz. Yanlış dosya yüklendiyse
+            silmek yerine <strong>değiştirmeyi</strong> tercih edin.
+          </p>
+          <SubmitButton variant="danger" pendingLabel="Siliniyor…">
+            Emin misiniz? Sil
+          </SubmitButton>
+        </>
+      ) : (
+        <button
+          type="button"
+          className={`${f.submit} ${f.submitGhost}`}
+          onClick={() => setConfirming(true)}
+        >
+          Sözleşmeyi sil
+        </button>
+      )}
+    </form>
   );
 }
 

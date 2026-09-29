@@ -4,7 +4,14 @@ import { PageBody, PageHeader, Card } from "@/components/Page";
 import { Avatar, Badge, ChipRow, EmptyState, FilterChip, Pagination, Tag, TableWrap, ui } from "@/components/ui";
 import { apiRequest } from "@/lib/api";
 import { daysSinceLabel, dueLabel } from "@/lib/dates";
-import { leadSourceLabel, leadStatusLabel, leadStatusTone, interestLabel } from "@/lib/labels";
+import {
+  leadSourceLabel,
+  leadStatusLabel,
+  leadStatusTone,
+  interestLabel,
+  LEAD_STATUS_ORDER,
+  LEAD_SOURCES,
+} from "@/lib/labels";
 import type { LeadListItem, Paged } from "@/lib/types";
 
 export const metadata = { title: "Adaylar · House Sixty CRM" };
@@ -27,6 +34,16 @@ const CHIPS = [
   { key: "stale", label: "7 gündür temassız", params: { staleDays: "7" } },
   { key: "proposal", label: "Teklif bekleyen", params: { status: "PROPOSAL_SENT" } },
 ];
+
+/**
+ * The one chip that sets the same parameter as a dropdown.
+ *
+ * «Teklif bekleyen» *is* a status filter, so it and the «Durum» select are two controls
+ * over one value — unlike «Sorumlu», where the chip and the dropdown reach the backend
+ * through different parameters (`mine` versus `ownerUserId`). Named here so the two places
+ * that have to know about the overlap cannot drift apart.
+ */
+const PROPOSAL_CHIP_STATUS = "PROPOSAL_SENT";
 
 /**
  * The dropdown's sentinel for "nobody owns this".
@@ -93,8 +110,22 @@ export default async function LeadsPage({
   // A failure here costs the dropdown its names, not the page its list.
   const ownerOptions = owners.kind === "ok" ? owners.data : [];
 
-  // The chip cannot be active while an explicit owner overrides it (see above).
-  const activeChip = owner && chipKey === "mine" ? "all" : chipKey;
+  /*
+   * A chip cannot be highlighted while a dropdown is overriding it.
+   *
+   * Two separate collisions, and the status one is narrower than the owner one. Any owner
+   * selection beats the "Bana atanan" chip, because the backend resolves `mine` instead of
+   * `ownerUserId` and the two cannot both apply. The status select beats «Teklif bekleyen»
+   * only when it asks for something *else*: selecting PROPOSAL_SENT explicitly is the same
+   * filter the chip applies, and de-highlighting it there would un-light the chip the
+   * moment somebody typed in the search box, with the list unchanged.
+   */
+  const activeChip =
+    owner && chipKey === "mine"
+      ? "all"
+      : status && status !== PROPOSAL_CHIP_STATUS && chipKey === "proposal"
+        ? "all"
+        : chipKey;
 
   /** Rebuilds this screen's URL, preserving everything except what changed. */
   const hrefWith = (patch: Record<string, string | undefined>) => {
@@ -135,8 +166,6 @@ export default async function LeadsPage({
             */}
             <form method="GET" action="/leads" role="search" className={ui.filterForm}>
               {chipKey !== "all" && <input type="hidden" name="chip" value={chipKey} />}
-              {status && <input type="hidden" name="status" value={status} />}
-              {source && <input type="hidden" name="source" value={source} />}
               <input
                 className={ui.search}
                 type="search"
@@ -145,6 +174,38 @@ export default async function LeadsPage({
                 placeholder="İsim, telefon veya e-posta"
                 aria-label="Adaylarda ara"
               />
+              {/*
+                «Durum» and «Kaynak» — both have been read from the URL, applied to the
+                query and preserved across chips and paging since phase 1, and until now
+                nothing on the screen could set either. They were hidden inputs here,
+                carrying a value only a hand-typed URL could ever have put there.
+
+                «Durum» shows the chip's own status when «Teklif bekleyen» is lit, so the
+                control never contradicts the filter that is actually in force.
+              */}
+              <select
+                className={ui.select}
+                name="status"
+                defaultValue={status || (chip.params.status ?? "")}
+                aria-label="Duruma göre filtrele"
+              >
+                <option value="">Tüm durumlar</option>
+                {/* Pipeline order, not alphabetical — this is the sales process. */}
+                {LEAD_STATUS_ORDER.map((v) => (
+                  <option key={v} value={v}>{leadStatusLabel(v)}</option>
+                ))}
+              </select>
+              <select
+                className={ui.select}
+                name="source"
+                defaultValue={source}
+                aria-label="Kaynağa göre filtrele"
+              >
+                <option value="">Tüm kaynaklar</option>
+                {LEAD_SOURCES.map((v) => (
+                  <option key={v} value={v}>{leadSourceLabel(v)}</option>
+                ))}
+              </select>
               {/*
                 A plain <select> in the same GET form as the search box, so picking an
                 owner lands in the URL exactly like every other filter on this screen —
@@ -185,7 +246,18 @@ export default async function LeadsPage({
         {CHIPS.map((c) => (
           <FilterChip
             key={c.key}
-            href={hrefWith({ chip: c.key === "all" ? "" : c.key, page: undefined })}
+            /*
+             * «Teklif bekleyen» drops any explicit status on its way in; every other chip
+             * preserves the filters, as they always have. Without this the chip is dead
+             * whenever the select holds a different status: `hrefWith` would carry that
+             * status forward and it overrides the chip's own params, so clicking would
+             * change the highlight and nothing else.
+             */
+            href={hrefWith({
+              chip: c.key === "all" ? "" : c.key,
+              page: undefined,
+              ...(c.key === "proposal" ? { status: undefined } : {}),
+            })}
             active={c.key === activeChip}
           >
             {c.label}
@@ -238,7 +310,31 @@ export default async function LeadsPage({
                       </td>
                       <td>{lead.interestedIn ? <Tag>{interestLabel(lead.interestedIn)}</Tag> : <span className={ui.faint}>—</span>}</td>
                       <td><Avatar name={lead.ownerName} /></td>
-                      <td className={`${ui.muted} ${ui.nowrap}`}>{daysSinceLabel(lead.lastContactAt)}</td>
+                      {/*
+                        The stale flag rides in the column that already answers "when did
+                        anyone last speak to this person" rather than taking a ninth one.
+                        The badge is what the daily sweep is *for*: the "7 gündür temassız"
+                        chip could always find these leads, but only if somebody remembered
+                        to click it — here it is on the row, unasked.
+                      */}
+                      <td className={ui.nowrap}>
+                        <span className={ui.muted}>{daysSinceLabel(lead.lastContactAt)}</span>
+                        {lead.staleFlaggedAt && (
+                          <>
+                            {" "}
+                            {/*
+                              `accent`, not `crit`. This screen reserves the two status
+                              colours for the two outcomes — `leadStatusTone` gives `good`
+                              to WON and `crit` to LOST and nothing else — so a red badge
+                              here would read as a lost lead in the column beside the one
+                              that says otherwise. It also scales: the first sweep flags
+                              most of the table at once, and a page of red says "everything
+                              is wrong" rather than "nobody has rung these people".
+                            */}
+                            <Badge tone="accent">soğuk</Badge>
+                          </>
+                        )}
+                      </td>
                       <td className={ui.nowrap}>
                         {lead.nextActionNote ? (
                           <span className={ui.rowAction}>{lead.nextActionNote}</span>

@@ -115,6 +115,33 @@ export async function uploadContractAction(_prev: FormState, form: FormData): Pr
 }
 
 /**
+ * Takes the scanned contract away — the object in the private bucket and the row's
+ * pointer to it.
+ *
+ * Not a `write()` call: that helper only speaks POST / PATCH / PUT and expects a body to
+ * report on, and this endpoint answers 204 with nothing in it.
+ *
+ * ⚠️ **Irreversible, and the only erase path there is.** Unlike replacing a contract —
+ * which also deletes the old object but leaves a new one in its place — this leaves the
+ * member with no document at all, and S3 versioning on the documents bucket is the only
+ * thing that could recover it. The button behind this asks twice.
+ */
+export async function deleteContractAction(_prev: FormState, form: FormData): Promise<FormState> {
+  const userId = str(form, "userId");
+  const result = await apiRequest<unknown>(`/api/v1/crm/members/${userId}/contract`, {
+    method: "DELETE",
+  });
+
+  if (result.kind === "unauthorized") redirect("/login");
+  if (result.kind !== "ok") {
+    return { error: result.kind === "forbidden" ? `Yetkiniz yok: ${result.message}` : result.message };
+  }
+
+  revalidatePath("/members", "layout");
+  return { ok: "Sözleşme silindi." };
+}
+
+/**
  * Fetches a short-lived link to the contract and hands it back for the browser to open.
  *
  * The URL is returned rather than stored anywhere: it carries its own authorisation, so

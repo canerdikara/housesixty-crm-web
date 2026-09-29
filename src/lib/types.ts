@@ -46,6 +46,13 @@ export type LeadListItem = {
   nextActionAt: string | null;
   nextActionNote: string | null;
   createdAt: string;
+  /**
+   * When the daily sweep flagged this lead as gone cold, or null (V45).
+   *
+   * A timestamp rather than a boolean, so the badge can say how long the silence has been
+   * running rather than just that it is.
+   */
+  staleFlaggedAt: string | null;
 };
 
 export type Interaction = {
