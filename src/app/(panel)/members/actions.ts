@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { apiRequest } from "@/lib/api";
 import type { FormState } from "@/lib/formState";
+import { PAYMENT_METHOD_INSTALMENTS } from "@/lib/labels";
 
 /**
  * Every write the member screens make — mockup screen 7.
@@ -296,6 +297,13 @@ export async function createTermAction(_prev: FormState, form: FormData): Promis
       renewalStatus: str(form, "renewalStatus") || "NOT_CONTACTED",
       renewalNote: orNull(form, "renewalNote"),
       amountPaid: money(form, "amountPaid"),
+      paymentMethod: orNull(form, "paymentMethod"),
+      // Only ever sent for the method it belongs to — the backend and a DB CHECK both
+      // refuse a count beside a cash sale.
+      installments:
+        str(form, "paymentMethod") === PAYMENT_METHOD_INSTALMENTS
+          ? Number(str(form, "installments")) || null
+          : null,
     },
     "POST",
     "Dönem eklendi."
@@ -347,6 +355,16 @@ export async function updateTermAction(_prev: FormState, form: FormData): Promis
    */
   const amount = money(form, "amountPaid");
   if (amount !== null) body.amountPaid = amount;
+
+  const method = str(form, "paymentMethod");
+  if (method) {
+    body.paymentMethod = method;
+    // Sent together, because the backend clears a stale count when the method stops being
+    // an instalment plan — sending one without the other leaves the pair inconsistent.
+    if (method === PAYMENT_METHOD_INSTALMENTS) {
+      body.installments = Number(str(form, "installments")) || null;
+    }
+  }
   if (renewalStatus && renewalStatus !== renewalStatusWas) {
     body.renewalStatus = renewalStatus;
   }

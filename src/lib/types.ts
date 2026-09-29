@@ -168,6 +168,10 @@ export type MembershipTerm = {
    * sales are unpriced, so a blank cannot masquerade as a free membership.
    */
   amountPaid: string | null;
+  /** How the sale was paid for (V48), or null for a term recorded before it was asked. */
+  paymentMethod: string | null;
+  /** Instalment count, only ever set alongside `KREDI_KARTI_TAKSIT`. */
+  installments: number | null;
 };
 
 export type MonthCount = { month: string; count: number };

@@ -3,7 +3,12 @@
 import { useState } from "react";
 import { ActionForm, SubmitButton, formStyles as f } from "@/components/Form";
 import { convertLeadAction } from "../../actions";
-import { EMERGENCY_GENDERS, PAYMENT_METHODS, paymentMethodLabel } from "@/lib/labels";
+import {
+  EMERGENCY_GENDERS,
+  PAYMENT_METHODS,
+  PAYMENT_METHOD_INSTALMENTS,
+  paymentMethodLabel,
+} from "@/lib/labels";
 import type { LeadDetail, MembershipTier } from "@/lib/types";
 
 /** İzmir's calendar date. Never the browser's — the club is in one timezone. */
@@ -37,6 +42,13 @@ export function ConvertForm({
    * revealing the dates rather than by rejecting a save.
    */
   const [tierId, setTierId] = useState("");
+  /*
+   * The instalment count only exists for one payment method, so the method is tracked to
+   * reveal it. Unmounted rather than hidden when it does not apply — a hidden input keeps
+   * its value and would submit a count beside a cash sale, which the database refuses and
+   * the admin would read as the form being broken.
+   */
+  const [method, setMethod] = useState("");
 
   return (
     <ActionForm action={convertLeadAction} hiddenFields={{ leadId: lead.id }}>
@@ -119,9 +131,20 @@ export function ConvertForm({
               </select>
             </div>
             <div className={f.field}>
-              <label className={f.label} htmlFor="c-payment">Ödeme şekli</label>
-              <select id="c-payment" name="paymentMethod" className={f.select} defaultValue="">
-                <option value="">— belirtilmedi —</option>
+              <label className={`${f.label} ${tierId ? f.required : ""}`} htmlFor="c-payment">
+                Ödeme şekli
+              </label>
+              <select
+                id="c-payment"
+                name="paymentMethod"
+                className={f.select}
+                value={method}
+                onChange={(e) => setMethod(e.target.value)}
+                /* Required only once a tier is chosen: converting a lead WITHOUT assigning
+                   a membership is an ordinary thing to do, and there is no sale to describe. */
+                required={!!tierId}
+              >
+                <option value="">— seçiniz —</option>
                 {PAYMENT_METHODS.map((m) => (
                   <option key={m} value={m}>{paymentMethodLabel(m)}</option>
                 ))}
@@ -132,18 +155,48 @@ export function ConvertForm({
           {/* Revealed by the tier, because a membership without dates is not a
               membership — every booking gate and every renewal query reads them. */}
           {tierId && (
-            <div className={f.row}>
-              <div className={f.field}>
-                <label className={`${f.label} ${f.required}`} htmlFor="c-start">Başlangıç</label>
-                <input id="c-start" name="membershipStart" type="date" className={f.input}
-                  defaultValue={izmirToday()} required />
+            <>
+              <div className={f.row}>
+                <div className={f.field}>
+                  <label className={`${f.label} ${f.required}`} htmlFor="c-start">Başlangıç</label>
+                  <input id="c-start" name="membershipStart" type="date" className={f.input}
+                    defaultValue={izmirToday()} required />
+                </div>
+                <div className={f.field}>
+                  <label className={`${f.label} ${f.required}`} htmlFor="c-end">Bitiş</label>
+                  <input id="c-end" name="membershipEnd" type="date" className={f.input}
+                    defaultValue={izmirOneYearOn()} required />
+                </div>
               </div>
-              <div className={f.field}>
-                <label className={`${f.label} ${f.required}`} htmlFor="c-end">Bitiş</label>
-                <input id="c-end" name="membershipEnd" type="date" className={f.input}
-                  defaultValue={izmirOneYearOn()} required />
+
+              <div className={f.row}>
+                <div className={f.field}>
+                  <label className={`${f.label} ${f.required}`} htmlFor="c-amount">
+                    Üyelik tutarı (₺)
+                  </label>
+                  <input id="c-amount" name="amountPaid" className={f.input}
+                    inputMode="decimal" placeholder="örn. 12000" required />
+                  {/*
+                    Required at this one moment and optional everywhere else, deliberately.
+                    This is the sale: the admin is sitting with the person and knows the
+                    figure. Both tiers are priced ₺0, so nothing fills it in afterwards by
+                    itself — and a blank here is how «Gelirler» ends up permanently empty.
+                  */}
+                  <p className={f.hint}>Gelir raporuna bu tutar yazılır.</p>
+                </div>
+
+                {method === PAYMENT_METHOD_INSTALMENTS && (
+                  <div className={f.field}>
+                    <label className={`${f.label} ${f.required}`} htmlFor="c-inst">
+                      Taksit sayısı
+                    </label>
+                    <input id="c-inst" name="installments" className={f.input}
+                      type="number" min={2} max={36} step={1} placeholder="örn. 9" required />
+                    <p className={f.hint}>3 ve 6 dışında herhangi bir sayı girilebilir.</p>
+                  </div>
+                )}
               </div>
-            </div>
+            </>
           )}
 
           <h3 className={f.sectionTitle}>Kimlik ve araç</h3>

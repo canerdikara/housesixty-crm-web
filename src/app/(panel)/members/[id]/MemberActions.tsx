@@ -21,6 +21,7 @@ import {
   renewalStatusLabel,
   termStatusLabel,
   PAYMENT_METHODS,
+  PAYMENT_METHOD_INSTALMENTS,
   paymentMethodLabel,
   EMERGENCY_GENDERS,
 } from "@/lib/labels";
@@ -364,6 +365,7 @@ export function AddTerm({ member }: { member: MemberDetail }) {
                 unpriced, so an empty box cannot masquerade as a free membership. */}
             <p className={f.hint}>Boş bırakılırsa gelir raporuna yazılmaz.</p>
           </div>
+          <TermPaymentFields />
           <div className={f.field}>
             <label className={f.label} htmlFor="t-new-note">Yenileme notu</label>
             <input id="t-new-note" name="renewalNote" className={f.input} maxLength={2000} />
@@ -436,6 +438,7 @@ export function EditTerm({ term }: { term: MembershipTerm }) {
                 alone" at the backend, so a recorded sale cannot be blanked by accident. */}
             <p className={f.hint}>Boşaltmak kayıtlı tutarı silmez.</p>
           </div>
+          <TermPaymentFields term={term} />
           <div className={f.field}>
             <label className={f.label} htmlFor={`t-${term.id}-note`}>Yenileme notu</label>
             <input id={`t-${term.id}-note`} name="renewalNote" className={f.input} maxLength={2000}
@@ -452,6 +455,61 @@ export function EditTerm({ term }: { term: MembershipTerm }) {
   );
 }
 
+
+/**
+ * How a membership sale was paid for — the pair that belongs together (V48).
+ *
+ * Shared by the new-term and edit-term forms rather than written twice, because the
+ * instalment rule is the fiddly part: a count is only valid alongside `KREDI_KARTI_TAKSIT`,
+ * and both the backend and a database CHECK refuse any other combination.
+ *
+ * ⚠️ The count is **unmounted**, not hidden, when the method is not an instalment plan. A
+ * hidden input keeps its value and would submit a count beside a cash sale — a 400 the
+ * admin could do nothing about, and the same shape of bug the member app shipped with
+ * `guestsAllowed`.
+ */
+function TermPaymentFields({ term }: { term?: MembershipTerm }) {
+  const [method, setMethod] = useState(term?.paymentMethod ?? "");
+  const id = term ? `t-${term.id}` : "t-new";
+
+  return (
+    <>
+      <div className={f.field}>
+        <label className={f.label} htmlFor={`${id}-method`}>Ödeme şekli</label>
+        <select
+          id={`${id}-method`}
+          name="paymentMethod"
+          className={f.select}
+          value={method}
+          onChange={(e) => setMethod(e.target.value)}
+        >
+          <option value="">— girilmemiş —</option>
+          {PAYMENT_METHODS.map((m) => (
+            <option key={m} value={m}>{paymentMethodLabel(m)}</option>
+          ))}
+          {/*
+            A legacy value this term already holds, kept selectable so saving the form does
+            not silently rewrite it to something the admin never chose. It is never offered
+            on a term that does not already have one.
+          */}
+          {method && !PAYMENT_METHODS.includes(method as (typeof PAYMENT_METHODS)[number]) && (
+            <option value={method}>{paymentMethodLabel(method, term?.installments)}</option>
+          )}
+        </select>
+      </div>
+
+      {method === PAYMENT_METHOD_INSTALMENTS && (
+        <div className={f.field}>
+          <label className={f.label} htmlFor={`${id}-inst`}>Taksit sayısı</label>
+          <input id={`${id}-inst`} name="installments" className={f.input}
+            type="number" min={2} max={36} step={1}
+            defaultValue={term?.installments ?? ""} placeholder="örn. 9" />
+          <p className={f.hint}>3 ve 6 dışında herhangi bir sayı girilebilir.</p>
+        </div>
+      )}
+    </>
+  );
+}
 
 // ── Onboarding and the contract (ADMIN only) ─────────────────────────────────
 

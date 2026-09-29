@@ -154,10 +154,18 @@ export const LEAD_INTEREST_CATEGORIES: InterestCategory[] = [
 ];
 
 /** How the membership was paid for, as recorded at the desk (V39). */
-export function paymentMethodLabel(v: string): string {
+/**
+ * @param installments the count, when `v` is `KREDI_KARTI_TAKSIT`. Ignored otherwise.
+ */
+export function paymentMethodLabel(v: string, installments?: number | null): string {
   switch (v) {
     case "NAKIT": return "Nakit";
     case "KREDI_KARTI_TEK_CEKIM": return "Kredi Kartı — Tek Çekim";
+    // The count lives in its own column now, so the label reads it rather than the name
+    // carrying it. Without a count this is a row that predates the column, not "0 taksit".
+    case "KREDI_KARTI_TAKSIT":
+      return installments ? `Kredi Kartı — ${installments} Taksit` : "Kredi Kartı — Taksitli";
+    // ⚠️ Legacy: still rendered because real rows hold them, never offered for new sales.
     case "KREDI_KARTI_3_TAKSIT": return "Kredi Kartı — 3 Taksit";
     case "KREDI_KARTI_6_TAKSIT": return "Kredi Kartı — 6 Taksit";
     default: return v;
@@ -172,12 +180,23 @@ export function paymentMethodLabel(v: string): string {
  */
 export const EMERGENCY_GENDERS = ["Erkek", "Kadın"] as const;
 
+/**
+ * What a new sale may be paid by.
+ *
+ * ⚠️ `KREDI_KARTI_3_TAKSIT` and `KREDI_KARTI_6_TAKSIT` are **deliberately absent**. They
+ * spell the count into the name, which is why "any other number of instalments" was
+ * unsayable; `KREDI_KARTI_TAKSIT` plus a count says the same thing and can also say four,
+ * nine or twelve. The two old values are still *rendered* by `paymentMethodLabel`, because
+ * real rows hold them — they are simply never offered again.
+ */
 export const PAYMENT_METHODS = [
   "NAKIT",
   "KREDI_KARTI_TEK_CEKIM",
-  "KREDI_KARTI_3_TAKSIT",
-  "KREDI_KARTI_6_TAKSIT",
+  "KREDI_KARTI_TAKSIT",
 ] as const;
+
+/** The value that needs an instalment count beside it. */
+export const PAYMENT_METHOD_INSTALMENTS = "KREDI_KARTI_TAKSIT";
 
 export const CONSENT_CHANNELS: ConsentChannel[] = ["EMAIL", "SMS", "WHATSAPP", "PHONE", "ALL"];
 

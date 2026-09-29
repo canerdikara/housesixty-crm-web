@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { apiRequest } from "@/lib/api";
 import type { FormState } from "@/lib/formState";
+import { PAYMENT_METHOD_INSTALMENTS } from "@/lib/labels";
 import type { LeadDetail } from "@/lib/types";
 
 /**
@@ -332,6 +333,30 @@ export async function convertLeadAction(_prev: FormState, form: FormData): Promi
   if (tierId && (!startDate || !endDate)) {
     return { error: "Üyelik tipi seçtiyseniz başlangıç ve bitiş tarihi de gerekli." };
   }
+
+  /*
+   * The sale's terms, required the moment a membership is assigned (club, 2026-09-29).
+   *
+   * Checked here as well as at the backend so the message arrives without a round trip and
+   * the form keeps what was typed. The backend's `@NotNull` is the one that enforces it.
+   *
+   * ⚠️ A comma decimal separator is accepted — a Turkish keyboard types "12000,50", and
+   * refusing it would be the form being pedantic about something it can simply understand.
+   */
+  const amountPaid = str(form, "amountPaid").replace(/\s/g, "").replace(",", ".");
+  const paymentMethod = str(form, "paymentMethod");
+  const installmentsRaw = str(form, "installments");
+
+  if (tierId) {
+    if (!amountPaid || !Number.isFinite(Number(amountPaid))) {
+      return { error: "Üyelik tutarı gerekli." };
+    }
+    if (Number(amountPaid) < 0) return { error: "Üyelik tutarı negatif olamaz." };
+    if (!paymentMethod) return { error: "Ödeme şekli gerekli." };
+    if (paymentMethod === PAYMENT_METHOD_INSTALMENTS && !installmentsRaw) {
+      return { error: "Taksitli ödemede taksit sayısı gerekli." };
+    }
+  }
   if (startDate && endDate && endDate < startDate) {
     return { error: "Bitiş tarihi başlangıçtan önce olamaz." };
   }
@@ -361,7 +386,20 @@ export async function convertLeadAction(_prev: FormState, form: FormData): Promi
       email: email || null,
       phone: phone || null,
       onboarding: hasOnboarding ? onboarding : null,
-      membership: tierId ? { tierId, startDate, endDate } : null,
+      membership: tierId
+        ? {
+            tierId,
+            startDate,
+            endDate,
+            amountPaid,
+            paymentMethod,
+            // Sent only for the one method it belongs to. The backend and the database both
+            // refuse a count beside a cash sale, so sending it would be a 400 the admin
+            // could do nothing about.
+            installments:
+              paymentMethod === PAYMENT_METHOD_INSTALMENTS ? Number(installmentsRaw) : null,
+          }
+        : null,
     },
   });
 
