@@ -4,7 +4,7 @@ import { PageBody, PageHeader, Card } from "@/components/Page";
 import { Badge, ChipRow, EmptyState, FilterChip, Pagination, Tag, TableWrap, ui } from "@/components/ui";
 import { apiRequest } from "@/lib/api";
 import { daysSinceLabel, formatDate } from "@/lib/dates";
-import type { MemberListItem, Paged } from "@/lib/types";
+import type { MemberListItem, MembershipTier, Paged } from "@/lib/types";
 
 export const metadata = { title: "Üyeler · House Sixty CRM" };
 export const dynamic = "force-dynamic";
@@ -43,16 +43,48 @@ export default async function MembersPage({
   const chip = CHIPS.find((c) => c.key === chipKey) ?? CHIPS[0]!;
   const q = one(sp.q) ?? "";
   const membershipType = one(sp.membershipType) ?? "";
+  // «Durum» — "" is every member, "risky" and "active" are the two halves.
+  const durum = one(sp.durum) ?? "";
   const page = Math.max(0, Number(one(sp.page) ?? 0) || 0);
 
+  // The chip's own params first, so an explicit dropdown selection can override them —
+  // the same precedence the leads screen uses.
   const query = new URLSearchParams({ ...chip.params });
   if (q.trim()) query.set("q", q.trim());
   if (membershipType) query.set("membershipType", membershipType);
+  if (durum === "risky") query.set("atRisk", "true");
+  else if (durum === "active") query.set("atRisk", "false");
   query.set("page", String(page));
   query.set("size", String(PAGE_SIZE));
 
-  const result = await apiRequest<Paged<MemberListItem>>(`/api/v1/crm/members?${query}`);
+  /*
+   * ⚠️ `/crm/membership-tiers`, not `/admin/membership-tiers`.
+   *
+   * The admin one is gated to ADMIN alone, and this screen is open to all four panel
+   * roles — pointing the filter at it would give SALES and RECEPTION a 403 and a dropdown
+   * with no options, which reads as "the club has no tiers" rather than "you may not see
+   * them".
+   *
+   * Fetched alongside the list rather than before it: a failure here costs the dropdown
+   * its options, not the page its members.
+   */
+  const [result, tiers] = await Promise.all([
+    apiRequest<Paged<MemberListItem>>(`/api/v1/crm/members?${query}`),
+    apiRequest<MembershipTier[]>("/api/v1/crm/membership-tiers"),
+  ]);
   if (result.kind === "unauthorized") redirect("/login");
+  const tierOptions = tiers.kind === "ok" ? tiers.data : [];
+
+  /*
+   * ⚠️ «Riskli» the chip and «Durum» the select are two controls over one value.
+   *
+   * The leads screen hit exactly this with «Teklif bekleyen» (§1u), and the resolution is
+   * the same: the select wins, and the chip un-lights only when the select asks for
+   * something *else*. Choosing «Riskli» in the dropdown is the same filter the chip
+   * applies, so de-highlighting it there would un-light the chip the moment somebody
+   * typed in the search box, with the list unchanged.
+   */
+  const activeChip = durum && durum !== "risky" && chipKey === "risky" ? "all" : chipKey;
 
   const hrefWith = (patch: Record<string, string | undefined>) => {
     const next = new URLSearchParams();
@@ -60,6 +92,7 @@ export default async function MembersPage({
       chip: chipKey === "all" ? "" : chipKey,
       q,
       membershipType,
+      durum,
       page: String(page),
     };
     for (const [k, v] of Object.entries({ ...base, ...patch })) if (v) next.set(k, v);
@@ -78,9 +111,8 @@ export default async function MembersPage({
           result.kind === "ok" ? `${result.data.totalElements} aktif üye` : "Üye listesi"
         }
         actions={
-          <form method="GET" action="/members" role="search">
+          <form method="GET" action="/members" role="search" className={ui.filterForm}>
             {chipKey !== "all" && <input type="hidden" name="chip" value={chipKey} />}
-            {membershipType && <input type="hidden" name="membershipType" value={membershipType} />}
             <input
               className={ui.search}
               type="search"
@@ -89,6 +121,48 @@ export default async function MembersPage({
               placeholder="İsim, telefon veya e-posta"
               aria-label="Üyelerde ara"
             />
+            {/*
+              «Üyelik» — the tier. The parameter has been read, applied and carried through
+              chips and paging since phase 2, and until now nothing on the screen could set
+              it: it was a hidden input here, holding a value only a hand-typed URL could
+              have put there. Same story as «Durum»/«Kaynak» on the leads list.
+
+              Filtered by **name**, not id, because that is what `GET /crm/members` takes —
+              `membershipType` matches `m.tier.name`.
+            */}
+            <select
+              className={ui.select}
+              name="membershipType"
+              defaultValue={membershipType}
+              aria-label="Üyeliğe göre filtrele"
+            >
+              <option value="">Tüm üyelikler</option>
+              {tierOptions.map((t) => (
+                <option key={t.id} value={t.name}>{t.name}</option>
+              ))}
+            </select>
+            {/*
+              «Durum». Shows the chip's own value when «Riskli» is lit, so the control
+              never contradicts the filter actually in force.
+
+              ⚠️ «Aktif» returns **nobody on production today**, and that is correct rather
+              than broken: "Riskli" means no turnstile pass in 45 days, no pass has ever
+              been recorded, so every member is risky by the rule's own definition. It
+              starts meaning something the day the gate is wired.
+            */}
+            <select
+              className={ui.select}
+              name="durum"
+              defaultValue={durum || (chipKey === "risky" ? "risky" : "")}
+              aria-label="Duruma göre filtrele"
+            >
+              <option value="">Tüm durumlar</option>
+              <option value="active">Aktif</option>
+              <option value="risky">Riskli</option>
+            </select>
+            <button type="submit" className={`${ui.button} ${ui.buttonGhost}`}>
+              Filtrele
+            </button>
           </form>
         }
       />
@@ -98,7 +172,7 @@ export default async function MembersPage({
           <FilterChip
             key={c.key}
             href={hrefWith({ chip: c.key === "all" ? "" : c.key, page: undefined })}
-            active={c.key === chipKey}
+            active={c.key === activeChip}
           >
             {c.label}
           </FilterChip>
@@ -112,7 +186,7 @@ export default async function MembersPage({
           <EmptyState title="Liste yüklenemedi">{result.message}</EmptyState>
         ) : result.data.content.length === 0 ? (
           <EmptyState title="Üye bulunamadı">
-            {q || chipKey !== "all"
+            {q || chipKey !== "all" || membershipType || durum
               ? "Bu filtrelere uyan üye yok."
               : "Aktif üye kaydı bulunamadı."}
           </EmptyState>
