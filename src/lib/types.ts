@@ -191,7 +191,15 @@ export type MemberUsage = {
 export type MembershipPaymentMethod =
   | "NAKIT" | "KREDI_KARTI_TEK_CEKIM" | "KREDI_KARTI_3_TAKSIT" | "KREDI_KARTI_6_TAKSIT";
 
-/** A membership tier, for the conversion form's «Üyelik Tipi». */
+/**
+ * A membership tier, for the conversion form's «Üyelik Tipi» and the Üyeler list's
+ * «Üyelik» filter.
+ *
+ * ⚠️ Two endpoints serve this shape and they are not interchangeable.
+ * `/admin/membership-tiers` is **ADMIN only**; `/crm/membership-tiers` is open to all four
+ * panel roles and returns id and name alone. A screen four roles can open must read the
+ * CRM one, or SALES and RECEPTION get a 403 and a silently empty dropdown.
+ */
 export type MembershipTier = {
   id: string;
   name: string;
@@ -421,7 +429,8 @@ export type DeliveryState =
 export type CampaignListItem = {
   id: string;
   name: string;
-  channel: CampaignChannel;
+  /** Every channel this campaign sends on — one or several since V49. */
+  channels: CampaignChannel[];
   status: CampaignStatus;
   segmentId: string | null;
   segmentName: string | null;
@@ -484,7 +493,9 @@ export type CampaignRecipient = {
   userId: string | null;
   leadId: string | null;
   fullName: string | null;
-  /** The address at send time, not the member's current one. */
+  /** One member has one row per channel, so this is what says which message. */
+  channel: CampaignChannel;
+  /** The address at send time — an email address, or an E.164 phone number. */
   address: string;
   state: DeliveryState;
   deliveredAt: string | null;
@@ -496,12 +507,41 @@ export type CampaignRecipient = {
 export type CampaignDetail = {
   campaign: CampaignListItem;
   body: string | null;
+  /** Meta's approved template name. Only meaningful on a WhatsApp campaign. */
+  templateRef: string | null;
+  /** Its language code — part of the template's identity, not a formatting choice. */
+  templateLanguage: string | null;
+  /** Merge-field names filling the template's {{1}}, {{2}} … in order. */
+  templateParams: string[];
   funnel: CampaignFunnel;
+  /**
+   * The same funnel per channel — **empty unless the campaign used more than one**.
+   *
+   * A single-channel campaign would only draw a copy of the headline funnel beneath
+   * itself, which says nothing.
+   */
+  funnelByChannel: Partial<Record<CampaignChannel, CampaignFunnel>>;
   recipients: CampaignRecipient[];
   /** The live segment count, and only while the campaign can still be sent. */
   audiencePreview: number | null;
   /** Null when it can be sent; otherwise why not, in Turkish. */
   sendBlockedReason: string | null;
+  /**
+   * Per-channel refusals, for the confirmation dialog.
+   *
+   * ⚠️ Distinct from `sendBlockedReason`, which blocks the whole send. A campaign on
+   * both channels where only WhatsApp is unconfigured is still sendable — as an email —
+   * and this is what lets the dialog say so before the button is pressed.
+   */
+  channelBlockedReasons: Partial<Record<CampaignChannel, string>>;
+};
+
+/** What an admin sees for each channel. Keep in step with `CampaignChannel.label`. */
+export const CHANNEL_LABELS: Record<CampaignChannel, string> = {
+  EMAIL: "E-posta",
+  WHATSAPP: "WhatsApp",
+  SMS: "SMS",
+  PUSH: "Push",
 };
 
 // ── Facility reports — «Anlık rapor» and «Günlük rapor» (V43) ───────────────────

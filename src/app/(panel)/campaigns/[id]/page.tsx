@@ -124,16 +124,17 @@ export default async function CampaignDetailPage({
 
       <Card>
         <div className={styles.head}>
-          {/* The mockup's square mark. The channel's initial, which is the one thing
-              about a campaign that is true at a glance from across a desk. */}
+          {/* The mockup's square mark. The channels' initials — one letter for a
+              single-channel campaign as before, and «EW» for one that goes out on
+              both, which is the thing about it most worth knowing at a glance. */}
           <div className={styles.mark} aria-hidden="true">
-            {campaignChannelLabel(campaign.channel).charAt(0)}
+            {campaign.channels.map((c) => campaignChannelLabel(c).charAt(0)).join("")}
           </div>
 
           <div className={styles.headMain}>
             <h2 className={styles.headName}>{campaign.name}</h2>
             <p className={styles.headMeta}>
-              {campaignChannelLabel(campaign.channel)}
+              {campaign.channels.map(campaignChannelLabel).join(" · ")}
               {campaign.segmentName ? ` · Segment: ${campaign.segmentName}` : " · Segment seçilmedi"}
               {campaign.sentAt
                 ? ` · ${formatDateTime(campaign.sentAt)}`

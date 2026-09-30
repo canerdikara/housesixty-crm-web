@@ -217,7 +217,12 @@ function Row({ c }: { c: CampaignListItem }) {
         {c.subject && <div className={styles.subject}>{c.subject}</div>}
       </td>
       <td>
-        <span className={styles.channel}>{campaignChannelLabel(c.channel)}</span>
+        {/* One chip per channel, in the enum's own order, so «E-posta · WhatsApp»
+            always reads the same way round and two campaigns on the same pair look
+            alike. */}
+        <span className={styles.channel}>
+          {c.channels.map(campaignChannelLabel).join(" · ")}
+        </span>
       </td>
       <td className={styles.segment}>{c.segmentName ?? <span className={ui.faint}>—</span>}</td>
       <td>

@@ -326,3 +326,162 @@
 .audienceValue { margin: 6px 0 0; font-family: var(--font-serif); font-size: 30px; line-height: 1; }
 .audienceLabel { margin: 0; font-size: 12.5px; color: var(--text-muted); }
 .audienceNote { margin: 8px 0 0; font-size: 11.5px; color: var(--text-faint); line-height: 1.5; }
+
+/* ── Channel picker — V49 ──────────────────────────────────────────────────── */
+
+/*
+ * «E-posta» and «WhatsApp» as two toggle buttons side by side.
+ *
+ * Buttons rather than checkboxes because both states have to be legible at a glance on a
+ * screen whose next control sends to the whole membership — an unticked checkbox and a
+ * ticked one differ by a few pixels, and the cost of misreading this particular pair is a
+ * WhatsApp message nobody meant to send.
+ */
+.channelPicker {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.channelButton {
+  flex: 0 0 auto;
+  padding: 9px 18px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--card-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.channelButton:hover { border-color: var(--accent); color: var(--text); }
+
+/*
+ * The "on" state carries **three** cues, not one: fill, border and weight.
+ *
+ * Colour alone would leave the two buttons near-identical to a colour-blind reader, on
+ * the one control in this panel where reading it wrong is expensive.
+ */
+.channelButtonOn {
+  color: var(--accent-ink);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.channelButtonOn:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+
+/* ── The WhatsApp template card ────────────────────────────────────────────── */
+
+.templateCard {
+  margin-top: 4px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card-2);
+}
+
+.templateTitle {
+  margin: 0 0 6px;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+/* ── The send confirmation dialog — V49 ────────────────────────────────────── */
+
+/*
+ * A modal, where V42 had an inline arming step.
+ *
+ * The thing this has to make unmissable is **which channels**, and an inline block that
+ * unfolds under a button the admin has already pressed reads as "yes, I know". A dialog
+ * over the page interrupts, which is the correct amount of friction for the one action in
+ * this panel that cannot be undone.
+ */
+.confirmOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(38, 35, 32, 0.55);
+}
+
+.confirmBox {
+  width: 100%;
+  max-width: 460px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  padding: 20px 22px;
+  background: var(--card);
+  border: 1px solid var(--crit);
+  border-radius: var(--radius);
+  box-shadow: 0 18px 48px rgba(38, 35, 32, 0.28);
+}
+
+.confirmTitle {
+  margin: 0 0 10px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.confirmLead {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.confirmLabel {
+  margin: 0 0 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.confirmChannels {
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.confirmChannels li {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.confirmChannels em { font-style: normal; color: var(--text-muted); }
+
+.confirmChannelOn > span:first-child { color: var(--good); font-weight: 700; }
+
+/*
+ * A blocked channel is **muted, not red**.
+ *
+ * Nothing has gone wrong — the server simply has no credentials for it, or the template
+ * is missing. Colouring it like a failure teaches whoever reads this dialog weekly that
+ * the normal state of their panel is broken.
+ */
+.confirmChannelOff { color: var(--text-muted); }
+.confirmChannelOff > span:first-child { color: var(--text-faint); font-weight: 700; }
+
+.confirmWarning {
+  margin: 0;
+  padding: 10px 12px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  border: 1px solid var(--crit);
+  border-radius: var(--radius-sm);
+  background: var(--crit-bg);
+}

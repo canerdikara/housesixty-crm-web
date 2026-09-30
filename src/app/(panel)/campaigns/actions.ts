@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { apiRequest } from "@/lib/api";
 import type { FormState } from "@/lib/formState";
-import type { CampaignDetail } from "@/lib/types";
+import type { CampaignChannel, CampaignDetail } from "@/lib/types";
 
 /**
  * Every write the campaign screens make.
@@ -36,6 +36,10 @@ export async function saveCampaignAction(input: {
   segmentId: string | null;
   subject: string;
   body: string;
+  channels: CampaignChannel[];
+  templateRef: string;
+  templateLanguage: string;
+  templateParams: string[];
 }): Promise<SaveResult> {
   const editing = Boolean(input.id);
   const result = await apiRequest<CampaignDetail>(
@@ -47,10 +51,15 @@ export async function saveCampaignAction(input: {
         segmentId: input.segmentId,
         subject: input.subject,
         body: input.body,
-        // Only on create. The channel is fixed once the copy is written for a medium,
-        // and the backend ignores it on an update — sending it would suggest otherwise
-        // to the next reader.
-        ...(editing ? {} : { channel: "EMAIL" }),
+        // Sent on both create and update since V49. The old comment here said the
+        // channel was fixed once the copy was written and that the backend ignored it
+        // on an update; both stopped being true when a campaign gained a *set* of
+        // channels — adding WhatsApp to a campaign whose email copy is already written
+        // is the ordinary case, not a medium swap.
+        channels: input.channels,
+        templateRef: input.templateRef,
+        templateLanguage: input.templateLanguage,
+        templateParams: input.templateParams,
       },
     }
   );
