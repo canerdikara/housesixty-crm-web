@@ -72,39 +72,17 @@ export default async function TurnstilePage() {
         <TurnstileScanner />
       </Card>
 
-      <Card>
-        <h2 className={styles.helpTitle}>Gerçek turnikeyi bağlayacak kişi için</h2>
-        <p className={styles.helpText}>
-          Bu sayfanın yaptığı tek şey, okuduğu QR içeriğini aşağıdaki isteğe koymaktır.
-          Donanım da aynısını göndermelidir:
-        </p>
-        <pre className={styles.code}>{`POST https://api.housesixty.com/api/v1/access/qr/validate
-Content-Type: application/json
+      {/*
+        ⚠️ The integrator's reference card was removed on the user's request (2026-09-30).
+        It printed the exact `POST /access/qr/validate` request this page sends, so that
+        whoever wires the real turnstile could copy it off the screen.
 
-{
-  "token": "<QR kodunun içeriği>",
-  "entryPoint": "MAIN_GATE",   // veya SPA_ENTRANCE, GYM_ENTRANCE
-  "direction": "ENTRY"          // veya EXIT
-}`}</pre>
-        <ul className={styles.helpList}>
-          <li>
-            <strong>Kimlik doğrulama gerekmez.</strong> Turnikenin kimlik bilgisi yoktur;
-            güvenlik, kodun <strong>60 saniye</strong> geçerli olması ve{" "}
-            <strong>yalnızca bir kez</strong> kullanılabilmesidir.
-          </li>
-          <li>
-            <strong>`direction` gönderilmezse `ENTRY` varsayılır</strong>, yani mevcut bir
-            entegrasyon değiştirilmeden çalışmaya devam eder. Ancak{" "}
-            <strong>çıkış okutulmadığı sürece</strong> «Anlık rapor» içerideki kişi
-            sayısını yalnızca dört saatlik üst sınırla düşürür.
-          </li>
-          <li>
-            <strong>`entryPoint` okuyucunun kendi kimliğidir</strong>, üyenin telefonunun
-            tahmini değil. Salon girişine okuyucu takıldığında `GYM_ENTRANCE` göndermesi
-            yeterlidir; rapordaki «Salon» sütunu kendiliğinden dolar.
-          </li>
-        </ul>
-      </Card>
+        It is not lost — the same request, and the three notes that went with it (no
+        authentication, `direction` defaults to ENTRY, `entryPoint` is the reader's own
+        identity), are in `crm/PHASE4-REPORTS-DEPLOY.md` and HANDOVER.md §1t. If the
+        hardware integration is ever handed to someone outside this repo, send them that
+        rather than this page.
+      */}
     </PageBody>
   );
 }

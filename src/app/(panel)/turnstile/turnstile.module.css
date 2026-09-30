@@ -196,31 +196,4 @@
   color: var(--text-muted);
 }
 
-/* ── The integrator's note ─────────────────────────────────────────────────── */
-
-.helpTitle { margin: 0 0 6px; font-size: 15px; }
-.helpText { margin: 0 0 12px; font-size: 12.5px; color: var(--text-muted); line-height: 1.6; }
-
-.code {
-  margin: 0;
-  padding: 14px 16px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--card-2);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 12px;
-  line-height: 1.6;
-  overflow-x: auto;
-  white-space: pre;
-}
-
-.helpList {
-  margin: 14px 0 0;
-  padding-left: 18px;
-  font-size: 12.5px;
-  line-height: 1.7;
-  color: var(--text-muted);
-}
-
-.helpList li + li { margin-top: 7px; }
-.helpList strong { color: var(--text); }
+/* The integrator's note was removed on 2026-09-30 — see the comment in page.tsx. */
