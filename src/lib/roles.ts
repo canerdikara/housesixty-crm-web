@@ -122,6 +122,8 @@ export function roleLabel(role: string): string {
       return "Antrenör";
     case "GUEST":
       return "Misafir";
+    case "EMPLOYEE":
+      return "Çalışan";
     default:
       return role;
   }

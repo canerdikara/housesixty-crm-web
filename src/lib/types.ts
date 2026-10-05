@@ -847,3 +847,47 @@ export type EventDetail = {
   /** Same switch as campaigns. The two `…Blocked` fields say why a channel cannot send. */
   sending: { sendingEnabled: boolean; emailBlocked: string | null; whatsappBlocked: string | null };
 };
+
+// ── Çalışan takibi (2026-10-05) ──────────────────────────────────────────────
+
+export type Employee = {
+  userId: string;
+  fullName: string;
+  email: string;
+  phone: string | null;
+  isActive: boolean;
+  createdAt: string;
+};
+
+export type EmployeeScan = { at: string; direction: "ENTRY" | "EXIT"; entryPoint: string | null };
+
+/**
+ * One employee's day. `openEntry` is an ENTRY with no EXIT after it — «çıkış yok», or on
+ * today «içeride». An open stretch adds **nothing** to `workedMinutes`: the backend does
+ * not guess a finish time for something that may be used for pay.
+ */
+export type EmployeeDay = {
+  date: string;
+  firstEntry: string | null;
+  lastExit: string | null;
+  workedMinutes: number;
+  scanCount: number;
+  openEntry: boolean;
+};
+
+export type EmployeeMonthRow = {
+  userId: string;
+  fullName: string;
+  isActive: boolean;
+  days: EmployeeDay[];
+  totalMinutes: number;
+  daysPresent: number;
+  /** Days before today that ended with no exit scan. */
+  openDays: number;
+};
+
+export type EmployeeMonth = { month: string; today: string; employees: EmployeeMonthRow[] };
+
+export type EmployeeDayRow = { userId: string; fullName: string; scans: EmployeeScan[]; summary: EmployeeDay | null };
+
+export type EmployeeDayView = { date: string; today: string; employees: EmployeeDayRow[] };

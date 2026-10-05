@@ -62,6 +62,14 @@ export const NAV: readonly NavItem[] = [
    */
   { href: "/income", label: "Gelirler", roles: [ROLE.ADMIN] },
 
+  /*
+   * ADMIN alone, like Gelirler and for a similar reason: staff arrival and departure times
+   * are personnel records — the kind a dispute about pay is settled from — and no other
+   * panel role's work needs them. New scope (2026-10-05), placed beside the other
+   * ADMIN-only management screen rather than among the member-facing ones.
+   */
+  { href: "/employees", label: "Çalışan takibi", roles: [ROLE.ADMIN] },
+
   { href: "/segments", label: "Segmentler", roles: [ROLE.ADMIN, ROLE.SALES, ROLE.MARKETING] },
   { href: "/campaigns", label: "Kampanyalar", roles: [ROLE.ADMIN, ROLE.SALES, ROLE.MARKETING] },
   { href: "/events", label: "Etkinlikler", roles: ALL },

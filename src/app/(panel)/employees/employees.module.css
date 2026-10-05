@@ -1,0 +1,103 @@
+/*
+ * «Çalışan takibi» — the month grid and the day timeline. CSS only, like every screen.
+ */
+
+.cardTitle { font-size: 16px; margin: 0; }
+.cardSub { margin: 3px 0 14px; color: var(--text-muted); font-size: 12.5px; }
+.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* ── View switch + month stepper ──────────────────────────────────────────── */
+
+.toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.stepper { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; }
+.stepper a, .stepperOff {
+  display: inline-flex; width: 30px; height: 30px; align-items: center; justify-content: center;
+  border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); text-decoration: none;
+}
+.stepperOff { color: var(--text-faint); }
+.monthName { min-width: 120px; text-align: center; }
+
+/* ── Month grid ───────────────────────────────────────────────────────────── */
+
+/*
+ * Thirty-one day columns do not fit a laptop at a readable size, so the grid scrolls
+ * sideways inside its card and the name column stays pinned — losing whose row you are
+ * reading halfway across the month is the failure this prevents.
+ */
+.gridWrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.grid { border-collapse: separate; border-spacing: 0; font-size: 11.5px; min-width: 100%; }
+.grid th, .grid td { border-bottom: 1px solid var(--border); padding: 0; }
+.grid thead th {
+  position: sticky; top: 0; background: var(--card-2); font-weight: 600; color: var(--text-muted);
+  padding: 7px 4px; text-align: center; white-space: nowrap;
+}
+.weekend { background: color-mix(in srgb, var(--chip) 55%, transparent); }
+.nameCol {
+  position: sticky; left: 0; z-index: 1; background: var(--card);
+  min-width: 170px; max-width: 200px; padding: 8px 12px !important; text-align: left !important;
+  border-right: 1px solid var(--border); font-size: 12.5px; font-weight: 600;
+}
+.grid thead .nameCol { background: var(--card-2); z-index: 2; }
+.inactive { color: var(--text-faint); font-weight: 400; font-size: 11px; display: block; }
+
+.cell { min-width: 52px; text-align: center; vertical-align: middle; }
+.cellLink {
+  display: block; padding: 6px 3px; color: inherit; text-decoration: none; line-height: 1.35;
+  font-variant-numeric: tabular-nums;
+}
+.cellLink:hover { background: var(--chip); }
+.cellHours { font-weight: 700; font-size: 12px; }
+.cellTimes { color: var(--text-muted); font-size: 10.5px; }
+
+/* A day that ended with no exit scan: amber, and it says so — never a silent short day. */
+.cellOpen { background: var(--warn-bg); }
+.cellOpenLabel { color: var(--warn); font-weight: 600; font-size: 10px; }
+/* Today's open stretch is someone at work, not a fault: green. */
+.cellHere { background: var(--good-bg); }
+.cellHereLabel { color: var(--good); font-weight: 600; font-size: 10px; }
+
+.totalCol {
+  position: sticky; right: 0; background: var(--card); border-left: 1px solid var(--border);
+  padding: 6px 10px !important; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums;
+}
+.grid thead .totalCol { background: var(--card-2); }
+.totalHours { font-weight: 700; font-size: 12.5px; }
+.totalSub { color: var(--text-muted); font-size: 10.5px; }
+
+.legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 10px; font-size: 11.5px; color: var(--text-muted); }
+.swatch { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; border: 1px solid var(--border); }
+
+/* ── Day view ─────────────────────────────────────────────────────────────── */
+
+.dayLayout { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 1000px) { .dayLayout { grid-template-columns: minmax(0, 1fr); } }
+
+.axis { position: relative; height: 18px; margin: 0 0 4px 180px; font-size: 10.5px; color: var(--text-faint); }
+.axis span { position: absolute; transform: translateX(-50%); }
+
+.lane { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 10px; align-items: center; padding: 8px 0; border-top: 1px solid var(--border); }
+.laneName { font-size: 12.5px; font-weight: 600; }
+.laneSub { display: block; font-weight: 400; font-size: 11px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+
+/*
+ * ⚠️ `display: block` on the track and every span inside it: an inline span ignores
+ * height and width, the trap the campaign funnel and the event bars both hit.
+ */
+.track { display: block; position: relative; height: 22px; background: var(--grid); border-radius: var(--radius-sm); }
+.stretch { display: block; position: absolute; top: 3px; bottom: 3px; background: var(--good); border-radius: 3px; opacity: 0.85; }
+.stretchOpen { background: var(--warn); opacity: 0.6; }
+.tick { display: block; position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; }
+.tickIn { background: var(--text); }
+.tickOut { background: var(--crit); }
+
+.scanList { margin: 6px 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 6px; font-size: 11px; }
+.scanList li { padding: 1px 7px; border-radius: var(--radius-pill); border: 1px solid var(--border); font-variant-numeric: tabular-nums; }
+.scanIn { color: var(--text); }
+.scanOut { color: var(--crit); }
+
+/* ── Employees card ───────────────────────────────────────────────────────── */
+
+.inline { display: inline-flex; gap: 6px; align-items: center; margin: 0; }
+.inlineError { font-size: 11px; color: var(--crit); }
+.linkButton { font: inherit; font-size: 12px; border: 0; padding: 0; background: none; color: var(--accent); cursor: pointer; }
+.linkButton:disabled { color: var(--text-faint); cursor: default; }
