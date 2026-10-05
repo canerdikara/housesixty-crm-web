@@ -378,3 +378,48 @@ export async function updateTermAction(_prev: FormState, form: FormData): Promis
       : "Dönem güncellendi."
   );
 }
+
+/**
+ * Changes the member's actual tier — `memberships.tier_id`, which gates booking and the
+ * turnstile — and records the sale as a term beside it.
+ *
+ * ⚠️ Not `createTermAction`. A term's «Üyelik tipi» is free text in the CRM's history
+ * table, and saving «Kurucu Üye» there changed nothing the member could feel
+ * (crm/HANDOVER.md §1aa). This is the panel's counterpart to the admin app's assign.
+ *
+ * ADMIN-only at the backend. The amount and payment terms are required, as on conversion:
+ * this is a sale, and the one moment its figure is known.
+ */
+export async function changeMembershipAction(_prev: FormState, form: FormData): Promise<FormState> {
+  const userId = str(form, "userId");
+  const tierId = str(form, "tierId");
+  const startDate = str(form, "startDate");
+  const endDate = str(form, "endDate");
+  const amountPaid = money(form, "amountPaid");
+  const paymentMethod = str(form, "paymentMethod");
+  const installments = Number(str(form, "installments")) || null;
+
+  if (!tierId) return { error: "Üyelik tipi seçin." };
+  if (!startDate || !endDate) return { error: "Başlangıç ve bitiş tarihi gerekli." };
+  if (endDate < startDate) return { error: "Bitiş tarihi başlangıçtan önce olamaz." };
+  if (amountPaid === null) return { error: "Üyelik tutarı gerekli." };
+  if (Number(amountPaid) < 0) return { error: "Üyelik tutarı negatif olamaz." };
+  if (!paymentMethod) return { error: "Ödeme şekli gerekli." };
+  if (paymentMethod === PAYMENT_METHOD_INSTALMENTS && !installments) {
+    return { error: "Taksit sayısı gerekli." };
+  }
+
+  return write(
+    `/api/v1/crm/members/${userId}/membership`,
+    {
+      tierId,
+      startDate,
+      endDate,
+      amountPaid,
+      paymentMethod,
+      installments: paymentMethod === PAYMENT_METHOD_INSTALMENTS ? installments : null,
+    },
+    "PUT",
+    "Üyelik değiştirildi."
+  );
+}

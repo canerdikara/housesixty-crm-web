@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState } from "react";
 import { ActionForm, Disclosure, SubmitButton, formStyles as f, FormMessage } from "@/components/Form";
 import {
+  changeMembershipAction,
   createTermAction,
   saveInterestsAction,
   savePreferencesAction,
@@ -26,7 +27,7 @@ import {
   EMERGENCY_GENDERS,
 } from "@/lib/labels";
 import type { FormState } from "@/lib/formState";
-import type { MemberDetail, MembershipTerm } from "@/lib/types";
+import type { MemberDetail, MembershipTerm, MembershipTier } from "@/lib/types";
 
 /**
  * The editing controls on the Üye 360 — mockup screen 7.
@@ -331,6 +332,64 @@ function TermStatusFields({ term }: { term?: MembershipTerm }) {
   );
 }
 
+/**
+ * «Üyeliği değiştir» — the member's real tier, not a term.
+ *
+ * ⚠️ Exists because «Dönem ekle» looked like it promoted people and did not: a term's type
+ * is free text in the CRM's history, while booking, the turnstile and the Üyeler list all
+ * read `memberships.tier_id` (crm/HANDOVER.md §1aa). This writes that, and the backend
+ * records the term alongside it, so nothing here needs a second form.
+ *
+ * A `<select>` of the club's tiers rather than the term editor's free-text datalist —
+ * this one has to name a tier that exists. ADMIN-only; the page renders it for nobody
+ * else, and passes no tiers to anyone else either.
+ */
+export function ChangeMembership({ member, tiers }: { member: MemberDetail; tiers: MembershipTier[] }) {
+  if (tiers.length === 0) return null;
+  // Preselect anything but the current tier: changing to the same one is the rare case.
+  const other = tiers.find((t) => t.name !== member.membershipType) ?? tiers[0]!;
+  return (
+    <Disclosure label="Üyeliği değiştir">
+      <ActionForm action={changeMembershipAction} hiddenFields={{ userId: member.userId }}>
+        <p className={f.hint}>
+          Şu anki üyelik: <strong>{member.membershipType ?? "yok"}</strong>. Kaydedince mevcut
+          üyelik sona erer, yenisi başlar ve bir dönem kaydı eklenir.
+        </p>
+        <div className={f.row}>
+          <div className={f.field}>
+            <label className={`${f.label} ${f.required}`} htmlFor="m-tier">Yeni üyelik tipi</label>
+            <select id="m-tier" name="tierId" className={f.select} required defaultValue={other.id}>
+              {tiers.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+            </select>
+          </div>
+        </div>
+        <div className={f.row}>
+          <div className={f.field}>
+            <label className={`${f.label} ${f.required}`} htmlFor="m-start">Başlangıç</label>
+            <input id="m-start" name="startDate" type="date" className={f.input} required
+              defaultValue={izmirToday()} />
+          </div>
+          <div className={f.field}>
+            <label className={`${f.label} ${f.required}`} htmlFor="m-end">Bitiş</label>
+            <input id="m-end" name="endDate" type="date" className={f.input} required
+              defaultValue={member.membershipEnd ?? izmirTodayPlusYears(1)} />
+          </div>
+        </div>
+        <div className={f.row}>
+          <div className={f.field}>
+            <label className={`${f.label} ${f.required}`} htmlFor="m-amount">Üyelik tutarı (₺)</label>
+            <input id="m-amount" name="amountPaid" className={f.input} required
+              inputMode="decimal" placeholder="örn. 12000" />
+            <p className={f.hint}>Gelir raporuna bu tutar yazılır. Ücretsiz geçişse 0 girin.</p>
+          </div>
+          <TermPaymentFields idPrefix="m" required />
+        </div>
+        <div className={f.actions}><SubmitButton>Üyeliği değiştir</SubmitButton></div>
+      </ActionForm>
+    </Disclosure>
+  );
+}
+
 export function AddTerm({ member }: { member: MemberDetail }) {
   return (
     <Disclosure label="Dönem ekle">
@@ -339,6 +398,10 @@ export function AddTerm({ member }: { member: MemberDetail }) {
           <label className={`${f.label} ${f.required}`} htmlFor="t-new-type">Üyelik tipi</label>
           <input id="t-new-type" name="membershipType" className={f.input} required maxLength={80}
             list={TIER_LIST_ID} defaultValue={member.membershipType ?? ""} />
+          <p className={f.hint}>
+            Yalnızca dönem kaydıdır; üyenin gerçek üyelik tipini değiştirmez. Bunun için
+            «Üyeliği değiştir».
+          </p>
         </div>
 
         <div className={f.row}>
@@ -408,6 +471,10 @@ export function EditTerm({ term }: { term: MembershipTerm }) {
           </label>
           <input id={`t-${term.id}-type`} name="membershipType" className={f.input} required
             maxLength={80} list={TIER_LIST_ID} defaultValue={term.membershipType} />
+          <p className={f.hint}>
+            Yalnızca dönem kaydıdır; üyenin gerçek üyelik tipini değiştirmez. Bunun için
+            «Üyeliği değiştir».
+          </p>
         </div>
 
         <div className={f.row}>
@@ -468,22 +535,35 @@ export function EditTerm({ term }: { term: MembershipTerm }) {
  * admin could do nothing about, and the same shape of bug the member app shipped with
  * `guestsAllowed`.
  */
-function TermPaymentFields({ term }: { term?: MembershipTerm }) {
+function TermPaymentFields({
+  term,
+  idPrefix,
+  required = false,
+}: {
+  term?: MembershipTerm;
+  /** Set when two of these can be on screen at once, so their ids do not collide. */
+  idPrefix?: string;
+  /** A sale (conversion, «Üyeliği değiştir») must say how it was paid; a term need not. */
+  required?: boolean;
+}) {
   const [method, setMethod] = useState(term?.paymentMethod ?? "");
-  const id = term ? `t-${term.id}` : "t-new";
+  const id = idPrefix ?? (term ? `t-${term.id}` : "t-new");
 
   return (
     <>
       <div className={f.field}>
-        <label className={f.label} htmlFor={`${id}-method`}>Ödeme şekli</label>
+        <label className={`${f.label} ${required ? f.required : ""}`} htmlFor={`${id}-method`}>
+          Ödeme şekli
+        </label>
         <select
           id={`${id}-method`}
           name="paymentMethod"
           className={f.select}
           value={method}
+          required={required}
           onChange={(e) => setMethod(e.target.value)}
         >
-          <option value="">— girilmemiş —</option>
+          <option value="">{required ? "— seçin —" : "— girilmemiş —"}</option>
           {PAYMENT_METHODS.map((m) => (
             <option key={m} value={m}>{paymentMethodLabel(m)}</option>
           ))}
@@ -500,9 +580,11 @@ function TermPaymentFields({ term }: { term?: MembershipTerm }) {
 
       {method === PAYMENT_METHOD_INSTALMENTS && (
         <div className={f.field}>
-          <label className={f.label} htmlFor={`${id}-inst`}>Taksit sayısı</label>
+          <label className={`${f.label} ${required ? f.required : ""}`} htmlFor={`${id}-inst`}>
+            Taksit sayısı
+          </label>
           <input id={`${id}-inst`} name="installments" className={f.input}
-            type="number" min={2} max={36} step={1}
+            type="number" min={2} max={36} step={1} required={required}
             defaultValue={term?.installments ?? ""} placeholder="örn. 9" />
           <p className={f.hint}>3 ve 6 dışında herhangi bir sayı girilebilir.</p>
         </div>

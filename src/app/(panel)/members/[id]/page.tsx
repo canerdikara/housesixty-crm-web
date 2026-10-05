@@ -15,9 +15,10 @@ import {
 } from "@/lib/labels";
 import { canWriteMembers } from "@/lib/roles";
 import { readSession } from "@/lib/session";
-import type { MemberDetail } from "@/lib/types";
+import type { MemberDetail, MembershipTier } from "@/lib/types";
 import {
   AddTerm,
+  ChangeMembership,
   EditInterests,
   EditPreferences,
   ContractActions,
@@ -56,7 +57,17 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
   const session = await readSession();
   const canWrite = canWriteMembers(session?.user.role);
 
-  const result = await apiRequest<MemberDetail>(`/api/v1/crm/members/${id}`);
+  const isAdmin = session?.user.role === "ADMIN";
+
+  const [result, tiersResult] = await Promise.all([
+    apiRequest<MemberDetail>(`/api/v1/crm/members/${id}`),
+    // Only fetched for the one role that may change a tier. A failure here costs the
+    // «Üyeliği değiştir» control, not the 360.
+    isAdmin
+      ? apiRequest<MembershipTier[]>("/api/v1/crm/membership-tiers")
+      : Promise.resolve(null),
+  ]);
+  const tiers = tiersResult?.kind === "ok" ? tiersResult.data : [];
   if (result.kind === "unauthorized") redirect("/login");
   if (result.kind === "error" && result.status === 404) notFound();
 
@@ -232,6 +243,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
                 </div>
               ))
             )}
+            {isAdmin && <ChangeMembership member={m} tiers={tiers} />}
             {canWrite && (
               <>
                 <AddTerm member={m} />
