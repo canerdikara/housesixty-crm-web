@@ -1,0 +1,236 @@
+/*
+ * «Etkinlikler» — mockup screens 13 (the list) and 14 (the detail).
+ *
+ * CSS and nothing else, like the other screens: the capacity bars are two spans.
+ */
+
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+.cardTitle { font-size: 16px; margin: 0; }
+.cardSub { margin: 3px 0 14px; color: var(--text-muted); font-size: 12.5px; }
+
+/* ── List — upcoming cards ─────────────────────────────────────────────────── */
+
+.upcoming {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.upCard {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card-2);
+  color: inherit;
+  text-decoration: none;
+  min-width: 0;
+}
+
+.upCard:hover { border-color: var(--accent); }
+
+/* The mockup's date square. */
+.dateMark {
+  flex: none;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--accent-ink);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.dateMarkDay { font-family: var(--font-serif); font-size: 21px; }
+.dateMarkMonth { margin-top: 4px; font-size: 10.5px; }
+
+/* A cancelled event's square goes quiet rather than red — nothing is wrong, it is off. */
+.dateMarkMuted { background: var(--chip); color: var(--text-muted); }
+
+.upMain { flex: 1; min-width: 0; }
+.upTitle {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.upMeta { margin: 3px 0 9px; font-size: 11.5px; color: var(--text-muted); }
+
+.bar { display: flex; align-items: center; gap: 10px; }
+
+/*
+ * ⚠️ `display: block` on both spans is load-bearing — an inline span ignores `height`.
+ * The same trap the campaign funnel fell into (campaigns.module.css, .stageTrack).
+ */
+.barTrack {
+  display: block;
+  flex: 1;
+  height: 7px;
+  border-radius: var(--radius-pill);
+  background: var(--grid);
+  overflow: hidden;
+}
+.barFill { display: block; height: 100%; border-radius: var(--radius-pill); }
+.barGood { background: var(--good); }
+.barWarn { background: var(--warn); }
+.barCrit { background: var(--crit); }
+.barLabel { font-size: 11.5px; color: var(--text-muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* ── The type pill, outlined like the campaign channel pill ────────────────── */
+
+.typePill {
+  display: inline-block;
+  font-size: 11.5px;
+  padding: 2px 9px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+/* ── Detail — header strip ─────────────────────────────────────────────────── */
+
+.head { display: flex; align-items: flex-start; gap: 18px; flex-wrap: wrap; }
+.headMain { flex: 1 1 260px; min-width: 0; }
+.headName { margin: 0; font-size: 21px; line-height: 1.25; }
+.headMeta { margin: 4px 0 10px; font-size: 12.5px; color: var(--text-muted); }
+.headTags { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.headStats { display: flex; gap: 24px; padding-left: 22px; border-left: 1px solid var(--border); }
+.stat { text-align: center; }
+.statValue { margin: 0; font-family: var(--font-serif); font-size: 24px; line-height: 1; }
+.statLabel { margin: 5px 0 0; font-size: 11.5px; color: var(--text-muted); }
+
+.description {
+  margin: 14px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-muted);
+  white-space: pre-wrap;
+}
+
+/* ── Detail — two columns ──────────────────────────────────────────────────── */
+
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 18px;
+  align-items: start;
+}
+
+.side { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+
+@media (max-width: 1080px) {
+  .split { grid-template-columns: minmax(0, 1fr); }
+  .headStats { padding-left: 0; border-left: none; }
+}
+
+/* ── Detail — occupancy card ───────────────────────────────────────────────── */
+
+.big { margin: 4px 0 0; font-family: var(--font-serif); font-size: 34px; line-height: 1; }
+.bigOf { font-family: var(--font-sans, inherit); font-size: 14px; color: var(--text-muted); margin-left: 6px; }
+
+.kv { margin: 14px 0 0; padding: 0; list-style: none; }
+.kv li {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+  font-size: 12.5px;
+}
+.kv li span:first-child { color: var(--text-muted); }
+.kv li span:last-child { font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ── Detail — invitee rows ─────────────────────────────────────────────────── */
+
+.rowNote { margin-top: 2px; font-size: 11.5px; color: var(--text-faint); }
+.rowActions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+
+/* The per-row controls are small forms; they must not inherit the form stack's gaps. */
+.inline { display: inline-flex; gap: 6px; align-items: center; margin: 0; }
+.inlineError { font-size: 11px; color: var(--crit); max-width: 22ch; }
+
+.miniSelect {
+  font: inherit;
+  font-size: 12px;
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  color: var(--text);
+}
+
+.miniButton {
+  font: inherit;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.miniButton:hover { border-color: var(--accent); }
+.miniButton:disabled { opacity: 0.5; cursor: default; }
+
+/* «Geldi» — checked in. Three cues (fill, border, tick) so it reads without colour. */
+.miniButtonOn { background: var(--good-bg); border-color: var(--good); color: var(--good); font-weight: 600; }
+
+.linkButton {
+  font: inherit;
+  font-size: 12px;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--accent);
+  cursor: pointer;
+}
+.linkButton:disabled { color: var(--text-faint); cursor: default; }
+
+/* ── Detail — member search results ────────────────────────────────────────── */
+
+.results { margin: 10px 0 0; padding: 0; list-style: none; }
+.results li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 0;
+  border-top: 1px solid var(--border);
+  font-size: 12.5px;
+}
+.resultTier { color: var(--text-muted); font-size: 11.5px; }
+
+/* ── Sending ───────────────────────────────────────────────────────────────── */
+
+.notice {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--warn-bg);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.channels { display: flex; gap: 14px; flex-wrap: wrap; margin: 4px 0 10px; font-size: 13px; }
+.channels label { display: inline-flex; gap: 6px; align-items: center; }
+.channelBlocked { color: var(--text-faint); font-size: 11.5px; display: block; margin-top: 2px; }
+
+.confirm {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--crit);
+  border-radius: var(--radius-sm);
+  background: var(--crit-bg);
+  font-size: 12.5px;
+  line-height: 1.55;
+}

@@ -761,3 +761,89 @@ export type Income = {
   /** True while no payment has ever been collected — i.e. no sanal POS is configured. */
   nothingEverCollected: boolean;
 };
+
+// ── Events (V50) ─────────────────────────────────────────────────────────────
+
+export type EventType = "TALK" | "SOCIAL" | "PARTNER" | "WORKSHOP" | "OTHER";
+export type EventStatus = "DRAFT" | "PUBLISHED" | "COMPLETED" | "CANCELLED";
+export type EventRsvp = "PENDING" | "ACCEPTED" | "DECLINED";
+
+/**
+ * A row of «Etkinlikler» — an event, or a tournament read from its own domain.
+ *
+ * For a tournament (`kind: "TOURNAMENT"`) the invitation columns are **null, not zero**:
+ * nobody is invited to a tournament, they register. `registered` carries that instead,
+ * and `startTime` is null because tournaments have no time of day.
+ */
+export type EventListItem = {
+  kind: "EVENT" | "TOURNAMENT";
+  id: string;
+  title: string;
+  /** An EventType, or "TOURNAMENT". */
+  type: string;
+  eventDate: string;
+  startTime: string | null;
+  location: string | null;
+  capacity: number | null;
+  /** An EventStatus, or a TournamentStatus for a tournament. */
+  status: string;
+  invited: number | null;
+  responded: number | null;
+  accepted: number | null;
+  attended: number | null;
+  registered: number | null;
+};
+
+export type EventList = { upcoming: EventListItem[]; past: EventListItem[] };
+
+export type EventStats = {
+  invited: number;
+  responded: number;
+  accepted: number;
+  declined: number;
+  pending: number;
+  attended: number;
+  walkIns: number;
+  /** Null when the event has no capacity limit. */
+  freeSpots: number | null;
+  sentCount: number;
+};
+
+export type EventInvitee = {
+  userId: string;
+  fullName: string;
+  tier: string | null;
+  rsvp: EventRsvp;
+  rsvpSource: "MEMBER" | "STAFF" | null;
+  respondedAt: string | null;
+  sentAt: string | null;
+  remindedAt: string | null;
+  lastSendNote: string | null;
+  attended: boolean;
+};
+
+export type EventWalkIn = {
+  userId: string;
+  fullName: string;
+  tier: string | null;
+  checkedInAt: string;
+};
+
+export type EventDetail = {
+  id: string;
+  title: string;
+  description: string | null;
+  type: EventType;
+  eventDate: string;
+  startTime: string;
+  location: string | null;
+  capacity: number | null;
+  status: EventStatus;
+  segmentId: string | null;
+  segmentName: string | null;
+  stats: EventStats;
+  invitees: EventInvitee[];
+  walkIns: EventWalkIn[];
+  /** Same switch as campaigns. The two `…Blocked` fields say why a channel cannot send. */
+  sending: { sendingEnabled: boolean; emailBlocked: string | null; whatsappBlocked: string | null };
+};

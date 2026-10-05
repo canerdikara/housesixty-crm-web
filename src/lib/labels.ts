@@ -294,6 +294,7 @@ export function segmentFieldLabel(v: string): string {
     case "join_date_days": return "Üyelik yaşı (gün)";
     case "interest": return "İlgi alanı";
     case "tournament_count": return "Turnuva katılımı";
+    case "event_attendance_count": return "Etkinlik katılımı";
     case "lesson_count": return "Ders katılımı";
     default: return v;
   }
@@ -426,6 +427,47 @@ export function entryPointLabel(v: string): string {
     case "MAIN_GATE": return "Ana giriş";
     case "SPA_ENTRANCE": return "Spa girişi";
     case "GYM_ENTRANCE": return "Salon girişi";
+    default: return v;
+  }
+}
+
+// ── Events (V50) ─────────────────────────────────────────────────────────────
+
+export const EVENT_TYPES = ["TALK", "SOCIAL", "PARTNER", "WORKSHOP", "OTHER"] as const;
+export const EVENT_STATUSES = ["DRAFT", "PUBLISHED", "COMPLETED", "CANCELLED"] as const;
+
+/** The mockup's type pills. `TOURNAMENT` is the tournament rows read from their own domain. */
+export function eventTypeLabel(v: string): string {
+  switch (v) {
+    case "TALK": return "Talk";
+    case "SOCIAL": return "Sosyal";
+    case "PARTNER": return "Partner";
+    case "WORKSHOP": return "Atölye";
+    case "OTHER": return "Diğer";
+    case "TOURNAMENT": return "Turnuva";
+    default: return v;
+  }
+}
+
+export function eventStatusLabel(v: string): string {
+  switch (v) {
+    case "DRAFT": return "Taslak";
+    case "PUBLISHED": return "Yayında";
+    case "COMPLETED": return "Tamamlandı";
+    case "CANCELLED": return "İptal";
+    // Tournament statuses, for the rows read from their own domain.
+    case "REGISTRATION": return "Kayıt açık";
+    case "IN_PROGRESS": return "Sürüyor";
+    default: return v;
+  }
+}
+
+/** The mockup's answer pills: «Katılacak», «Katılamayacak», «Yanıt yok». */
+export function eventRsvpLabel(v: string): string {
+  switch (v) {
+    case "ACCEPTED": return "Katılacak";
+    case "DECLINED": return "Katılamayacak";
+    case "PENDING": return "Yanıt yok";
     default: return v;
   }
 }

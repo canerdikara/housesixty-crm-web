@@ -71,6 +71,26 @@ export function canWriteCampaigns(role: string | undefined | null): boolean {
 }
 
 /**
+ * «Etkinlikler» — who may create, edit and invite.
+ *
+ * §6's events row: ADMIN, SALES and MARKETING full, RECEPTION read. Presentation only;
+ * `CrmEventController` enforces it.
+ */
+export function canManageEvents(role: string | undefined | null): boolean {
+  return role === ROLE.ADMIN || role === ROLE.SALES || role === ROLE.MARKETING;
+}
+
+/**
+ * Who may take attendance at an event — all four panel roles.
+ *
+ * The one place the panel departs from §6's "RECEPTION read" for events, by the club's
+ * decision (2026-10-05): attendance is taken at the door, and the door is reception's.
+ */
+export function canCheckInEvents(role: string | undefined | null): boolean {
+  return canManageEvents(role) || role === ROLE.RECEPTION;
+}
+
+/**
  * Turkish display name for any backend role.
  *
  * The three non-panel roles are here deliberately, even though they can never own a
