@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { entryPointLabel } from "@/lib/labels";
-import type { EntryPoint, TurnstileDirection, TurnstileResult } from "@/lib/types";
+import type { EntryPoint, GateDirection, TurnstileResult } from "@/lib/types";
 import { validateScanAction } from "./actions";
 import styles from "./turnstile.module.css";
 
@@ -60,7 +60,13 @@ export function TurnstileScanner() {
 
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [entryPoint, setEntryPoint] = useState<EntryPoint>("MAIN_GATE");
-  const [direction, setDirection] = useState<TurnstileDirection>("ENTRY");
+  /*
+   * «Otomatik» by default. With «Giriş» as the default, scanning somebody a second time to
+   * let them out recorded another *entry* unless the operator remembered to flip this
+   * select first — so nobody ever left, and «Çalışan takibi» showed no exits (reported
+   * 2026-10-05). The server resolves AUTO per person from their last pass today.
+   */
+  const [direction, setDirection] = useState<GateDirection>("AUTO");
   const [verdict, setVerdict] = useState<TurnstileResult | null>(null);
   const [log, setLog] = useState<{ at: string; name: string; ok: boolean; dir: string }[]>([]);
 
@@ -186,7 +192,8 @@ export function TurnstileScanner() {
             }).format(new Date()),
             name: result.memberName ?? "—",
             ok: result.valid,
-            dir: dir === "ENTRY" ? "Giriş" : "Çıkış",
+            // What the server recorded, which is the only honest label under «Otomatik».
+            dir: (result.direction ?? dir) === "EXIT" ? "Çıkış" : (result.direction ?? dir) === "ENTRY" ? "Giriş" : "—",
           },
           ...prev,
         ].slice(0, 12)
@@ -232,8 +239,9 @@ export function TurnstileScanner() {
             <select
               className={styles.select}
               value={direction}
-              onChange={(e) => setDirection(e.target.value as TurnstileDirection)}
+              onChange={(e) => setDirection(e.target.value as GateDirection)}
             >
+              <option value="AUTO">Otomatik (giriş / çıkış sırayla)</option>
               <option value="ENTRY">Giriş</option>
               <option value="EXIT">Çıkış</option>
             </select>
@@ -281,6 +289,9 @@ export function TurnstileScanner() {
               <p className={styles.verdictName}>
                 {verdict.valid ? (verdict.memberName ?? "Geçiş kabul edildi") : "Geçiş reddedildi"}
               </p>
+              {verdict.valid && verdict.direction && (
+                <p className={styles.verdictMessage}>{verdict.direction === "EXIT" ? "Çıkış" : "Giriş"} kaydedildi</p>
+              )}
               {/* The backend's own English string, verbatim. This is a stand-in for a
                   gate, and the exact text a real integrator receives is the useful part. */}
               <p className={styles.verdictMessage}>{verdict.message}</p>
@@ -291,7 +302,7 @@ export function TurnstileScanner() {
         {status.kind === "scanning" && !verdict && (
           <p className={styles.hint}>
             Okutuluyor — {entryPointLabel(entryPoint)} ·{" "}
-            {direction === "ENTRY" ? "Giriş" : "Çıkış"}. QR kodu kameraya gösterin.
+            {direction === "AUTO" ? "Otomatik yön" : direction === "ENTRY" ? "Giriş" : "Çıkış"}. QR kodu kameraya gösterin.
           </p>
         )}
       </div>

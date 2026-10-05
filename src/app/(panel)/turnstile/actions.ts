@@ -1,7 +1,7 @@
 "use server";
 
 import { API_BASE } from "@/lib/api";
-import type { EntryPoint, TurnstileDirection, TurnstileResult } from "@/lib/types";
+import type { EntryPoint, GateDirection, TurnstileResult } from "@/lib/types";
 
 /**
  * Posting a scanned QR token to the backend, exactly as a real turnstile would.
@@ -27,7 +27,7 @@ import type { EntryPoint, TurnstileDirection, TurnstileResult } from "@/lib/type
 export async function validateScanAction(input: {
   token: string;
   entryPoint: EntryPoint;
-  direction: TurnstileDirection;
+  direction: GateDirection;
 }): Promise<TurnstileResult> {
   if (!API_BASE) {
     return { valid: false, memberName: null, userId: null, message: "CRM_API_BASE_URL ayarlı değil" };

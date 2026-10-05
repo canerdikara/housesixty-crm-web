@@ -611,6 +611,12 @@ export type EntryPoint = "MAIN_GATE" | "SPA_ENTRANCE" | "GYM_ENTRANCE";
 export type TurnstileDirection = "ENTRY" | "EXIT";
 
 /**
+ * What a gate may *ask* for. `AUTO` (2026-10-05) lets the server decide per person — an
+ * exit if their last pass today was an entry, otherwise an entry — and is never stored.
+ */
+export type GateDirection = TurnstileDirection | "AUTO";
+
+/**
  * What `POST /access/qr/validate` answers.
  *
  * `message` is the **backend's own English string** ("Access granted", "Invalid or
@@ -625,6 +631,8 @@ export type TurnstileResult = {
   userId: string | null;
   memberName: string | null;
   message: string;
+  /** What was recorded — the server's answer when the gate sent `AUTO`. */
+  direction?: TurnstileDirection | null;
 };
 
 // ── The reservations calendar — V46 ──────────────────────────────────────────────
