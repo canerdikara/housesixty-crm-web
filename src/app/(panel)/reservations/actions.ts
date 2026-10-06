@@ -142,3 +142,38 @@ export async function searchMembersAction(
     phone: m.phone,
   }));
 }
+
+/**
+ * «Rezervasyon ekle» — opens ONE slot, then lands back on the day with that slot's booking
+ * panel already open (`?slot=`), so the booking itself goes through [bookSlotAction] and
+ * every one of its rules. For a day nobody generated slots on, or an hour outside them.
+ */
+export async function createDeskSlotAction(_prev: FormState, form: FormData): Promise<FormState> {
+  const date = str(form, "date");
+  const type = str(form, "type");
+  const price = str(form, "price").replace(",", ".");
+  const body = {
+    facilityId: str(form, "facilityId"),
+    date,
+    startTime: str(form, "startTime"),
+    durationMinutes: Number(str(form, "durationMinutes") || "60"),
+    price: price === "" ? null : Number(price),
+    memberDiscountPercent: Number(str(form, "memberDiscountPercent") || "0"),
+  };
+  if (!body.facilityId) return { error: "Kort / oda seçin." };
+  if (!body.startTime) return { error: "Başlangıç saati gerekli." };
+  if (body.price === null || Number.isNaN(body.price)) return { error: "Ücret gerekli." };
+
+  const result = await apiRequest<{ slotId: string }>("/api/v1/crm/reservations/slots", { method: "POST", body });
+  switch (result.kind) {
+    case "ok":
+      revalidatePath("/reservations", "layout");
+      redirect(`/reservations?date=${date}&type=${type}&slot=${result.data.slotId}`);
+    case "unauthorized":
+      redirect("/login");
+    case "forbidden":
+      return { error: `Yetkiniz yok: ${result.message}` };
+    default:
+      return { error: result.message };
+  }
+}

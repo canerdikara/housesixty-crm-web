@@ -5,7 +5,7 @@ import { FormMessage, SubmitButton, formStyles as f } from "@/components/Form";
 import { Badge, ui } from "@/components/ui";
 import type { FormState } from "@/lib/formState";
 import type { CalendarReservation, CalendarSlot, ReservationCalendar } from "@/lib/types";
-import { bookSlotAction, cancelReservationAction, searchMembersAction } from "./actions";
+import { bookSlotAction, cancelReservationAction, createDeskSlotAction, searchMembersAction } from "./actions";
 import { GUEST_SEATS, OPEN_SEAT } from "./constants";
 import styles from "./reservations.module.css";
 
@@ -33,6 +33,7 @@ export function CalendarGrid({
   canWrite,
   readOnly,
   aside,
+  initialSlotId,
 }: {
   calendar: ReservationCalendar;
   /** The day, already formatted for İzmir by the server. */
@@ -51,8 +52,22 @@ export function CalendarGrid({
    * prop renders on the server and costs the client bundle nothing.
    */
   aside: React.ReactNode;
+  /**
+   * `?slot=` — the slot «Rezervasyon ekle» just opened. Its booking panel starts open, so
+   * the desk goes straight from "open an hour" to "who is it for".
+   */
+  initialSlotId?: string;
 }) {
-  const [selected, setSelected] = useState<{ slot: CalendarSlot; facility: string } | null>(null);
+  const find = (id: string | undefined) => {
+    if (!id) return null;
+    for (const fac of calendar.facilities) {
+      const slot = fac.slots.find((s) => s.slotId === id);
+      if (slot) return { slot, facility: fac.name };
+    }
+    return null;
+  };
+  const [selected, setSelected] = useState<{ slot: CalendarSlot; facility: string } | null>(() => find(initialSlotId));
+  const [adding, setAdding] = useState(false);
 
   /*
    * Close the panel whenever the server sends a new grid.
@@ -63,14 +78,37 @@ export function CalendarGrid({
    * unrelated re-render does not close a panel the user is halfway through.
    */
   useEffect(() => {
-    setSelected(null);
-  }, [calendar.date, calendar.facilityType, calendar.bookedCount]);
+    // The just-opened slot stays selected across the re-render a booking causes, so the
+    // panel turns into the booking's detail — the confirmation the desk is looking for.
+    setSelected(find(initialSlotId));
+    setAdding(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [calendar.date, calendar.facilityType, calendar.bookedCount, initialSlotId]);
+
+  const canAdd = canWrite && !readOnly && calendar.facilityOptions.length > 0;
 
   return (
     <div className={styles.layout}>
       {/* Its own scroller: six columns of an hour each can exceed a narrow window, and the
           page body must never scroll sideways. */}
       <div className={styles.scroller}>
+        {calendar.facilities.length === 0 ? (
+          /*
+           * A day nobody generated slots for. Not an error, and no longer a dead end: the
+           * month picker is still beside it, and «Rezervasyon ekle» opens an hour.
+           */
+          <div className={styles.emptyDay}>
+            <p className={styles.emptyDayTitle}>Bu tarihte seans yok</p>
+            <p className={styles.emptyDayText}>
+              Bu gün için {calendar.facilityType === "SPA" ? "spa" : "padel"} seansı oluşturulmamış.
+              {canAdd
+                ? " «Rezervasyon ekle» ile tek bir saat açıp hemen rezervasyon yapabilirsiniz; toplu seanslar yönetici uygulamasındaki «Seans oluştur» ekranından tanımlanır."
+                : readOnly
+                  ? " Geçmiş bir güne rezervasyon eklenemez."
+                  : " Seanslar yönetici uygulamasındaki «Seans oluştur» ekranından tanımlanır."}
+            </p>
+          </div>
+        ) : (
         <table className={styles.grid}>
           <thead>
             <tr>
@@ -111,9 +149,22 @@ export function CalendarGrid({
             ))}
           </tbody>
         </table>
+        )}
       </div>
 
       <div className={styles.side}>
+        {canAdd && !adding && (
+          <button type="button" className={ui.button} onClick={() => { setSelected(null); setAdding(true); }}>
+            + Rezervasyon ekle
+          </button>
+        )}
+        {adding && (
+          <AddSlotPanel
+            calendar={calendar}
+            dateLabel={dateLabel}
+            onClose={() => setAdding(false)}
+          />
+        )}
         {/* Above the month picker, not instead of it: picking another day is the next thing
             the desk does when the court they wanted is taken. */}
         {selected && (
@@ -592,5 +643,85 @@ function BookingForm({ slotId }: { slotId: string }) {
         )}
       </div>
     </form>
+  );
+}
+
+/**
+ * «Rezervasyon ekle» — open one hour on one court, then book it.
+ *
+ * Price, discount and length default to what that court's most recent slot carried, so a
+ * desk opening an hour on an ordinary day changes nothing but the time. The backend refuses
+ * an hour in the past and any overlap with an existing slot on that court.
+ */
+function AddSlotPanel({
+  calendar,
+  dateLabel,
+  onClose,
+}: {
+  calendar: ReservationCalendar;
+  dateLabel: string;
+  onClose: () => void;
+}) {
+  const [state, action] = useActionState<FormState, FormData>(createDeskSlotAction, {});
+  const options = calendar.facilityOptions;
+  const [facilityId, setFacilityId] = useState(options[0]?.id ?? "");
+  const fac = options.find((o) => o.id === facilityId);
+  // Keyed on the court, so switching court re-seeds price and length from that court.
+  const seedKey = facilityId;
+  const durations = [30, 60, 90, 120];
+  const lastDuration = fac?.lastDurationMinutes ?? 60;
+
+  return (
+    <aside className={styles.panel} aria-label="Rezervasyon ekle">
+      <div className={styles.panelHead}>
+        <div>
+          <p className={styles.panelTitle}>Rezervasyon ekle</p>
+          <p className={styles.panelSub}>{dateLabel} · önce saat açılır, sonra üye seçilir</p>
+        </div>
+        <button type="button" className={styles.close} onClick={onClose} aria-label="Kapat">×</button>
+      </div>
+      <form action={action} className={f.form}>
+        <input type="hidden" name="date" value={calendar.date} />
+        <input type="hidden" name="type" value={calendar.facilityType} />
+        <FormMessage state={state} />
+        <div className={f.field}>
+          <label className={f.label} htmlFor="ds-fac">{calendar.facilityType === "SPA" ? "Oda" : "Kort"}</label>
+          <select id="ds-fac" name="facilityId" className={f.select} value={facilityId} onChange={(e) => setFacilityId(e.target.value)}>
+            {options.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+          </select>
+        </div>
+        <div className={f.row}>
+          <div className={f.field}>
+            <label className={f.label} htmlFor="ds-time">Başlangıç</label>
+            <input id="ds-time" name="startTime" type="time" step={900} className={f.input} required defaultValue="18:00" />
+          </div>
+          <div className={f.field}>
+            <label className={f.label} htmlFor="ds-dur">Süre</label>
+            <select key={`d-${seedKey}`} id="ds-dur" name="durationMinutes" className={f.select}
+              defaultValue={String(durations.includes(lastDuration) ? lastDuration : 60)}>
+              {durations.map((d) => <option key={d} value={d}>{d} dk</option>)}
+            </select>
+          </div>
+        </div>
+        <div className={f.row}>
+          <div className={f.field}>
+            <label className={f.label} htmlFor="ds-price">Ücret (₺)</label>
+            <input key={`p-${seedKey}`} id="ds-price" name="price" inputMode="decimal" className={f.input} required
+              defaultValue={fac?.lastPrice != null ? String(fac.lastPrice) : ""} placeholder="0" />
+          </div>
+          <div className={f.field}>
+            <label className={f.label} htmlFor="ds-disc">Üye indirimi (%)</label>
+            <input key={`m-${seedKey}`} id="ds-disc" name="memberDiscountPercent" type="number" min={0} max={100}
+              className={f.input} defaultValue={String(fac?.lastMemberDiscountPercent ?? 0)} />
+          </div>
+        </div>
+        {fac?.lastPrice == null && (
+          <p className={f.hint}>Bu {calendar.facilityType === "SPA" ? "oda" : "kort"} için daha önce seans açılmamış — ücreti girin.</p>
+        )}
+        <div className={f.actions}>
+          <SubmitButton pendingLabel="Açılıyor…">Saati aç ve üye seç</SubmitButton>
+        </div>
+      </form>
+    </aside>
   );
 }

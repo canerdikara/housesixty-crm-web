@@ -718,6 +718,22 @@ export type ReservationCalendar = {
   times: string[];
   bookedCount: number;
   availableCount: number;
+  /**
+   * Every active facility of this type, with or without slots on the day — what
+   * «Rezervasyon ekle» offers. On a day nobody generated, `facilities` is empty and this
+   * is the only list there is.
+   */
+  facilityOptions: CalendarFacilityOption[];
+};
+
+export type CalendarFacilityOption = {
+  id: string;
+  name: string;
+  capacity: number;
+  /** Null when the facility has never had a slot. */
+  lastPrice: number | null;
+  lastMemberDiscountPercent: number | null;
+  lastDurationMinutes: number | null;
 };
 
 // ── «Gelirler» — income, V47 ─────────────────────────────────────────────────────
@@ -1022,3 +1038,36 @@ export type ConsentLogRow = {
   state: "GRANTED" | "WITHDRAWN";
   recordedAt: string;
 };
+
+// ── «İYS'ye aktar» (V52) ──────────────────────────────────────────────────────
+
+export type IysExportRow = {
+  recipient: string;
+  type: "MESAJ" | "ARAMA" | "EPOSTA";
+  status: "ONAY" | "RET";
+  consentDate: string;
+  source: string;
+  recipientType: string;
+  name: string;
+  subjectType: "LEAD" | "MEMBER";
+  ourSource: string | null;
+  textVersion: string;
+  addressBackfilled: boolean;
+  sourceInferred: boolean;
+  sourceAssumed: boolean;
+  recordedAt: string;
+};
+
+export type IysExportSummary = {
+  rows: number;
+  outsideRange: number;
+  processingOnly: number;
+  ambiguousPhone: number;
+  whatsapp: number;
+  noAddress: number;
+  addressBackfilled: number;
+  sourceInferred: number;
+  sourceAssumed: number;
+};
+
+export type IysExport = { rows: IysExportRow[]; summary: IysExportSummary };

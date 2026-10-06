@@ -360,3 +360,14 @@
   flex: none;
   accent-color: var(--accent);
 }
+
+/* ── A day with no slots (2026-10-06) ──────────────────────────────────────── */
+
+.emptyDay {
+  padding: 48px 24px;
+  text-align: center;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+}
+.emptyDayTitle { margin: 0; font-family: var(--font-serif); font-size: 19px; }
+.emptyDayText { margin: 8px auto 0; max-width: 52ch; font-size: 13px; line-height: 1.6; color: var(--text-muted); }

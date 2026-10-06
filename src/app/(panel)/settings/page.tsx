@@ -7,7 +7,7 @@ import { formatDate, formatDateTime } from "@/lib/dates";
 import { consentChannelLabel } from "@/lib/labels";
 import { ROLE, roleLabel } from "@/lib/roles";
 import { readSession } from "@/lib/session";
-import type { ConsentLogRow, Paged, PanelUserDetail, RoleCandidate } from "@/lib/types";
+import type { ConsentLogRow, IysExport, Paged, PanelUserDetail, RoleCandidate } from "@/lib/types";
 import { RoleButton, RoleSelect } from "./SettingsControls";
 import styles from "./settings.module.css";
 
@@ -44,18 +44,25 @@ export default async function SettingsPage({
   const subject = one("subject");
   const cq = one("cq");
   const page = Math.max(0, Number.parseInt(one("page"), 10) || 0);
+  const isoDay = (v: string) => (/^\d{4}-\d{2}-\d{2}$/.test(v) ? v : "");
+  const ifrom = isoDay(one("ifrom"));
+  const ito = isoDay(one("ito"));
+  const iParams = new URLSearchParams();
+  if (ifrom) iParams.set("from", ifrom);
+  if (ito) iParams.set("to", ito);
 
   const cParams = new URLSearchParams({ page: String(page), size: String(PAGE_SIZE) });
   if (subject) cParams.set("subject", subject);
   if (cq) cParams.set("q", cq);
 
-  const [session, users, candidates, consents] = await Promise.all([
+  const [session, users, candidates, consents, iys] = await Promise.all([
     readSession(),
     apiRequest<PanelUserDetail[]>("/api/v1/crm/settings/users"),
     uq.length >= 2
       ? apiRequest<RoleCandidate[]>(`/api/v1/crm/settings/users/candidates?q=${encodeURIComponent(uq)}`)
       : Promise.resolve(null),
     apiRequest<Paged<ConsentLogRow>>(`/api/v1/crm/consents?${cParams}`),
+    apiRequest<IysExport>(`/api/v1/crm/consents/iys-export${iParams.size ? `?${iParams}` : ""}`),
   ]);
   if (users.kind === "unauthorized" || consents.kind === "unauthorized") redirect("/login");
 
@@ -256,6 +263,66 @@ export default async function SettingsPage({
           </>
         )}
       </Card>
+
+      {/* Its own card under the log, spaced like the rest — Card takes no margin itself. */}
+      <div style={{ marginTop: 18 }}>
+      <Card>
+        <div className={styles.cardHead}>
+          <div>
+            <h2 className={styles.cardTitle} id="iys">İYS&apos;ye aktar</h2>
+            <p className={styles.cardSub}>
+              Pazarlama izinlerinin İYS&apos;deki biçimi: her adres ve tür (MESAJ · ARAMA · EPOSTA) için son durum.
+              Dosyayı İYS portalındaki toplu izin yüklemeye verin; önce kontrol listesini okuyun.
+            </p>
+          </div>
+        </div>
+        <form method="GET" action="/settings#iys" className={ui.filterForm} style={{ marginBottom: 12 }}>
+          <label className={styles.resultMeta} htmlFor="iys-from">İzin tarihi</label>
+          <input id="iys-from" className={ui.select} type="date" name="ifrom" defaultValue={ifrom} aria-label="Başlangıç" />
+          <span className={styles.resultMeta}>–</span>
+          <input className={ui.select} type="date" name="ito" defaultValue={ito} aria-label="Bitiş" />
+          <button type="submit" className={`${ui.button} ${ui.buttonGhost}`}>Göster</button>
+        </form>
+        {iys.kind !== "ok" ? (
+          <EmptyState title="İYS dökümü hazırlanamadı">{iys.kind === "unauthorized" ? "" : iys.message}</EmptyState>
+        ) : (
+          <>
+            <ul className={styles.iysList}>
+              <li><strong>{iys.data.summary.rows}</strong> satır aktarılacak{ifrom || ito ? " (seçilen tarihlerde)" : ""}</li>
+              {iys.data.summary.addressBackfilled > 0 && (
+                <li className={styles.iysWarn}>{iys.data.summary.addressBackfilled} satırda adres, izin alındığında kaydedilmemiş — kişinin bugünkü adresi kullanıldı</li>
+              )}
+              {iys.data.summary.sourceAssumed > 0 && (
+                <li className={styles.iysWarn}>{iys.data.summary.sourceAssumed} satır panelden girilmiş: kaynak «fiziksel ortam» varsayıldı; telefonla alındıysa düzeltin</li>
+              )}
+              {iys.data.rows.some((r) => !r.source) && (
+                <li className={styles.iysWarn}>
+                  <strong>{iys.data.rows.filter((r) => !r.source).length} satırın kaynağı belirlenemedi</strong> — yüklemeden önce kontrol listesinden doldurun
+                </li>
+              )}
+              {iys.data.summary.sourceInferred > 0 && (
+                <li className={styles.iysWarn}>{iys.data.summary.sourceInferred} satırın kaynağı kayıttan çıkarıldı</li>
+              )}
+            </ul>
+            <p className={styles.cardSub} style={{ margin: "10px 0 6px" }}>Aktarılmayanlar:</p>
+            <ul className={styles.iysList}>
+              <li>{iys.data.summary.processingOnly} yalnızca KVKK işleme rızası (pazarlama izni değil)</li>
+              <li>{iys.data.summary.ambiguousPhone} eski «Telefon» kaydı — pazarlama izni mi işleme rızası mı belli değil</li>
+              <li>{iys.data.summary.whatsapp} WhatsApp kaydı — İYS&apos;de hangi türe girdiği hukuken netleşmedi</li>
+              <li>{iys.data.summary.noAddress} kayıt — o tür için geçerli adres yok (e-posta ya da cep telefonu)</li>
+            </ul>
+            <div className={styles.rowActions} style={{ marginTop: 14 }}>
+              <a className={ui.button} href={`/settings/iys-export?kind=iys${iParams.size ? `&${iParams}` : ""}`}>İYS dosyasını indir (.csv)</a>
+              <a className={`${ui.button} ${ui.buttonGhost}`} href={`/settings/iys-export?kind=review${iParams.size ? `&${iParams}` : ""}`}>Kontrol listesini indir</a>
+            </div>
+            <p className={styles.rowNote} style={{ marginTop: 10 }}>
+              ⚠️ Sütunlar İYS veri modeline göre hazırlandı; İYS portalının kendi yükleme şablonuyla karşılaştırın.
+              İYS&apos;den gelen ret bildirimleri bu sisteme düşmez — kampanya göndermeden önce İYS kontrol edilmelidir.
+            </p>
+          </>
+        )}
+      </Card>
+      </div>
     </PageBody>
   );
 }

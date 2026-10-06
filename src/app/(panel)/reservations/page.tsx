@@ -38,7 +38,7 @@ export const dynamic = "force-dynamic";
 export default async function ReservationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ date?: string; type?: string }>;
+  searchParams: Promise<{ date?: string; type?: string; slot?: string }>;
 }) {
   const params = await searchParams;
 
@@ -103,17 +103,6 @@ export default async function ReservationsPage({
             <EmptyState title="Bu ekranı görüntüleme yetkiniz yok">{result.message}</EmptyState>
           ) : result.kind === "error" ? (
             <EmptyState title="Takvim yüklenemedi">{result.message}</EmptyState>
-          ) : result.data.facilities.length === 0 ? (
-            <EmptyState title="Bu tarihte seans yok">
-              {/*
-                A real and recoverable state, not a fault: slots are generated per facility
-                per day from the admin app, and a date nobody has generated has none. Saying
-                so — and where to fix it — is the difference between an empty screen and a
-                broken one.
-              */}
-              Bu gün için {type === "SPA" ? "spa" : "padel"} seansı oluşturulmamış. Seanslar
-              yönetici uygulamasındaki «Seans oluştur» ekranından tanımlanır.
-            </EmptyState>
           ) : (
             <CalendarGrid
               calendar={result.data}
@@ -122,6 +111,10 @@ export default async function ReservationsPage({
               /* A court in the past cannot be booked — the backend refuses it — so the
                  empty cells are drawn as empty rather than as buttons that 400. */
               readOnly={isPast}
+              /* A day with no slots still draws the grid component: its empty state keeps
+                 the month picker beside it and offers «Rezervasyon ekle» (2026-10-06). It
+                 used to be a bare message — no way to change the day, no way to book. */
+              initialSlotId={/^[0-9a-f-]{36}$/.test(params.slot ?? "") ? params.slot : undefined}
               aside={
                 <Calendar
                   selected={date}
