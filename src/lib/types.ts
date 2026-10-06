@@ -899,3 +899,126 @@ export type EmployeeMonth = { month: string; today: string; employees: EmployeeM
 export type EmployeeDayRow = { userId: string; fullName: string; scans: EmployeeScan[]; summary: EmployeeDay | null };
 
 export type EmployeeDayView = { date: string; today: string; employees: EmployeeDayRow[] };
+
+// ── «Geri Bildirim» (V51) ─────────────────────────────────────────────────────
+
+export type SurveyStatus = "DRAFT" | "OPEN" | "CLOSED";
+export type SurveyQuestionType = "RATING" | "TEXT";
+export type TicketType = "COMPLAINT" | "REQUEST" | "SUGGESTION";
+export type TicketStatus = "OPEN" | "IN_REVIEW" | "RESOLVED" | "CLOSED";
+
+export type SurveyQuestion = { id: string; label: string; type: SurveyQuestionType };
+
+export type SurveyListItem = {
+  id: string;
+  title: string;
+  status: SurveyStatus;
+  createdAt: string;
+  asked: number;
+  answered: number;
+};
+
+/** `average` only for RATING; `texts` only for TEXT, and only on the survey's own screen. */
+export type SurveyQuestionStat = {
+  id: string;
+  label: string;
+  type: SurveyQuestionType;
+  average: number | null;
+  count: number;
+  texts: string[] | null;
+};
+
+export type SurveyRecipient = {
+  userId: string;
+  fullName: string;
+  answered: boolean;
+  source: "MEMBER" | "STAFF" | null;
+  submittedAt: string | null;
+  sentAt: string | null;
+  lastSendNote: string | null;
+  answers: Record<string, number | string> | null;
+};
+
+export type SurveyDetail = {
+  id: string;
+  title: string;
+  intro: string | null;
+  questions: SurveyQuestion[];
+  status: SurveyStatus;
+  segmentId: string | null;
+  segmentName: string | null;
+  createdAt: string;
+  asked: number;
+  answered: number;
+  /** Somebody has answered: questions can be reworded or added, not removed or retyped. */
+  questionsLocked: boolean;
+  stats: SurveyQuestionStat[];
+  recipients: SurveyRecipient[];
+  sending: { sendingEnabled: boolean; emailBlocked: string | null; whatsappBlocked: string | null };
+};
+
+export type Ticket = {
+  id: string;
+  subject: string;
+  description: string | null;
+  type: TicketType;
+  status: TicketStatus;
+  userId: string;
+  memberName: string;
+  assigneeUserId: string | null;
+  assigneeName: string | null;
+  resolutionNote: string | null;
+  resolvedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  createdByName: string | null;
+  ageDays: number;
+};
+
+export type TrainerScore = { trainerId: string; name: string; average: number; count: number };
+
+export type FeedbackOverview = {
+  periodDays: number;
+  overallAverage: number | null;
+  overallCount: number;
+  survey: {
+    id: string;
+    title: string;
+    status: SurveyStatus;
+    asked: number;
+    answered: number;
+    stats: SurveyQuestionStat[];
+  } | null;
+  openTickets: number;
+  openAverageAgeDays: number | null;
+  resolvedInPeriod: number;
+  resolvedAverageDays: number | null;
+  /** ADMIN only — null for every other role. */
+  trainers: TrainerScore[] | null;
+  tickets: Ticket[];
+  surveys: SurveyListItem[];
+};
+
+// ── «Ayarlar» (V51) ───────────────────────────────────────────────────────────
+
+export type PanelUserDetail = {
+  id: string;
+  fullName: string;
+  email: string;
+  role: string;
+  lastLoginAt: string | null;
+  /** False until the person has set a password at first sign-in in the app. */
+  activated: boolean;
+};
+
+export type RoleCandidate = { id: string; fullName: string; email: string; role: string };
+
+export type ConsentLogRow = {
+  subjectType: "LEAD" | "MEMBER";
+  subjectId: string;
+  name: string;
+  textVersion: string;
+  channels: string[];
+  state: "GRANTED" | "WITHDRAWN";
+  recordedAt: string;
+};

@@ -471,3 +471,57 @@ export function eventRsvpLabel(v: string): string {
     default: return v;
   }
 }
+
+// ── «Geri Bildirim» (V51) ─────────────────────────────────────────────────────
+
+export const TICKET_TYPES = ["COMPLAINT", "REQUEST", "SUGGESTION"] as const;
+export const TICKET_STATUSES = ["OPEN", "IN_REVIEW", "RESOLVED", "CLOSED"] as const;
+export const SURVEY_STATUSES = ["DRAFT", "OPEN", "CLOSED"] as const;
+
+/** The mockup's «Tür» pills. */
+export function ticketTypeLabel(v: string): string {
+  switch (v) {
+    case "COMPLAINT": return "Şikayet";
+    case "REQUEST": return "Talep";
+    case "SUGGESTION": return "Öneri";
+    default: return v;
+  }
+}
+
+export function ticketStatusLabel(v: string): string {
+  switch (v) {
+    case "OPEN": return "Açık";
+    case "IN_REVIEW": return "İnceleniyor";
+    case "RESOLVED": return "Çözüldü";
+    case "CLOSED": return "Kapatıldı";
+    default: return v;
+  }
+}
+
+/** Red open, amber in review, green done — the mockup's three colours. CLOSED is quiet. */
+export function ticketStatusTone(v: string): "neutral" | "accent" | "good" | "crit" {
+  switch (v) {
+    case "OPEN": return "crit";
+    case "IN_REVIEW": return "accent";
+    case "RESOLVED": return "good";
+    default: return "neutral";
+  }
+}
+
+export function surveyStatusLabel(v: string): string {
+  switch (v) {
+    case "DRAFT": return "Taslak";
+    case "OPEN": return "Açık";
+    case "CLOSED": return "Kapalı";
+    default: return v;
+  }
+}
+
+export function surveyQuestionTypeLabel(v: string): string {
+  return v === "RATING" ? "Puan (1–5)" : v === "TEXT" ? "Metin" : v;
+}
+
+/** One decimal, Turkish comma: 4.6 → "4,6". */
+export function score(v: number | null | undefined): string {
+  return v === null || v === undefined ? "—" : v.toLocaleString("tr-TR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+}

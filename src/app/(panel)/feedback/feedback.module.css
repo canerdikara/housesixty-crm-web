@@ -1,0 +1,234 @@
+/*
+ * «Geri Bildirim» — mockup screen 16, plus its survey and ticket screens.
+ *
+ * CSS only, like the dashboard: the score bars are two spans, no chart library.
+ */
+
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+.cardTitle { font-size: 16px; margin: 0; }
+.cardSub { margin: 3px 0 14px; color: var(--text-muted); font-size: 12.5px; }
+.cardHead { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.cardLink { font-size: 12.5px; color: var(--accent); white-space: nowrap; }
+
+/* ── Tiles — same object as «Genel Bakış» ──────────────────────────────────── */
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+@media (max-width: 1180px) { .tiles { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px) { .tiles { grid-template-columns: 1fr; } }
+
+.tile {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  padding: 16px 18px 15px;
+}
+.tileLabel { margin: 0; color: var(--text-muted); font-size: 12.5px; }
+.tileValue { font-family: var(--font-serif); font-size: 34px; line-height: 1.1; margin: 8px 0 6px; font-weight: 500; }
+.tileNote { margin: 0; font-size: 12px; color: var(--text-muted); }
+.tileNoteGood { color: var(--good); font-weight: 600; }
+.tileNoteWarn { color: var(--warn); font-weight: 600; }
+
+/* ── Two cards side by side ────────────────────────────────────────────────── */
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 18px;
+  align-items: stretch;
+  margin-bottom: 18px;
+}
+.row > * { min-width: 0; }
+.rowSingle { grid-template-columns: minmax(0, 1fr); }
+
+@media (max-width: 1080px) { .row { grid-template-columns: minmax(0, 1fr); } }
+
+/* ── Score bars — one per question / trainer ───────────────────────────────── */
+
+.scores { margin: 0; padding: 0; list-style: none; }
+.scores li {
+  display: grid;
+  grid-template-columns: minmax(90px, 170px) 1fr 40px;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+}
+.scoreName { font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.scoreNameRight { text-align: right; color: var(--text-muted); }
+
+/* ⚠️ `display: block` on both spans is load-bearing — an inline span ignores `height`. */
+.track { display: block; height: 8px; border-radius: var(--radius-pill); background: var(--grid); overflow: hidden; }
+.trackTall { height: 22px; border-radius: 3px; }
+.fill { display: block; height: 100%; background: var(--good); border-radius: inherit; }
+.scoreValue { font-family: var(--font-serif); font-size: 16px; text-align: right; font-variant-numeric: tabular-nums; }
+.scoreCount { display: block; font-family: var(--font-sans, inherit); font-size: 10.5px; color: var(--text-faint); }
+
+/* ── Pills ─────────────────────────────────────────────────────────────────── */
+
+.typePill {
+  display: inline-block;
+  font-size: 11.5px;
+  padding: 2px 9px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.rowNote { margin-top: 2px; font-size: 11.5px; color: var(--text-faint); }
+.rowActions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+
+/* ── Survey detail ─────────────────────────────────────────────────────────── */
+
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 18px;
+  align-items: start;
+  margin-top: 18px;
+}
+.side { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+@media (max-width: 1080px) { .split { grid-template-columns: minmax(0, 1fr); } }
+
+.texts { margin: 6px 0 0; padding: 0; list-style: none; }
+.texts li {
+  padding: 8px 10px;
+  margin-top: 6px;
+  border-radius: var(--radius-sm);
+  background: var(--card-2);
+  font-size: 12.5px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.kv { margin: 0; padding: 0; list-style: none; }
+.kv li {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+  font-size: 12.5px;
+}
+.kv li span:first-child { color: var(--text-muted); }
+.kv li span:last-child { font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+
+.inline { display: inline-flex; gap: 6px; align-items: center; margin: 0; }
+.inlineError { font-size: 11px; color: var(--crit); max-width: 22ch; }
+
+.miniButton {
+  font: inherit;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.miniButton:hover { border-color: var(--accent); }
+.miniButton:disabled { opacity: 0.5; cursor: default; }
+
+.linkButton {
+  font: inherit;
+  font-size: 12px;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.results { margin: 10px 0 0; padding: 0; list-style: none; }
+.results li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 0;
+  border-top: 1px solid var(--border);
+  font-size: 12.5px;
+}
+.resultMeta { color: var(--text-muted); font-size: 11.5px; }
+
+.notice {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--warn-bg);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.confirm {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--crit);
+  border-radius: var(--radius-sm);
+  background: var(--crit-bg);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+/* ── The survey editor's question rows ─────────────────────────────────────── */
+
+.qRow {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) 150px auto;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 0;
+}
+.qIndex { font-size: 12px; color: var(--text-faint); text-align: right; font-variant-numeric: tabular-nums; }
+.qTools { display: flex; gap: 2px; }
+.qTool {
+  font: inherit;
+  font-size: 13px;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.qTool:disabled { opacity: 0.35; cursor: default; }
+
+@media (max-width: 640px) {
+  .qRow { grid-template-columns: 22px minmax(0, 1fr); }
+  .qRow > :nth-child(3), .qRow > :nth-child(4) { grid-column: 2; }
+}
+
+/* ── Staff answer form — the 1–5 radios ────────────────────────────────────── */
+
+.rating { display: flex; gap: 6px; flex-wrap: wrap; }
+.rating label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 34px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  font-size: 13px;
+  cursor: pointer;
+}
+.rating input { position: absolute; opacity: 0; pointer-events: none; }
+.rating label:has(input:checked) { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.rating label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Phone width: the label column gives way so the bar keeps the room the comparison needs. */
+@media (max-width: 560px) {
+  .scores li { grid-template-columns: minmax(64px, 38%) 1fr 36px; gap: 8px; }
+}

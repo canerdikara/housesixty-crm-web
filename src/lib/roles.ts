@@ -136,3 +136,17 @@ export function initialsOf(fullName: string): string {
   if (parts.length === 1) return parts[0]!.slice(0, 2).toLocaleUpperCase("tr-TR");
   return (parts[0]![0]! + parts[parts.length - 1]![0]!).toLocaleUpperCase("tr-TR");
 }
+
+/**
+ * «Geri Bildirim» — who may record what a member said: open a ticket, type in a paper
+ * survey. §6's "RECEPTION create", plus ADMIN. Presentation only; `CrmFeedbackController`
+ * enforces it.
+ */
+export function canRecordFeedback(role: string | undefined | null): boolean {
+  return role === ROLE.ADMIN || role === ROLE.RECEPTION;
+}
+
+/** Building, sending and deleting surveys; editing any ticket. ADMIN alone (§6 "full"). */
+export function canManageFeedback(role: string | undefined | null): boolean {
+  return role === ROLE.ADMIN;
+}
