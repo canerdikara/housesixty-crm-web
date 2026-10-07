@@ -161,14 +161,19 @@ export default async function FeedbackPage({
         {d.trainers !== null && (
           <Card>
             <h2 className={styles.cardTitle}>Antrenör puanları</h2>
-            <p className={styles.cardSub}>Son {days} gün · ders sonrası üye değerlendirmesi · yalnızca yöneticiler görür</p>
+            <p className={styles.cardSub}>Son {days} gün · ders sonrası üye değerlendirmesi · yalnızca yöneticiler görür · ders bazında görmek için isme tıklayın</p>
             {d.trainers.length === 0 ? (
               <EmptyState title={`Son ${days} günde antrenör puanı yok`} />
             ) : (
               <ul className={styles.scores}>
                 {d.trainers.map((t) => (
                   <li key={t.trainerId}>
-                    <span className={`${styles.scoreName} ${styles.scoreNameRight}`}>{t.name}</span>
+                    <Link
+                      className={`${styles.scoreName} ${styles.scoreNameRight} ${styles.scoreLink}`}
+                      href={`/feedback/trainers/${t.trainerId}?days=${days}`}
+                    >
+                      {t.name}
+                    </Link>
                     <span className={`${styles.track} ${styles.trackTall}`}>
                       <span className={styles.fill} style={{ width: `${(t.average / 5) * 100}%` }} />
                     </span>

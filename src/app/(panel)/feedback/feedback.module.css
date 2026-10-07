@@ -63,6 +63,10 @@
 }
 .scoreName { font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .scoreNameRight { text-align: right; color: var(--text-muted); }
+/* The trainer names open the per-lesson drill-down, so they read as links. */
+.scoreLink { color: var(--accent); text-decoration: none; }
+.scoreLink:hover { text-decoration: underline; }
+.nowrap { white-space: nowrap; }
 
 /* ⚠️ `display: block` on both spans is load-bearing — an inline span ignores `height`. */
 .track { display: block; height: 8px; border-radius: var(--radius-pill); background: var(--grid); overflow: hidden; }

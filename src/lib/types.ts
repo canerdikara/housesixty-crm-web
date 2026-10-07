@@ -993,6 +993,27 @@ export type Ticket = {
 
 export type TrainerScore = { trainerId: string; name: string; average: number; count: number };
 
+/** One lesson or 1-on-1 in a trainer's drill-down. `date` is "YYYY-MM-DD", `startTime` "HH:mm:ss". */
+export type TrainerSessionScore = {
+  kind: "LESSON" | "PRIVATE";
+  sessionId: string;
+  title: string;
+  date: string;
+  startTime: string;
+  average: number;
+  count: number;
+};
+
+/** `GET /crm/feedback/trainers/{id}` — ADMIN only. */
+export type TrainerSessionScores = {
+  trainerId: string;
+  name: string;
+  periodDays: number;
+  average: number | null;
+  count: number;
+  sessions: TrainerSessionScore[];
+};
+
 export type FeedbackOverview = {
   periodDays: number;
   overallAverage: number | null;
