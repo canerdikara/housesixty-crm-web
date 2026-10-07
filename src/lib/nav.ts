@@ -73,7 +73,9 @@ export const NAV: readonly NavItem[] = [
   { href: "/segments", label: "Segmentler", roles: [ROLE.ADMIN, ROLE.SALES, ROLE.MARKETING] },
   { href: "/campaigns", label: "Kampanyalar", roles: [ROLE.ADMIN, ROLE.SALES, ROLE.MARKETING] },
   { href: "/events", label: "Etkinlikler", roles: ALL },
-  { href: "/partners", label: "Partnerler", roles: [ROLE.ADMIN, ROLE.SALES, ROLE.MARKETING] },
+  // «Partnerler» is hidden — not needed for now (user, 2026-10-07). The placeholder page
+  // still exists at /partners; to bring it back, restore:
+  // { href: "/partners", label: "Partnerler", roles: [ROLE.ADMIN, ROLE.SALES, ROLE.MARKETING] },
 
   // Reception is "create" in the matrix — they log a member's complaint at the desk.
   { href: "/feedback", label: "Geri Bildirim", roles: ALL },
