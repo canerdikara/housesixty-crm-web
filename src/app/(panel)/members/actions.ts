@@ -423,3 +423,33 @@ export async function changeMembershipAction(_prev: FormState, form: FormData): 
     "Üyelik değiştirildi."
   );
 }
+
+/**
+ * «QR erişimi» (V53) — the desk's two turnstile tools. ADMIN and RECEPTION at the backend
+ * (ADMIN only when the person is an employee). Both answer 204, so `write`'s generic JSON
+ * path is not used; the shape is the contract delete's.
+ */
+async function accessWrite(path: string, method: "POST" | "DELETE", successMessage: string): Promise<FormState> {
+  const result = await apiRequest<unknown>(path, { method });
+  if (result.kind === "unauthorized") redirect("/login");
+  if (result.kind !== "ok") {
+    return { error: result.kind === "forbidden" ? `Yetkiniz yok: ${result.message}` : result.message };
+  }
+  revalidatePath("/members", "layout");
+  revalidatePath("/employees");
+  return { ok: successMessage };
+}
+
+/** Removes the QR phone binding; the next phone that opens the QR screen takes it. */
+export async function unbindQrDeviceAction(_prev: FormState, form: FormData): Promise<FormState> {
+  return accessWrite(
+    `/api/v1/crm/access/${str(form, "userId")}/device`,
+    "DELETE",
+    "Telefon bağı kaldırıldı. Üyenin QR ekranını açtığı ilk telefon yeni QR telefonu olur."
+  );
+}
+
+/** Records an exit for somebody who left without scanning, so the gate lets them back in. */
+export async function recordQrExitAction(_prev: FormState, form: FormData): Promise<FormState> {
+  return accessWrite(`/api/v1/crm/access/${str(form, "userId")}/exit`, "POST", "Çıkış kaydedildi.");
+}

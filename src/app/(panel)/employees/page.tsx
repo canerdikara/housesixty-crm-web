@@ -12,7 +12,7 @@ import { formatDate, izmirToday } from "@/lib/dates";
 import { readSession } from "@/lib/session";
 import type { Employee, EmployeeDay, EmployeeDayView, EmployeeMonth, EmployeeScan } from "@/lib/types";
 import { createEmployeeAction } from "./actions";
-import { ActiveToggle } from "./EmployeeControls";
+import { ActiveToggle, QrRowAction } from "./EmployeeControls";
 import styles from "./employees.module.css";
 
 export const metadata = { title: "Çalışan takibi · House Sixty CRM" };
@@ -325,7 +325,7 @@ function EmployeesCard({ list, error }: { list: Employee[]; error: string | null
       <h2 className={styles.cardTitle}>Çalışanlar</h2>
       <p className={styles.cardSub}>
         Çalışan hesabı yalnızca üye uygulamasındaki QR&apos;ı açar: rezervasyon, ders ya da turnuva yapamaz;
-        yönetici uygulamasına ve panele giremez. Yönetici uygulamasından da eklenebilir.
+        yönetici uygulamasına ve panele giremez. Çalışanlar yalnızca buradan eklenir.
       </p>
 
       {error ? (
@@ -334,7 +334,7 @@ function EmployeesCard({ list, error }: { list: Employee[]; error: string | null
         <TableWrap>
           <table className={ui.table}>
             <thead>
-              <tr><th>Ad soyad</th><th>E-posta</th><th>Telefon</th><th>Durum</th><th /></tr>
+              <tr><th>Ad soyad</th><th>E-posta</th><th>Telefon</th><th>Durum</th><th>QR telefonu</th><th /></tr>
             </thead>
             <tbody>
               {list.map((e) => (
@@ -343,7 +343,15 @@ function EmployeesCard({ list, error }: { list: Employee[]; error: string | null
                   <td className={ui.muted}>{e.email}</td>
                   <td className={ui.nowrap}>{e.phone ?? "—"}</td>
                   <td>{e.isActive ? "Etkin" : <span className={ui.faint}>Devre dışı</span>}</td>
-                  <td className={styles.num}><ActiveToggle userId={e.userId} isActive={e.isActive} name={e.fullName} /></td>
+                  <td className={ui.nowrap}>
+                    {e.qrDeviceBound ? (e.qrDeviceLabel ?? "Bağlı") : <span className={ui.faint}>Bağlanmadı</span>}
+                    {e.insideSince && <span className={ui.faint}> · içeride</span>}
+                  </td>
+                  <td className={styles.num}>
+                    {e.insideSince && <QrRowAction userId={e.userId} kind="exit" name={e.fullName} />}
+                    {e.qrDeviceBound && <QrRowAction userId={e.userId} kind="unbind" name={e.fullName} />}
+                    <ActiveToggle userId={e.userId} isActive={e.isActive} name={e.fullName} />
+                  </td>
                 </tr>
               ))}
             </tbody>

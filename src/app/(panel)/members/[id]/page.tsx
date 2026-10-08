@@ -15,7 +15,7 @@ import {
 } from "@/lib/labels";
 import { canWriteMembers } from "@/lib/roles";
 import { readSession } from "@/lib/session";
-import type { MemberDetail, MembershipTier } from "@/lib/types";
+import type { MemberDetail, MembershipTier, QrAccess } from "@/lib/types";
 import {
   AddTerm,
   ChangeMembership,
@@ -26,6 +26,7 @@ import {
   EditTerm,
   TierSuggestions,
 } from "./MemberActions";
+import { QrAccessActions } from "./QrAccessCard";
 import detail from "../../leads/[id]/detail.module.css";
 import styles from "./member.module.css";
 
@@ -38,6 +39,18 @@ function Row({ k, v }: { k: string; v: React.ReactNode }) {
       <span className={detail.rowValue}>{v ?? "—"}</span>
     </div>
   );
+}
+
+function qrEventLabel(e: QrAccess["events"][number]): string {
+  const phone = e.deviceLabel ? ` (${e.deviceLabel})` : "";
+  switch (e.event) {
+    case "BOUND":
+      return `İlk telefon bağlandı${phone}`;
+    case "SELF_CHANGE":
+      return `Üye telefonu değiştirdi${phone} · e-posta kodu`;
+    case "DESK_UNBIND":
+      return `Bağ kaldırıldı${phone}${e.actorName ? ` · ${e.actorName}` : ""}`;
+  }
 }
 
 function initials(name: string): string {
@@ -58,16 +71,21 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
   const canWrite = canWriteMembers(session?.user.role);
 
   const isAdmin = session?.user.role === "ADMIN";
+  // «QR erişimi» (V53) is the desk's: ADMIN and RECEPTION only, at the backend too.
+  const canDesk = isAdmin || session?.user.role === "RECEPTION";
 
-  const [result, tiersResult] = await Promise.all([
+  const [result, tiersResult, accessResult] = await Promise.all([
     apiRequest<MemberDetail>(`/api/v1/crm/members/${id}`),
     // Only fetched for the one role that may change a tier. A failure here costs the
     // «Üyeliği değiştir» control, not the 360.
     isAdmin
       ? apiRequest<MembershipTier[]>("/api/v1/crm/membership-tiers")
       : Promise.resolve(null),
+    // A failure costs the «QR erişimi» card, not the 360.
+    canDesk ? apiRequest<QrAccess>(`/api/v1/crm/access/${id}`) : Promise.resolve(null),
   ]);
   const tiers = tiersResult?.kind === "ok" ? tiersResult.data : [];
+  const access = accessResult?.kind === "ok" ? accessResult.data : null;
   if (result.kind === "unauthorized") redirect("/login");
   if (result.kind === "error" && result.status === 404) notFound();
 
@@ -445,6 +463,46 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
             )}
             {canWrite && <EditInterests member={m} />}
           </Card>
+
+          {access && (
+            <Card>
+              <h2 className={styles.cardTitle}>QR erişimi</h2>
+              <p className={styles.cardSub}>Turnike · resepsiyon ve yöneticiler</p>
+              <div className={detail.rows}>
+                <Row
+                  k="QR telefonu"
+                  v={
+                    access.deviceLabel || access.deviceBoundAt ? (
+                      <>
+                        {access.deviceLabel ?? "Bilinmeyen telefon"}
+                        {access.deviceBoundAt && (
+                          <span className={ui.faint}> · {formatDate(access.deviceBoundAt)}</span>
+                        )}
+                      </>
+                    ) : (
+                      "Henüz bağlanmadı"
+                    )
+                  }
+                />
+                <Row
+                  k="Şu an"
+                  v={access.insideSince ? `İçeride · ${formatDateTime(access.insideSince)}` : "Dışarıda"}
+                />
+                {access.events.slice(0, 4).map((e) => (
+                  <Row
+                    key={e.createdAt + e.event}
+                    k={formatDateTime(e.createdAt)}
+                    v={qrEventLabel(e)}
+                  />
+                ))}
+              </div>
+              <QrAccessActions
+                userId={m.userId}
+                hasDevice={!!access.deviceBoundAt}
+                inside={!!access.insideSince}
+              />
+            </Card>
+          )}
 
           <Card>
             <h2 className={styles.cardTitle}>KVKK rızası</h2>

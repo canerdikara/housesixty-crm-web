@@ -881,6 +881,11 @@ export type Employee = {
   phone: string | null;
   isActive: boolean;
   createdAt: string;
+  /** V53 — the bound QR phone; `qrDeviceBound` is the truth, the label is display. */
+  qrDeviceLabel: string | null;
+  qrDeviceBound: boolean;
+  /** V53 — set while their latest pass today is an entry. */
+  insideSince: string | null;
 };
 
 export type EmployeeScan = { at: string; direction: "ENTRY" | "EXIT"; entryPoint: string | null };
@@ -1092,3 +1097,13 @@ export type IysExportSummary = {
 };
 
 export type IysExport = { rows: IysExportRow[]; summary: IysExportSummary };
+
+/** «QR erişimi» — `GET /api/v1/crm/access/{userId}` (V53). */
+export type QrDeviceEventKind = "BOUND" | "SELF_CHANGE" | "DESK_UNBIND";
+export type QrAccess = {
+  deviceLabel: string | null;
+  deviceBoundAt: string | null;
+  /** Set when this person's latest pass today was an entry — they are inside. */
+  insideSince: string | null;
+  events: { event: QrDeviceEventKind; deviceLabel: string | null; actorName: string | null; createdAt: string }[];
+};
