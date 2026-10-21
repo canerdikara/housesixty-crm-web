@@ -193,7 +193,9 @@ export default async function DashboardPage({
           <p className={styles.footNote}>
             Rezervasyonlar oynanan güne göre sayılır; iptal ve gelmedi hariç. Turnike
             girişleri ayrı ölçülür — son {days} günde{" "}
-            <strong>{d.turnstileEntriesInPeriod}</strong> giriş.
+            <strong>{d.turnstileEntriesInPeriod}</strong> giriş,{" "}
+            <strong>{d.facilityVisitsInPeriod}</strong> ziyaret (turnike girişi veya padel;
+            kişi başına günde bir).
           </p>
         </Card>
 
@@ -234,7 +236,7 @@ export default async function DashboardPage({
               <h2 className={styles.cardTitle}>Risk altındaki üyeler</h2>
               <p className={styles.cardSub}>45 günden uzun süredir ziyaret yok</p>
             </div>
-            {d.turnstileEntriesEver > 0 && d.atRiskTotal > 0 && (
+            {d.facilityVisitsEver > 0 && d.atRiskTotal > 0 && (
               <span className={styles.riskCount}>{d.atRiskTotal} üye</span>
             )}
           </div>
@@ -512,23 +514,24 @@ function MembersLine({ data }: { data: Dashboard }) {
 /**
  * The at-risk table, or an explanation of why it would be a false alarm.
  *
- * With no turnstile pass ever recorded, the 45-day rule flags **every member in the
- * club** — correct by its own definition and worth nothing as a signal. Drawing eleven
+ * With no visit ever recorded — no turnstile entry and no padel booking played — the
+ * 45-day rule flags **every member in the club**: correct by its own definition and
+ * worth nothing as a signal. Drawing eleven
  * red rows in that state would be the dashboard inventing a crisis out of an empty
  * table, so the screen says which of the two it is showing.
  */
 function AtRiskTable({ data }: { data: Dashboard }) {
-  if (data.turnstileEntriesEver === 0) {
+  if (data.facilityVisitsEver === 0) {
     return (
       <div className={styles.caveat}>
         <span className={styles.caveatMark} aria-hidden="true">
           ▲
         </span>
         <span>
-          <strong>Henüz turnike geçişi kaydedilmedi.</strong> Risk kuralı “45 gündür
-          ziyaret yok” olduğu için şu anda {data.atRiskTotal} üyenin tamamı bu listeye
-          giriyor. Kulüp açılıp turnike kullanılmaya başlandığında bu liste anlam
-          kazanacak.
+          <strong>Henüz ziyaret kaydı yok.</strong> Ziyaret, turnikeden giriş ya da
+          oynanmış bir padel rezervasyonudur. Risk kuralı “45 gündür ziyaret yok” olduğu
+          için şu anda {data.atRiskTotal} üyenin tamamı bu listeye giriyor. Üyeler gelmeye
+          başladığında bu liste anlam kazanacak.
         </span>
       </div>
     );

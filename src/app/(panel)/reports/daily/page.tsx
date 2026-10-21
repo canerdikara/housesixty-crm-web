@@ -24,7 +24,11 @@ export const dynamic = "force-dynamic";
  * Because bookings and turnstile passes are kept apart rather than blended, the day
  * splits four ways, and two of those are only visible here:
  *
- * - **Gelmedi** — booked and never scanned in. A no-show list, per person.
+ * - **Gelmedi** — booked for something other than padel and never came. A no-show list,
+ *   per person. Padel is left out: the courts can be reached without the turnstile.
+ *
+ * «Tesise gelen» (V54) is everyone with a turnstile entry or a padel booking that has
+ * started — a union of evidence person by person, not a blend of the two numbers.
  * - **Rezervasyonsuz** — scanned in with nothing booked. Everybody who came for the gym,
  *   invisible to every other screen in the CRM.
  */
@@ -108,10 +112,16 @@ export default async function DailyReportPage({
               label="Turnikeden giren"
               note="o gün tesise giren"
             />
+            {/* Not gated on the turnstile: padel bookings are evidence on their own. */}
+            <Headline
+              value={d.cameTotal}
+              label="Tesise gelen"
+              note="turnikeden giren veya padel oynayan"
+            />
             <Headline
               value={d.turnstileEverUsed ? d.noShowTotal : null}
               label="Gelmedi"
-              note="rezervasyonu vardı, girmedi"
+              note="padel dışı rezervasyonu vardı, gelmedi"
             />
             <Headline
               value={d.turnstileEverUsed ? d.walkInTotal : null}

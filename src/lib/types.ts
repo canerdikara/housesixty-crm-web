@@ -327,12 +327,16 @@ export type Dashboard = {
   /** Series order for `facilityUsage`, from the backend's own enum. */
   facilityTypes: string[];
   facilityUsage: FacilityUsageMonth[];
+  /** Turnstile entries (exits not counted) — "is the gate working". */
   turnstileEntriesInPeriod: number;
+  turnstileEntriesEver: number;
+  /** Visit days: a turnstile entry or a started padel booking (V54). */
+  facilityVisitsInPeriod: number;
   /**
-   * Passes ever recorded. Zero means the at-risk list flags everyone by definition and
+   * Visit days ever recorded. Zero means the at-risk list flags everyone by definition and
    * says nothing — the screen explains that rather than drawing a list of red rows.
    */
-  turnstileEntriesEver: number;
+  facilityVisitsEver: number;
   leadSources: SourceConversion[];
   activeMembersByMonth: MonthCount[];
   atRisk: AtRiskMember[];
@@ -570,6 +574,13 @@ export type ReportPerson = {
   /** Real instants. Null until the turnstile records them. */
   enteredAt: string | null;
   leftAt: string | null;
+  /**
+   * Why they count as arrived (V54): a scanned entry, an entry the desk recorded, or a
+   * padel booking that has started (the courts bypass the turnstile). Null otherwise.
+   */
+  cameVia: "TURNSTILE" | "DESK" | "PADEL" | null;
+  /** Booked for something other than padel and has not come — «Gelmedi». */
+  noShow: boolean;
 };
 
 export type ReportAreaCount = {
@@ -587,6 +598,8 @@ export type LiveReport = {
   date: string;
   bookedTotal: number;
   checkedInTotal: number;
+  /** «Şu an tesiste»: inside by turnstile, or on a padel court right now. */
+  hereNowTotal: number;
   areas: ReportAreaCount[];
   people: ReportPerson[];
   /** False until the turnstile has ever recorded a pass — on production, it has not. */
@@ -597,6 +610,9 @@ export type DailyReport = {
   date: string;
   bookedTotal: number;
   checkedInTotal: number;
+  /** «Tesise gelen»: a turnstile entry or a started padel booking that day. */
+  cameTotal: number;
+  /** Booked for something other than padel, and did not come. */
   noShowTotal: number;
   walkInTotal: number;
   areas: ReportAreaCount[];

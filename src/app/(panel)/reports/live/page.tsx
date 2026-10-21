@@ -88,6 +88,12 @@ export default async function LiveReportPage() {
           label="Turnikeden giren"
           note="içeride, çıkış okutmamış"
         />
+        {/* Padel courts bypass the turnstile, so a court in play is evidence on its own. */}
+        <Headline
+          value={d.hereNowTotal}
+          label="Şu an tesiste"
+          note="turnikeden içeride veya padel oynuyor"
+        />
       </div>
 
       <Card>
@@ -123,7 +129,7 @@ export default async function LiveReportPage() {
         <p className={styles.cardSub}>
           {d.people.length === 0
             ? "Şu an kimse beklenmiyor"
-            : `${d.people.length} kişi · «Gelmedi» olanlar rezervasyonu olup henüz girmemiş olanlardır`}
+            : `${d.people.length} kişi · «Gelmedi» olanlar padel dışı rezervasyonu olup henüz girmemiş olanlardır; padel oynayanlar turnikesiz de gelmiş sayılır`}
         </p>
         <PeopleTable
           people={d.people}

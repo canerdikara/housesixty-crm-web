@@ -154,7 +154,12 @@ export function PeopleTable({
 }
 
 /**
- * The four combinations of booked × checkedIn, each named for what the club would do.
+ * The combinations of booked × arrived, each named for what the club would do.
+ *
+ * "Arrived" is `cameVia` (V54) — a turnstile entry, a desk-recorded entry, or a padel
+ * booking that has started — or, failing that, any scan at all. «Gelmedi» is the
+ * server's `noShow`: booked for something other than padel and not come, so a padel
+ * player who never scanned is not one, and a padel slot later today reads «Bekleniyor».
  *
  * ⚠️ «Gelmedi» is **not** coloured as a failure while the turnstile has never recorded
  * anything: every single person would be a no-show, and a table of red rows caused by a
@@ -168,10 +173,13 @@ function PresenceBadge({
   person: ReportPerson;
   turnstileEverUsed: boolean;
 }) {
-  if (person.booked && person.checkedIn) return <Badge tone="good">Geldi</Badge>;
-  if (person.checkedIn) return <Badge tone="accent">Rezervasyonsuz</Badge>;
-  if (!turnstileEverUsed) return <Badge tone="neutral">Bekleniyor</Badge>;
-  return <Badge tone="crit">Gelmedi</Badge>;
+  const arrived = person.cameVia !== null || person.checkedIn;
+  const via =
+    person.cameVia === "PADEL" ? " · padel" : person.cameVia === "DESK" ? " · resepsiyon" : "";
+  if (person.booked && arrived) return <Badge tone="good">{`Geldi${via}`}</Badge>;
+  if (arrived) return <Badge tone="accent">{`Rezervasyonsuz${via}`}</Badge>;
+  if (person.noShow && turnstileEverUsed) return <Badge tone="crit">Gelmedi</Badge>;
+  return <Badge tone="neutral">Bekleniyor</Badge>;
 }
 
 function roleShort(role: string): string {
