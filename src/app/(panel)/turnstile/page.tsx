@@ -34,11 +34,12 @@ export const dynamic = "force-dynamic";
  *
  * ## The gate is the login, not the endpoint
  *
- * `/access/qr/validate` is `permitAll` and has to be — a turnstile carries no
- * credentials. So this page being behind the panel's login and Amplify's basic auth
- * controls who gets a *scanner*, not who can reach the endpoint. Anyone who can read a
- * member's QR can already post it with curl, which is true of the real gate too and is
- * why the token lives sixty seconds and can be used once.
+ * `/access/qr/validate` is `permitAll` — a turnstile has no user to sign in as. Since
+ * turnstile.md §8 the gate proves itself with the shared `X-HS-Gate-Key` instead, which
+ * the server action sends from `GATE_API_KEY` (server-side only, never in the browser).
+ * While the backend's `GATE_REQUIRE_KEY` is false a call without the key still passes;
+ * once it is true, only a gate holding the key can redeem a code. This page being behind
+ * the panel's login and Amplify's basic auth controls who gets a *scanner*.
  */
 export default async function TurnstilePage() {
   const session = await readSession();

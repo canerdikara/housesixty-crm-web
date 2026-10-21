@@ -42,7 +42,9 @@ frontend:
         # reads like a broken build rather than a missing setting. The one variable that
         # must exist is asserted above; CRM_FEATURE_WAREHOUSE is optional and defaults
         # false, so its absence must not take the build down.
-        - env | grep -e CRM_API_BASE_URL -e CRM_FEATURE_WAREHOUSE >> .env.production || true
+        # GATE_API_KEY (turnstile.md §8) is optional too: the simulator sends it only when
+        # set, and the backend accepts a missing key until GATE_REQUIRE_KEY=true.
+        - env | grep -e CRM_API_BASE_URL -e CRM_FEATURE_WAREHOUSE -e GATE_API_KEY >> .env.production || true
         - npm run build
   artifacts:
     # ⚠️ .next, never `out`. `out` is a static export, and a static deployment does not

@@ -18,8 +18,12 @@ import type { EntryPoint, GateDirection, TurnstileResult } from "@/lib/types";
  * is a tab left open on a desk firing one action per scan, so its access token expires
  * under it and the next scan would bounce the whole page to the login screen mid-shift.
  *
- * `/access/qr/validate` is `permitAll` — a turnstile has no credentials, which is the
- * whole point of it — so this sends no `Authorization` header at all and cannot expire.
+ * `/access/qr/validate` is `permitAll` — a turnstile has no user to sign in as — so this
+ * sends no `Authorization` header at all and cannot expire. What it sends instead is the
+ * gate key (turnstile.md §8): `X-HS-Gate-Key` from `GATE_API_KEY`, read here on the
+ * server and never shipped to the browser. **Only when the variable is non-empty** — the
+ * backend treats a blank header as missing, and while its `GATE_REQUIRE_KEY` is false a
+ * missing key still passes, which is what lets the panel ship before the key is set.
  * The *page* is still behind the panel's login and Amplify's basic auth; that is what
  * controls who can open a scanner, and it is unaffected by a stale token because opening
  * the page is a navigation.
@@ -34,9 +38,13 @@ export async function validateScanAction(input: {
   }
 
   try {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    const gateKey = process.env.GATE_API_KEY?.trim();
+    if (gateKey) headers["X-HS-Gate-Key"] = gateKey;
+
     const res = await fetch(`${API_BASE}/api/v1/access/qr/validate`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify(input),
       cache: "no-store",
     });
@@ -49,7 +57,12 @@ export async function validateScanAction(input: {
         valid: false,
         memberName: null,
         userId: null,
-        message: `Sunucu ${res.status} döndü`,
+        // 401 here is only ever the gate key (GATE_KEY_INVALID / GATE_KEY_REQUIRED): the
+        // endpoint has no other authentication. Say so, or it reads as a member's problem.
+        message:
+          res.status === 401
+            ? "Turnike anahtarı reddedildi — panelin GATE_API_KEY değeri sunucununkiyle aynı olmalı"
+            : `Sunucu ${res.status} döndü`,
       };
     }
     return (await res.json()) as TurnstileResult;
