@@ -1,0 +1,112 @@
+/*
+ * «Turnikeler» — desk control of the two turnstiles (turnstile.md §9).
+ *
+ * The status line is the first thing on the page and the only coloured band: the desk must
+ * see "offline — open by hand" before it reaches for a button that cannot work.
+ */
+
+.statusLine {
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  font-size: 13px;
+  margin-bottom: 18px;
+}
+.statusOn { border-color: var(--good); background: var(--good-bg); }
+.statusWarn { border-color: var(--warn); background: var(--warn-bg); }
+.statusOff { border-color: var(--crit); background: var(--crit-bg); }
+.version { color: var(--text-muted); }
+
+.cardTitle { font-size: 16px; margin: 0; }
+.cardSub { margin: 3px 0 12px; color: var(--text-muted); font-size: 12.5px; }
+.label { margin: 0 0 6px; font-size: 12px; color: var(--text-muted); }
+
+/* ── «Kim için?» ───────────────────────────────────────────────────────────── */
+
+.picker,
+.turnstile,
+.logCard {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  padding: 18px 20px;
+}
+.picker { margin-bottom: 18px; }
+
+.chosen {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-height: 32px;
+  margin-bottom: 12px;
+  font-size: 13.5px;
+}
+.small { padding: 3px 10px; font-size: 12px; }
+
+.spaList { margin-bottom: 12px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  padding: 5px 11px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background: var(--chip);
+  color: var(--text);
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.chipOn { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
+
+.searchRow { position: relative; max-width: 420px; }
+.searchRow input { width: 100%; }
+.results {
+  position: absolute;
+  z-index: 5;
+  left: 0;
+  right: 0;
+  margin: 4px 0 0;
+  padding: 4px 0;
+  list-style: none;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-card);
+}
+.results button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 7px 12px;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+}
+.results button:hover { background: var(--chip); }
+.reason { display: block; margin-top: 10px; width: 100%; max-width: 420px; }
+
+/* ── The turnstiles ────────────────────────────────────────────────────────── */
+
+.turnstiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+}
+.tHead { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.tName { margin: 0; font-size: 18px; font-family: var(--font-serif); }
+.sideDown { margin: 0 0 10px; font-size: 12.5px; color: var(--crit); }
+.buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.buttons button { justify-content: center; }
+.buttons button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.feedback { margin: 12px 0 0; font-size: 13px; font-weight: 600; }
+.fb_good { color: var(--good); }
+.fb_crit { color: var(--crit); }
+.fb_warn { color: var(--warn); }
+.fb_busy { color: var(--text-muted); font-weight: 400; }
+
+.footNote { margin: 10px 2px 18px; font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+
+.logCard .cardTitle { margin-bottom: 12px; }

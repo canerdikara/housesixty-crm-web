@@ -51,6 +51,15 @@ export const NAV: readonly NavItem[] = [
    */
   { href: "/reservations", label: "Rezervasyonlar", roles: ALL },
 
+  /*
+   * «Turnikeler» (turnstile.md §9) — the desk opens the turnstiles for spa guests and anyone
+   * without their phone. Right after Rezervasyonlar: the front desk lives on both.
+   * ⚠️ ADMIN only until the gate bridge is installed (§9.5): a page that can only ever say
+   * "offline" would teach the desk to ignore it. Add ROLE.RECEPTION at install (§16 step 11);
+   * the backend already admits ADMIN and RECEPTION.
+   */
+  { href: "/gate", label: "Turnikeler", roles: [ROLE.ADMIN] },
+
   // Membership terms: reception has no access at all.
   { href: "/renewals", label: "Yenilemeler", roles: [ROLE.ADMIN, ROLE.SALES, ROLE.MARKETING] },
 

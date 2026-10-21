@@ -1123,3 +1123,62 @@ export type QrAccess = {
   insideSince: string | null;
   events: { event: QrDeviceEventKind; deviceLabel: string | null; actorName: string | null; createdAt: string }[];
 };
+
+// ── «Turnikeler» — desk control of the turnstiles (V55, turnstile.md §9) ─────────
+
+export type GateAction = "OPEN_ONCE" | "HOLD_OPEN" | "RELEASE";
+
+/** One turnstile as the bridge last reported it. */
+export type GateTurnstile = {
+  /** The bridge's config name, «T1» / «T2». */
+  name: string;
+  entryOnline: boolean;
+  exitOnline: boolean;
+  /** SBXPC door status: 1 forced open (held), 3 open, 4 auto recover, 5 close…; null if unread. */
+  doorStatus: number | null;
+  holdOpenSince: string | null;
+};
+
+export type GateStatus = {
+  /** A heartbeat within 90 s. */
+  bridgeOnline: boolean;
+  lastSeenAt: string | null;
+  version: string | null;
+  turnstiles: GateTurnstile[];
+};
+
+/**
+ * PENDING · SENT · DONE · FAILED, or the two read-time states: EXPIRED (never collected
+ * within 10 s, so it will never run) and NO_RESULT (collected, never answered — look at
+ * the turnstile, it may or may not have opened).
+ */
+export type GateCommandStatus = "PENDING" | "SENT" | "DONE" | "FAILED" | "EXPIRED" | "NO_RESULT";
+
+export type GateCommandLogItem = {
+  id: string;
+  createdAt: string;
+  turnstile: string;
+  action: GateAction;
+  direction: TurnstileDirection | null;
+  subjectUserId: string | null;
+  subjectName: string | null;
+  subjectRole: string | null;
+  requestedByName: string | null;
+  reason: string | null;
+  status: GateCommandStatus;
+  resultMessage: string | null;
+  passRecorded: boolean;
+};
+
+/** «Kim için?» — id, name and role only. */
+export type GatePerson = { userId: string; fullName: string; role: string };
+
+/** A spa booking today, offered first in «Kim için?». */
+export type GateSpaBooking = {
+  reservationId: string;
+  userId: string;
+  fullName: string;
+  facilityName: string;
+  startTime: string;
+  endTime: string;
+};

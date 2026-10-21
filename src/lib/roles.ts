@@ -150,3 +150,12 @@ export function canRecordFeedback(role: string | undefined | null): boolean {
 export function canManageFeedback(role: string | undefined | null): boolean {
   return role === ROLE.ADMIN;
 }
+
+/**
+ * «Turnikeler» — open, hold open and release the turnstiles (turnstile.md §9). ADMIN and
+ * RECEPTION, the pair that books at the desk. Presentation only; `CrmGateController`
+ * enforces it.
+ */
+export function canControlGate(role: string | undefined | null): boolean {
+  return role === ROLE.ADMIN || role === ROLE.RECEPTION;
+}
