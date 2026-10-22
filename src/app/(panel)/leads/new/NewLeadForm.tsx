@@ -9,6 +9,7 @@ import {
   CONSENT_CHANNELS,
   LEAD_INTEREST_CATEGORIES,
   LEAD_SOURCES,
+  SYSTEM_LEAD_SOURCES,
   consentChannelLabel,
   interestLabel,
   leadSourceLabel,
@@ -20,10 +21,10 @@ import {
  * `WEBSITE_FORM` is absent from the source list on purpose. The backend reserves it
  * for the public endpoint and rejects it here with a 400; leaving it selectable would
  * offer an option that always fails. More to the point, source reporting is only
- * worth anything if "web sitesi formu" means the form.
+ * worth anything if "web sitesi formu" means the form. `GUEST_APP` (V57) likewise.
  */
 export function NewLeadForm({ consentTextVersion }: { consentTextVersion: string }) {
-  const sources = LEAD_SOURCES.filter((s) => s !== "WEBSITE_FORM");
+  const sources = LEAD_SOURCES.filter((s) => !SYSTEM_LEAD_SOURCES.includes(s));
 
   /*
    * Two of the source values want a follow-up question, and only ever one of them:

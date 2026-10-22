@@ -55,8 +55,15 @@ export function ConvertForm({
       <p className={f.hint} style={{ marginBottom: 2 }}>
         Üye hesabı oluşturulur ve bu adayın tüm etkileşim geçmişi üyeye taşınır. Aynı
         e-posta veya telefona sahip bir üye zaten varsa yeni kayıt açılmaz, aday mevcut
-        üyeye bağlanır.
+        üyeye bağlanır. Kişinin uygulamada misafir hesabı varsa yeni hesap açılmaz; misafir
+        hesabı üye hesabına yükseltilir ve rezervasyonları korunur.
       </p>
+      {lead.guestUserId && (
+        <p className={f.hint} style={{ marginBottom: 2 }}>
+          <strong>Bu aday uygulamada misafir hesabı açtı.</strong> Dönüştürünce o hesap üye
+          olur; açık misafir oturumu kapanır, üye «Parola Oluştur» ile giriş yapar.
+        </p>
+      )}
 
       <h3 className={f.sectionTitle}>Üye hesabı</h3>
       <div className={f.row}>

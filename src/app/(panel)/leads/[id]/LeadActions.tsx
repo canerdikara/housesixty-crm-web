@@ -16,6 +16,7 @@ import {
   INTERACTION_TYPES,
   LEAD_INTEREST_CATEGORIES,
   LEAD_SOURCES,
+  SYSTEM_LEAD_SOURCES,
   interactionTypeLabel,
   interestLabel,
   leadSourceLabel,
@@ -361,15 +362,15 @@ export function EditLeadProfile({ lead }: { lead: LeadDetail }) {
           <div className={f.field}>
             <label className={f.label} htmlFor="p-source">Kaynak</label>
             {/*
-              WEBSITE_FORM is offered only to a lead that already carries it. It cannot
-              be chosen — source reporting is worth nothing if "web sitesi formu" can be
-              typed in by hand — but a website enquiry still has to be editable without
-              being relabelled first.
+              WEBSITE_FORM and GUEST_APP are offered only to a lead that already carries
+              them. They cannot be chosen — source reporting is worth nothing if "web
+              sitesi formu" can be typed in by hand — but such a lead still has to be
+              editable without being relabelled first.
             */}
             <select id="p-source" name="source" className={f.select} value={source}
               onChange={(e) => setSource(e.target.value)}>
               {LEAD_SOURCES
-                .filter((s) => s !== "WEBSITE_FORM" || lead.source === "WEBSITE_FORM")
+                .filter((s) => !SYSTEM_LEAD_SOURCES.includes(s) || lead.source === s)
                 .map((s) => <option key={s} value={s}>{leadSourceLabel(s)}</option>)}
             </select>
           </div>

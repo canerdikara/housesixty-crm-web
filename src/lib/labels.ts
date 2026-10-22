@@ -60,6 +60,7 @@ export function leadSourceLabel(v: string): string {
     case "SOCIAL": return "Sosyal medya";
     case "PARTNER": return "Partner";
     case "OTHER": return "Diğer";
+    case "GUEST_APP": return "Misafir (uygulama)";
     default: return v;
   }
 }
@@ -121,8 +122,11 @@ export function consentChannelLabel(v: string): string {
 }
 
 export const LEAD_SOURCES: LeadSource[] = [
-  "WEBSITE_FORM", "REFERRAL", "WALK_IN", "EVENT", "SOCIAL", "PARTNER", "OTHER",
+  "WEBSITE_FORM", "GUEST_APP", "REFERRAL", "WALK_IN", "EVENT", "SOCIAL", "PARTNER", "OTHER",
 ];
+
+/** Sources only the platform sets (public form, guest sign-up, V57); never offered for typing in. */
+export const SYSTEM_LEAD_SOURCES: LeadSource[] = ["WEBSITE_FORM", "GUEST_APP"];
 
 /**
  * Every category the system knows, in category order.

@@ -379,6 +379,7 @@ export async function convertLeadAction(_prev: FormState, form: FormData): Promi
   const result = await apiRequest<{
     userId: string;
     createdUser: boolean;
+    upgradedGuest?: boolean;
     guestAccountToReview: string | null;
   }>(`/api/v1/crm/leads/${id}/convert`, {
     method: "POST",
@@ -408,9 +409,11 @@ export async function convertLeadAction(_prev: FormState, form: FormData): Promi
     return { error: result.kind === "forbidden" ? `Yetkiniz yok: ${result.message}` : result.message };
   }
 
-  const base = result.data.createdUser
-    ? "Üye kaydı oluşturuldu. Üye ilk girişini yapmayı bekliyor."
-    : "Aday mevcut bir üyeye bağlandı.";
+  const base = result.data.upgradedGuest
+    ? "Misafir hesabı üye hesabına yükseltildi; rezervasyonları korundu. Üye, uygulamada «Parola Oluştur» ile ilk girişini yapacak."
+    : result.data.createdUser
+      ? "Üye kaydı oluşturuldu. Üye ilk girişini yapmayı bekliyor."
+      : "Aday mevcut bir üyeye bağlandı.";
   const guestNote = result.data.guestAccountToReview
     ? " Aynı telefona sahip bir misafir hesabı var — birleştirme kararı sizde."
     : "";

@@ -11,7 +11,8 @@
 export type LeadStatus = "NEW" | "CONTACTED" | "VISITED" | "PROPOSAL_SENT" | "WON" | "LOST";
 
 export type LeadSource =
-  | "WEBSITE_FORM" | "REFERRAL" | "WALK_IN" | "EVENT" | "SOCIAL" | "PARTNER" | "OTHER";
+  | "WEBSITE_FORM" | "REFERRAL" | "WALK_IN" | "EVENT" | "SOCIAL" | "PARTNER" | "OTHER"
+  | "GUEST_APP";
 
 export type InteractionType =
   | "CALL" | "EMAIL" | "WHATSAPP" | "SMS" | "MEETING" | "VISIT" | "NOTE" | "SYSTEM";
@@ -98,6 +99,8 @@ export type LeadDetail = LeadListItem & {
   lostReason: string | null;
   convertedUserId: string | null;
   convertedAt: string | null;
+  /** The guest account the lead was opened from (V57); conversion upgrades it. */
+  guestUserId?: string | null;
   notes: string | null;
   updatedAt: string;
   interactions: Interaction[];

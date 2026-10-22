@@ -196,6 +196,10 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
               {lead.source === "EVENT" && (
                 <Row k="Etkinlik" v={lead.eventName ?? "—"} />
               )}
+              {/* V57: any lead can carry one — a web enquirer who later signed up as a guest too. */}
+              {lead.guestUserId && !lead.convertedUserId && (
+                <Row k="Misafir hesabı" v="Var — dönüştürünce üyeye yükseltilir" />
+              )}
               <Row k="Sorumlu" v={lead.ownerName ?? "—"} />
             </div>
 
