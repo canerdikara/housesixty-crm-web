@@ -22,8 +22,8 @@ function money(v: string): string {
  * One window's takings.
  *
  * ⚠️ «Tahakkuk eden» and «Tahsil edilen» are shown as two figures and never combined.
- * Booked is what was billed; collected is what reached the bank. Adding them would
- * double-count, and averaging them would describe nothing.
+ * Booked is what was billed; collected is card money that reached the bank, net of voids
+ * and refunds. Adding them would double-count, and averaging them would describe nothing.
  */
 export function TotalsCard({
   title,
@@ -56,12 +56,23 @@ export function TotalsCard({
 
       <div className={styles.collected}>
         <span className={styles.collectedValue}>{money(totals.collected)}</span>
-        <span className={styles.collectedLabel}>Tahsil edilen</span>
+        <span className={styles.collectedLabel}>Tahsil edilen (net)</span>
       </div>
+      {/*
+        Card money given back in this window (V58, virtual_pos.md §9.3). Already subtracted
+        from the net above — shown so a negative or small net explains itself. A refund is
+        its own event on its own day, so a sale refunded next month leaves this month alone.
+      */}
+      {Number(totals.refunded) > 0 && (
+        <div className={styles.collected}>
+          <span className={styles.collectedValue}>{money(totals.refunded)}</span>
+          <span className={styles.collectedLabel}>İade edilen</span>
+        </div>
+      )}
 
       {/*
-        An unexplained ₺0 reads as a broken page. It is not: no sanal POS is configured, so
-        no payment can ever reach COMPLETED. Same pattern as the dashboard's turnstile note.
+        An unexplained ₺0 reads as a broken page. It is not: until the sanal POS is configured
+        no card sale can be approved. Same pattern as the dashboard's turnstile note.
       */}
       {nothingEverCollected && (
         <p className={styles.note}>

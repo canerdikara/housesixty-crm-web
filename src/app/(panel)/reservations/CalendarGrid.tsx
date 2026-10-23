@@ -317,17 +317,38 @@ function BookingDetail({
             payment was verified" since V44 and also means "the desk booked it" since V46, so
             the badge says which — a reader cannot tell from the word alone.
           */}
-          <Badge tone={reservation.status === "CONFIRMED" ? "good" : "neutral"}>
-            {reservation.status === "CONFIRMED" ? "Onaylı" : "Beklemede"}
-          </Badge>
+          {/*
+            Two more states, for guests' card bookings only (virtual_pos.md §9.2): «Ödendi»
+            is CONFIRMED with a completed payment, «Ödeme bekleniyor» is PENDING on a
+            booking that must be paid. A desk booking stays «Onaylı», a member's PENDING
+            stays «Beklemede».
+          */}
+          {reservation.status === "CONFIRMED" && reservation.paid ? (
+            <Badge tone="good">Ödendi</Badge>
+          ) : reservation.status === "PENDING" && reservation.paymentRequired ? (
+            <Badge tone="accent">Ödeme bekleniyor</Badge>
+          ) : (
+            <Badge tone={reservation.status === "CONFIRMED" ? "good" : "neutral"}>
+              {reservation.status === "CONFIRMED" ? "Onaylı" : "Beklemede"}
+            </Badge>
+          )}
         </dd>
 
         <dt>Kaynak</dt>
         <dd>
           {reservation.bookedAtDesk
             ? `Resepsiyon${reservation.bookedByName ? ` · ${reservation.bookedByName}` : ""}`
-            : "Üyenin kendi rezervasyonu"}
+            : reservation.bookerRole === "GUEST"
+              ? "Misafirin kendi rezervasyonu"
+              : "Üyenin kendi rezervasyonu"}
         </dd>
+
+        {reservation.paid && reservation.paidAmount && (
+          <>
+            <dt>Ödeme</dt>
+            <dd>{tl(reservation.paidAmount)} kartla ödendi</dd>
+          </>
+        )}
 
         <dt>Oyuncular</dt>
         <dd>
@@ -375,14 +396,39 @@ function BookingDetail({
           <input type="hidden" name="reservationId" value={reservation.id} />
           <FormMessage state={state} />
           {confirming ? (
-            <>
-              <p className={f.hint}>
-                Rezervasyon iptal edilir ve kort tekrar rezervasyona açılır.
-              </p>
-              <SubmitButton variant="danger" pendingLabel="İptal ediliyor…">
-                Emin misiniz? İptal et
-              </SubmitButton>
-            </>
+            reservation.paid ? (
+              /*
+               * A paid booking — always a guest's — offers the choice the contract makes
+               * (doc 02 art. 8.3, virtual_pos.md §9.2). The sentences come from the server's
+               * refundOnCancel, the same test the cancellation itself applies.
+               */
+              <>
+                <p className={f.hint}>
+                  {reservation.refundOnCancel === "FULL"
+                    ? `Müşteri talebiyle iptalde ödenen ${tl(reservation.paidAmount)} karta iade edilecek.`
+                    : `Başlangıca ${reservation.freeCancellationHours} saatten az kaldığı için müşteri talebiyle iptalde iade yapılmayacak.`}
+                </p>
+                <SubmitButton variant="danger" name="initiator" value="CUSTOMER" pendingLabel="İptal ediliyor…">
+                  Müşteri talebiyle iptal
+                </SubmitButton>
+                <p className={f.hint}>
+                  Tesis kaynaklı iptalde {tl(reservation.paidAmount)} saatten bağımsız olarak tam
+                  iade edilir ve misafire e-posta gönderilir.
+                </p>
+                <SubmitButton variant="danger" name="initiator" value="CLUB" pendingLabel="İptal ediliyor…">
+                  Tesis kaynaklı iptal — tam iade
+                </SubmitButton>
+              </>
+            ) : (
+              <>
+                <p className={f.hint}>
+                  Rezervasyon iptal edilir ve kort tekrar rezervasyona açılır.
+                </p>
+                <SubmitButton variant="danger" pendingLabel="İptal ediliyor…">
+                  Emin misiniz? İptal et
+                </SubmitButton>
+              </>
+            )
           ) : (
             <button
               type="button"
@@ -396,6 +442,12 @@ function BookingDetail({
       )}
     </div>
   );
+}
+
+/** Lira with kuruş, Turkish style: "700,00 TL". Server amounts are strings; render only. */
+function tl(v: string | null): string {
+  const n = Number(v ?? 0);
+  return `${new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number.isFinite(n) ? n : 0)} TL`;
 }
 
 /**

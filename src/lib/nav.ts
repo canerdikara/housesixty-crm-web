@@ -72,6 +72,13 @@ export const NAV: readonly NavItem[] = [
   { href: "/income", label: "Gelirler", roles: [ROLE.ADMIN] },
 
   /*
+   * «Ödemeler» (virtual_pos.md §9.1) — guests' card payments, the attention list, manual
+   * refund. ADMIN only (§15 #6): payment data joins health data as admin-only (CRM.md §12).
+   * Right after «Gelirler», its money twin.
+   */
+  { href: "/payments", label: "Ödemeler", roles: [ROLE.ADMIN] },
+
+  /*
    * ADMIN alone, like Gelirler and for a similar reason: staff arrival and departure times
    * are personnel records — the kind a dispute about pay is settled from — and no other
    * panel role's work needs them. New scope (2026-10-05), placed beside the other

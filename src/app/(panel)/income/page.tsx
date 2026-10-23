@@ -18,12 +18,12 @@ export const dynamic = "force-dynamic";
  * ## ⚠️ Two numbers, never one
  *
  * «Tahakkuk eden» is what was **billed** — courts played and memberships sold. «Tahsil
- * edilen» is what reached the **bank**. They are never added or averaged, the same rule the
- * facility reports follow for booked-versus-turnstile, because the gap is the useful part.
+ * edilen» is card money that reached the **bank**, net of voids and refunds (V58), with
+ * «İade edilen» beside it. They are never added or averaged, the same rule the facility
+ * reports follow for booked-versus-turnstile, because the gap is the useful part.
  *
- * Collected is **₺0 on production and stays ₺0** until a sanal POS is configured. Rather
- * than render an unexplained zero, the page says so — the pattern the dashboard uses for
- * `turnstileEntriesEver`.
+ * Collected is **₺0** until the sanal POS is configured. Rather than render an unexplained
+ * zero, the page says so — the pattern the dashboard uses for `turnstileEntriesEver`.
  *
  * ## The two bases, stated on the page rather than assumed
  *

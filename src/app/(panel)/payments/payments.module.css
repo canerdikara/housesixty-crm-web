@@ -1,0 +1,26 @@
+/* «Ödemeler» (virtual_pos.md §9.1). */
+
+.cardTitle { font-size: 16px; margin: 0; }
+.cardSub { margin: 2px 0 12px; color: var(--text-muted); font-size: 12.5px; }
+
+.attention { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.attention li {
+  display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline;
+  padding: 10px 12px; border: 1px solid var(--crit); border-radius: var(--radius);
+  background: var(--crit-bg);
+}
+.attention a { font-weight: 600; }
+
+.notice { margin: 0 0 16px; color: var(--text-muted); font-size: 13px; }
+
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0; }
+.facts dt { color: var(--text-muted); }
+.facts dd { margin: 0; }
+
+.legend { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; margin: 0; font-size: 12.5px; }
+.legend dt { font-variant-numeric: tabular-nums; font-weight: 600; }
+.legend dd { margin: 0; color: var(--text-muted); }
+
+.layout { display: grid; grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr); gap: 16px; }
+@media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+.stack { display: grid; gap: 16px; align-content: start; }

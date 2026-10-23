@@ -96,16 +96,23 @@ export async function bookSlotAction(_prev: FormState, form: FormData): Promise<
  * A DELETE that cancels rather than deletes: the row stays, carrying who cancelled it and
  * when. Works on a booking the member made themselves as well as a desk one — that is what
  * a desk is for.
+ *
+ * `initiator` comes from whichever button was pressed (virtual_pos.md §9.2). CUSTOMER
+ * applies the owner's window to a paid booking; CLUB («Tesis kaynaklı») refunds it in full
+ * whatever the hour and e-mails the guest. Anything else is CUSTOMER — the safe default,
+ * since it never refunds more than the policy promises.
  */
 export async function cancelReservationAction(
   _prev: FormState,
   form: FormData
 ): Promise<FormState> {
   const id = str(form, "reservationId");
+  const initiator = str(form, "initiator") === "CLUB" ? "CLUB" : "CUSTOMER";
 
-  const result = await apiRequest<unknown>(`/api/v1/crm/reservations/${id}`, {
-    method: "DELETE",
-  });
+  const result = await apiRequest<unknown>(
+    `/api/v1/crm/reservations/${id}?initiator=${initiator}`,
+    { method: "DELETE" }
+  );
 
   if (result.kind === "unauthorized") redirect("/login");
   if (result.kind !== "ok") {
@@ -115,7 +122,13 @@ export async function cancelReservationAction(
   }
 
   revalidatePath("/reservations", "layout");
-  return { ok: "Rezervasyon iptal edildi, kort tekrar açıldı." };
+  revalidatePath("/payments", "layout");
+  return {
+    ok:
+      initiator === "CLUB"
+        ? "Rezervasyon tesis kaynaklı iptal edildi; ödeme varsa tam iade başlatıldı."
+        : "Rezervasyon iptal edildi, kort tekrar açıldı.",
+  };
 }
 
 /**

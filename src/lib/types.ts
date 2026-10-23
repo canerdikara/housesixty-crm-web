@@ -709,6 +709,17 @@ export type CalendarReservation = {
   bookedAtDesk: boolean;
   bookedByName: string | null;
   deskNote: string | null;
+  /** The owner's role — «Misafirin kendi rezervasyonu» for a guest (virtual_pos.md §9.2). */
+  bookerRole: string;
+  /** A guest booking that must be paid by card (V58). PENDING + this = «Ödeme bekleniyor». */
+  paymentRequired: boolean;
+  /** The card was charged and nothing given back yet. Only ever a guest's booking. */
+  paid: boolean;
+  paidAmount: string | null;
+  /** What a customer-initiated cancel gives back. A club-initiated one always refunds in full. */
+  refundOnCancel: "FULL" | "NONE" | "NOT_PAID";
+  /** The owner's free-cancellation window: 12, or 8 for a guest. */
+  freeCancellationHours: number;
 };
 
 export type CalendarSlot = {
@@ -760,9 +771,10 @@ export type CalendarFacilityOption = {
 /**
  * ⚠️ `booked` and `collected` are NEVER added or averaged.
  *
- * `booked` is what was billed — courts played and memberships sold. `collected` is what
- * reached the bank, and is **0 on production** until a sanal POS is configured. They sit
- * side by side because the gap between them is the useful part.
+ * `booked` is what was billed — courts played and memberships sold. `collected` is card
+ * money **net** of voids and refunds (V58), each on its own day, so it can be negative in a
+ * month that only refunded. 0 until the sanal POS is configured. They sit side by side
+ * because the gap between them is the useful part.
  */
 export type IncomeTotals = {
   padel: string;
@@ -770,7 +782,10 @@ export type IncomeTotals = {
   membership: string;
   /** padel + spa + membership. Billed, not banked. */
   booked: string;
+  /** Net: sales minus voids and refunds. */
   collected: string;
+  /** Card money given back in the window, already subtracted from `collected`. */
+  refunded: string;
   reservationCount: number;
   membershipCount: number;
 };
@@ -783,6 +798,7 @@ export type IncomeMonth = {
   membership: string;
   booked: string;
   collected: string;
+  refunded: string;
 };
 
 export type Income = {
@@ -801,7 +817,7 @@ export type Income = {
    * records a figure. Rendered, so the membership total is never read as a confident zero.
    */
   unpricedMembershipSales: number;
-  /** True while no payment has ever been collected — i.e. no sanal POS is configured. */
+  /** True while no card sale has ever been approved — i.e. no sanal POS is configured. */
   nothingEverCollected: boolean;
 };
 
@@ -1184,4 +1200,94 @@ export type GateSpaBooking = {
   facilityName: string;
   startTime: string;
   endTime: string;
+};
+
+// ── «Ödemeler» — card payments, V58 (virtual_pos.md §9.1) ───────────────────────────
+
+export type PaymentStatus = "PENDING" | "COMPLETED" | "FAILED" | "REFUNDED" | "REFUND_PENDING";
+export type PosKind = "SALE" | "VOID" | "REFUND";
+export type PosStatus = "STARTED" | "APPROVED" | "DECLINED" | "ABANDONED" | "UNKNOWN";
+
+/** ⚠️ No card data anywhere — the club holds none. */
+export type PaymentRow = {
+  id: string;
+  customerName: string;
+  customerPhone: string | null;
+  customerRole: string;
+  reservationId: string;
+  reservationStatus: ReservationStatus;
+  facilityName: string;
+  slotDate: string;
+  startTime: string;
+  amount: string;
+  status: PaymentStatus;
+  createdAt: string;
+  paidAt: string | null;
+  refundedAt: string | null;
+  orderId: string | null;
+  rrn: string | null;
+  saleAttempts: number;
+  refundedAmount: string;
+  lastCode: string | null;
+  needsAttention: boolean;
+};
+
+export type PaymentAttentionKind = "REFUND_PENDING" | "OWED_REFUND" | "UNKNOWN_ATTEMPT" | "CONTRACT_MAIL_GAVE_UP";
+
+export type PaymentAttention = {
+  kind: PaymentAttentionKind;
+  paymentId: string;
+  orderId: string | null;
+  customerName: string;
+  amount: string;
+  since: string | null;
+};
+
+export type PaymentList = {
+  attention: PaymentAttention[];
+  rows: PaymentRow[];
+  providerConfigured: boolean;
+};
+
+export type PosTransactionRow = {
+  id: string;
+  kind: PosKind;
+  orderId: string;
+  amount: string;
+  status: PosStatus;
+  reason: string | null;
+  procReturnCode: string | null;
+  mdStatus: string | null;
+  rrn: string | null;
+  authCode: string | null;
+  createdAt: string;
+  completedAt: string | null;
+  inquiredAt: string | null;
+  requestedByName: string | null;
+  note: string | null;
+  primary: boolean;
+};
+
+export type PaymentDetail = {
+  payment: PaymentRow;
+  transactions: PosTransactionRow[];
+  contractVersion: string | null;
+  contractAcceptedAt: string | null;
+  contractMailedAt: string | null;
+  contractMailGaveUpAt: string | null;
+  canRefund: boolean;
+  providerConfigured: boolean;
+};
+
+export type BankLookup = {
+  answered: boolean;
+  code: string | null;
+  reasonCode: string | null;
+  status: string | null;
+  authAmount: string | null;
+  authDate: string | null;
+  rrn: string | null;
+  authCode: string | null;
+  history: { type: string | null; status: string | null; authAmount: string | null; authDate: string | null; voidDate: string | null; returnCode: string | null }[];
+  note: string | null;
 };

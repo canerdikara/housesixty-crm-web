@@ -16,16 +16,21 @@ export function SubmitButton({
   children,
   pendingLabel,
   variant = "primary",
+  name,
+  value,
 }: {
   children: React.ReactNode;
   pendingLabel?: string;
   variant?: "primary" | "ghost" | "danger";
+  /** For a form with two submit buttons: the clicked one's name/value reaches the action. */
+  name?: string;
+  value?: string;
 }) {
   const { pending } = useFormStatus();
   const cls =
     variant === "ghost" ? styles.submitGhost : variant === "danger" ? styles.submitDanger : "";
   return (
-    <button type="submit" className={`${styles.submit} ${cls}`} disabled={pending}>
+    <button type="submit" name={name} value={value} className={`${styles.submit} ${cls}`} disabled={pending}>
       {pending ? (pendingLabel ?? "Kaydediliyor…") : children}
     </button>
   );

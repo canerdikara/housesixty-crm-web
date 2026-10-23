@@ -349,7 +349,7 @@ function Cell({ v }: { v: Access }) {
 /**
  * Area · ADMIN · SALES · MARKETING · RECEPTION — what the backend actually enforces today.
  * CRM.md §6 plus the later decisions: reception books at the desk (2026-09-29) and takes
- * event attendance (2026-10-05); Gelirler and Çalışan takibi are ADMIN only; reception
+ * event attendance (2026-10-05); Gelirler, Ödemeler (V58) and Çalışan takibi are ADMIN only; reception
  * records feedback; the trainer ratings on Geri Bildirim are ADMIN only.
  */
 const MATRIX: [string, Access, Access, Access, Access][] = [
@@ -359,6 +359,7 @@ const MATRIX: [string, Access, Access, Access, Access][] = [
   ["Rezervasyonlar", "full", "read", "read", "full"],
   ["Yenilemeler", "full", "full", "read", "none"],
   ["Gelirler", "full", "none", "none", "none"],
+  ["Ödemeler", "full", "none", "none", "none"],
   ["Çalışan takibi", "full", "none", "none", "none"],
   ["Segmentler", "full", "full", "full", "none"],
   ["Kampanyalar", "full", "read", "full", "none"],
