@@ -652,6 +652,8 @@ export type TurnstileResult = {
   message: string;
   /** What was recorded — the server's answer when the gate sent `AUTO`. */
   direction?: TurnstileDirection | null;
+  /** `ALREADY_INSIDE` from /validate; `UNKNOWN_CODE` for a 6-digit code nobody held (the gate still opens). */
+  reason?: string | null;
 };
 
 // ── The reservations calendar — V46 ──────────────────────────────────────────────

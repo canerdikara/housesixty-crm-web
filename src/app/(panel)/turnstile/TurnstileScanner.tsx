@@ -1,17 +1,22 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { entryPointLabel } from "@/lib/labels";
-import type { EntryPoint, GateDirection, TurnstileResult } from "@/lib/types";
-import { validateScanAction } from "./actions";
+import type { TurnstileDirection, TurnstileResult } from "@/lib/types";
+import { scanCodeAction, validateScanAction } from "./actions";
 import styles from "./turnstile.module.css";
 
 /**
  * A turnstile, simulated with whatever camera the machine has.
  *
- * Reads the QR the member app draws — a standard code whose content is the raw token —
- * and POSTs it to `/access/qr/validate` exactly as the real gate will. It is a **test
- * tool**, which is why it is not in the sidebar and why the page above it says so.
+ * Reads the QR the member app draws and records the pass the way the real turnstile will.
+ * It is a **test tool**, which is why it is not in the sidebar and why the page above it
+ * says so. Two kinds of QR, told apart by their content:
+ *
+ * - **A 6-digit code** (V60, the supplier's turnstile, once `GATE_STATIC_CODES` is on):
+ *   posted to `/access/gate/scan` as the code plus the chosen reader — what the supplier's
+ *   system sends after the arm turns.
+ * - **A 43-character token** (the apps until then): posted to `/access/qr/validate`, with
+ *   the direction the chosen reader stands for.
  *
  * ## Four things here are not obvious
  *
@@ -23,7 +28,8 @@ import styles from "./turnstile.module.css";
  *
  * **2. A token lives 60 seconds.** So [seen] is not a leak — an entry older than the
  * token's own lifetime can never be presented again, and the set is pruned on that basis
- * rather than growing for the life of the tab.
+ * rather than growing for the life of the tab. A 6-digit code is remembered for only a few
+ * seconds: the same code is handed to the next member soon after it is used.
  *
  * **3. `BarcodeDetector` is not in Safari**, and the failure mode is a camera that runs
  * and detects nothing — which looks like a broken scanner rather than an unsupported
@@ -37,6 +43,20 @@ import styles from "./turnstile.module.css";
 
 /** How long a decoded token is remembered, in ms. Its own TTL plus a margin. */
 const TOKEN_TTL_MS = 75_000;
+/** A 6-digit code: long enough to swallow the camera's repeats, short enough for the next holder. */
+const CODE_TTL_MS = 8_000;
+const STATIC_CODE = /^\d{6}$/;
+
+/**
+ * The supplier's four readers. ⚠️ Placeholder numbering, the same as the backend's
+ * `GATE_READERS` default, until the supplier confirms theirs.
+ */
+const READERS: { n: number; label: string; direction: TurnstileDirection }[] = [
+  { n: 1, label: "Turnike 1 · giriş", direction: "ENTRY" },
+  { n: 2, label: "Turnike 1 · çıkış", direction: "EXIT" },
+  { n: 3, label: "Turnike 2 · giriş", direction: "ENTRY" },
+  { n: 4, label: "Turnike 2 · çıkış", direction: "EXIT" },
+];
 /** Between detection attempts. 10/s is far faster than a person presents a phone. */
 const SCAN_INTERVAL_MS = 100;
 /** How long a verdict stays on screen before scanning resumes. */
@@ -59,23 +79,18 @@ export function TurnstileScanner() {
   const busyRef = useRef(false);
 
   const [status, setStatus] = useState<Status>({ kind: "idle" });
-  const [entryPoint, setEntryPoint] = useState<EntryPoint>("MAIN_GATE");
-  /*
-   * «Otomatik» by default. With «Giriş» as the default, scanning somebody a second time to
-   * let them out recorded another *entry* unless the operator remembered to flip this
-   * select first — so nobody ever left, and «Çalışan takibi» showed no exits (reported
-   * 2026-10-05). The server resolves AUTO per person from their last pass today.
-   */
-  const [direction, setDirection] = useState<GateDirection>("AUTO");
+  // Which of the four readers this camera stands for — and so the direction. The real
+  // turnstile has fixed readers, so the old «Otomatik» direction is gone with it.
+  const [reader, setReader] = useState(1);
   const [verdict, setVerdict] = useState<TurnstileResult | null>(null);
-  const [log, setLog] = useState<{ at: string; name: string; ok: boolean; dir: string }[]>([]);
+  const [log, setLog] = useState<{ at: string; name: string; ok: boolean; unknown: boolean; dir: string }[]>([]);
 
   // The selects change under the scan loop, so it reads them from a ref rather than
   // from a stale closure — otherwise switching to EXIT mid-session keeps sending ENTRY.
-  const settingsRef = useRef({ entryPoint, direction });
+  const settingsRef = useRef(reader);
   useEffect(() => {
-    settingsRef.current = { entryPoint, direction };
-  }, [entryPoint, direction]);
+    settingsRef.current = reader;
+  }, [reader]);
 
   const stop = useCallback(() => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -170,14 +185,18 @@ export function TurnstileScanner() {
       // Prune, then check. See note 1: without this, every success is chased by a
       // failure for as long as the phone stays in frame.
       for (const [t, at] of seenRef.current) {
-        if (now - at > TOKEN_TTL_MS) seenRef.current.delete(t);
+        if (now - at > (STATIC_CODE.test(t) ? CODE_TTL_MS : TOKEN_TTL_MS)) seenRef.current.delete(t);
       }
       if (seenRef.current.has(raw)) return;
       seenRef.current.set(raw, now);
 
       busyRef.current = true;
-      const { entryPoint: ep, direction: dir } = settingsRef.current;
-      const result = await validateScanAction({ token: raw, entryPoint: ep, direction: dir });
+      const r = READERS.find((x) => x.n === settingsRef.current) ?? READERS[0];
+      const isCode = STATIC_CODE.test(raw);
+      const dir = r.direction;
+      const result = isCode
+        ? await scanCodeAction({ code: raw, reader: r.n, direction: dir })
+        : await validateScanAction({ token: raw, entryPoint: "MAIN_GATE", direction: dir });
       if (cancelled) return;
 
       setVerdict(result);
@@ -190,10 +209,11 @@ export function TurnstileScanner() {
               minute: "2-digit",
               second: "2-digit",
             }).format(new Date()),
-            name: result.memberName ?? "—",
+            // A code's answer carries no name (it is a third party's endpoint).
+            name: result.memberName ?? (isCode ? "6 haneli kod" : "—"),
             ok: result.valid,
-            // What the server recorded, which is the only honest label under «Otomatik».
-            dir: (result.direction ?? dir) === "EXIT" ? "Çıkış" : (result.direction ?? dir) === "ENTRY" ? "Giriş" : "—",
+            unknown: result.reason === "UNKNOWN_CODE",
+            dir: (result.direction ?? dir) === "EXIT" ? "Çıkış" : "Giriş",
           },
           ...prev,
         ].slice(0, 12)
@@ -221,29 +241,12 @@ export function TurnstileScanner() {
         <div className={styles.controls}>
           <label className={styles.control}>
             <span className={styles.controlLabel}>Okuyucu</span>
-            <select
-              className={styles.select}
-              value={entryPoint}
-              onChange={(e) => setEntryPoint(e.target.value as EntryPoint)}
-            >
-              {(["MAIN_GATE", "SPA_ENTRANCE", "GYM_ENTRANCE"] as const).map((p) => (
-                <option key={p} value={p}>
-                  {entryPointLabel(p)}
+            <select className={styles.select} value={reader} onChange={(e) => setReader(Number(e.target.value))}>
+              {READERS.map((r) => (
+                <option key={r.n} value={r.n}>
+                  {r.n} · {r.label}
                 </option>
               ))}
-            </select>
-          </label>
-
-          <label className={styles.control}>
-            <span className={styles.controlLabel}>Yön</span>
-            <select
-              className={styles.select}
-              value={direction}
-              onChange={(e) => setDirection(e.target.value as GateDirection)}
-            >
-              <option value="AUTO">Otomatik (giriş / çıkış sırayla)</option>
-              <option value="ENTRY">Giriş</option>
-              <option value="EXIT">Çıkış</option>
             </select>
           </label>
 
@@ -287,7 +290,11 @@ export function TurnstileScanner() {
             <div className={styles.verdict}>
               <p className={styles.verdictMark}>{verdict.valid ? "✓" : "✕"}</p>
               <p className={styles.verdictName}>
-                {verdict.valid ? (verdict.memberName ?? "Geçiş kabul edildi") : "Geçiş reddedildi"}
+                {verdict.valid
+                  ? (verdict.memberName ?? "Geçiş kaydedildi")
+                  : verdict.reason === "UNKNOWN_CODE"
+                    ? "Bilinmeyen geçiş"
+                    : "Geçiş reddedildi"}
               </p>
               {verdict.valid && verdict.direction && (
                 <p className={styles.verdictMessage}>{verdict.direction === "EXIT" ? "Çıkış" : "Giriş"} kaydedildi</p>
@@ -301,8 +308,7 @@ export function TurnstileScanner() {
 
         {status.kind === "scanning" && !verdict && (
           <p className={styles.hint}>
-            Okutuluyor — {entryPointLabel(entryPoint)} ·{" "}
-            {direction === "AUTO" ? "Otomatik yön" : direction === "ENTRY" ? "Giriş" : "Çıkış"}. QR kodu kameraya gösterin.
+            Okutuluyor — {READERS.find((r) => r.n === reader)?.label}. QR kodu kameraya gösterin.
           </p>
         )}
       </div>
@@ -318,7 +324,7 @@ export function TurnstileScanner() {
                 <span className={styles.logTime}>{row.at}</span>
                 <span className={styles.logName}>{row.name}</span>
                 <span className={row.ok ? styles.logOk : styles.logBad}>
-                  {row.ok ? row.dir : "Ret"}
+                  {row.ok ? row.dir : row.unknown ? "Bilinmeyen" : "Ret"}
                 </span>
               </li>
             ))}

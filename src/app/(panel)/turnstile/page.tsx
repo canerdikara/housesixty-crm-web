@@ -12,6 +12,10 @@ export const dynamic = "force-dynamic";
 /**
  * A stand-in for the turnstile, so the reports have something to report.
  *
+ * Since V60 (2026-10-28) it speaks both protocols: a 6-digit code goes to
+ * `/access/gate/scan` the way the supplier's system will report it, a 43-character token
+ * to `/access/qr/validate` as before. See `TurnstileScanner`. The notes below predate it.
+ *
  * ## Why this exists
  *
  * Nothing calls `POST /access/qr/validate`. The member apps only call `/generate` — they
@@ -62,9 +66,10 @@ export default async function TurnstilePage() {
       />
 
       <div className={styles.banner}>
-        <strong>Bu bir test aracıdır.</strong> Gerçek turnike donanımı bağlanana kadar,
-        üyenin uygulamadaki QR kodunu bu sayfadaki kamerayla okutarak giriş ve çıkış
-        kaydı oluşturabilirsiniz. Okutulan her kod gerçek bir geçiş kaydı yazar ve «Anlık
+        <strong>Bu bir test aracıdır.</strong> Gerçek turnike bağlanana kadar, üyenin
+        uygulamadaki QR kodunu bu sayfadaki kamerayla okutarak giriş ve çıkış kaydı
+        oluşturabilirsiniz. Okuyucuyu seçin: kamera o okuyucunun yerine geçer. Hem 6 haneli
+        turnike kodlarını hem de uygulamanın eski uzun kodlarını okur. Okutulan her kod gerçek bir geçiş kaydı yazar ve «Anlık
         rapor» ile «Günlük rapor» ekranlarında görünür — yani burada yapılan okutmalar
         gerçek veridir, silinmez.
       </div>
