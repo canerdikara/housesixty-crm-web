@@ -4,6 +4,7 @@ import { PageBody, PageHeader, Card } from "@/components/Page";
 import { Badge, EmptyState, Pagination, TableWrap, ui } from "@/components/ui";
 import { apiRequest } from "@/lib/api";
 import { formatDate, formatDateTime } from "@/lib/dates";
+import { iysUpload } from "@/lib/iys";
 import { consentChannelLabel } from "@/lib/labels";
 import { ROLE, roleLabel } from "@/lib/roles";
 import { readSession } from "@/lib/session";
@@ -65,6 +66,9 @@ export default async function SettingsPage({
     apiRequest<IysExport>(`/api/v1/crm/consents/iys-export${iParams.size ? `?${iParams}` : ""}`),
   ]);
   if (users.kind === "unauthorized" || consents.kind === "unauthorized") redirect("/login");
+  // What the İYS file will actually hold (lib/iys.ts) — the card counts from this, so it
+  // can never promise rows the file leaves out.
+  const upload = iysUpload(iys.kind === "ok" ? iys.data.rows : []);
 
   const header = <PageHeader title="Ayarlar" subtitle="Kullanıcılar, yetkiler ve KVKK kayıtları" />;
 
@@ -288,17 +292,20 @@ export default async function SettingsPage({
         ) : (
           <>
             <ul className={styles.iysList}>
-              <li><strong>{iys.data.summary.rows}</strong> satır aktarılacak{ifrom || ito ? " (seçilen tarihlerde)" : ""}</li>
+              <li><strong>{upload.rows.length}</strong> satır aktarılacak{ifrom || ito ? " (seçilen tarihlerde)" : ""}</li>
               {iys.data.summary.addressBackfilled > 0 && (
                 <li className={styles.iysWarn}>{iys.data.summary.addressBackfilled} satırda adres, izin alındığında kaydedilmemiş — kişinin bugünkü adresi kullanıldı</li>
               )}
               {iys.data.summary.sourceAssumed > 0 && (
                 <li className={styles.iysWarn}>{iys.data.summary.sourceAssumed} satır panelden girilmiş: kaynak «fiziksel ortam» varsayıldı; telefonla alındıysa düzeltin</li>
               )}
-              {iys.data.rows.some((r) => !r.source) && (
+              {upload.noSource > 0 && (
                 <li className={styles.iysWarn}>
-                  <strong>{iys.data.rows.filter((r) => !r.source).length} satırın kaynağı belirlenemedi</strong> — yüklemeden önce kontrol listesinden doldurun
+                  <strong>{upload.noSource} satırın kaynağı belirlenemedi</strong> — İYS dosyasına alınmadı (İYS kaynaksız satırı kabul etmez); kontrol listesinde işaretli
                 </li>
+              )}
+              {upload.foreignPhone > 0 && (
+                <li className={styles.iysWarn}>{upload.foreignPhone} telefon Türkiye numarası değil — İYS dosyasına alınmadı</li>
               )}
               {iys.data.summary.sourceInferred > 0 && (
                 <li className={styles.iysWarn}>{iys.data.summary.sourceInferred} satırın kaynağı kayıttan çıkarıldı</li>
@@ -316,7 +323,8 @@ export default async function SettingsPage({
               <a className={`${ui.button} ${ui.buttonGhost}`} href={`/settings/iys-export?kind=review${iParams.size ? `&${iParams}` : ""}`}>Kontrol listesini indir</a>
             </div>
             <p className={styles.rowNote} style={{ marginTop: 10 }}>
-              ⚠️ Sütunlar İYS veri modeline göre hazırlandı; İYS portalının kendi yükleme şablonuyla karşılaştırın.
+              Dosya İYS portalının örnek dosyasıyla («Ornek_Bireysel.csv») aynı biçimdedir.{" "}
+              <strong>Yüklemeden önce Excel&apos;de açıp kaydetmeyin</strong> — Excel telefon numaralarını bozar; indirdiğiniz dosyayı olduğu gibi yükleyin.
               İYS&apos;den gelen ret bildirimleri bu sisteme düşmez — kampanya göndermeden önce İYS kontrol edilmelidir.
             </p>
           </>
