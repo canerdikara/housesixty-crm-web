@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { TurnstileDirection, TurnstileResult } from "@/lib/types";
+import { READERS } from "@/lib/gate";
+import type { TurnstileResult } from "@/lib/types";
 import { scanCodeAction, validateScanAction } from "./actions";
 import styles from "./turnstile.module.css";
 
@@ -47,16 +48,6 @@ const TOKEN_TTL_MS = 75_000;
 const CODE_TTL_MS = 8_000;
 const STATIC_CODE = /^\d{6}$/;
 
-/**
- * The supplier's four readers. ⚠️ Placeholder numbering, the same as the backend's
- * `GATE_READERS` default, until the supplier confirms theirs.
- */
-const READERS: { n: number; label: string; direction: TurnstileDirection }[] = [
-  { n: 1, label: "Turnike 1 · giriş", direction: "ENTRY" },
-  { n: 2, label: "Turnike 1 · çıkış", direction: "EXIT" },
-  { n: 3, label: "Turnike 2 · giriş", direction: "ENTRY" },
-  { n: 4, label: "Turnike 2 · çıkış", direction: "EXIT" },
-];
 /** Between detection attempts. 10/s is far faster than a person presents a phone. */
 const SCAN_INTERVAL_MS = 100;
 /** How long a verdict stays on screen before scanning resumes. */

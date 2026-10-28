@@ -5,8 +5,9 @@ import { apiRequest } from "@/lib/api";
 import { izmirToday } from "@/lib/dates";
 import { canControlGate } from "@/lib/roles";
 import { readSession } from "@/lib/session";
-import type { DeskVisit } from "@/lib/types";
+import type { DeskVisit, GateSilence } from "@/lib/types";
 import { DeskLog } from "./DeskLog";
+import { SilenceWarning } from "./SilenceWarning";
 
 export const metadata = { title: "Turnikeler · House Sixty CRM" };
 export const dynamic = "force-dynamic";
@@ -38,9 +39,10 @@ export default async function GatePage() {
   }
 
   const today = izmirToday();
-  const [open, day] = await Promise.all([
+  const [open, day, silence] = await Promise.all([
     apiRequest<DeskVisit[]>("/api/v1/crm/gate/visits/open"),
     apiRequest<DeskVisit[]>(`/api/v1/crm/gate/visits?date=${today}`),
+    apiRequest<GateSilence>("/api/v1/crm/gate/silence"),
   ]);
   if (open.kind === "unauthorized" || day.kind === "unauthorized") redirect("/login");
 
@@ -59,6 +61,7 @@ export default async function GatePage() {
   return (
     <PageBody>
       <PageHeader title="Turnikeler" subtitle="Resepsiyondan elle geçirilenlerin giriş ve çıkış kayıtları" />
+      <SilenceWarning initial={silence.kind === "ok" ? silence.data : null} />
       <DeskLog initialOpen={open.data} initialDay={day.data} initialDate={today} />
     </PageBody>
   );

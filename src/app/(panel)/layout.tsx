@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
+import { GateAlerts } from "@/components/GateAlerts";
 import { Sidebar } from "@/components/Sidebar";
 import { readSession } from "@/lib/session";
 import { navFor } from "@/lib/nav";
-import { canAccessPanel } from "@/lib/roles";
+import { canAccessPanel, canControlGate } from "@/lib/roles";
 import styles from "@/components/sidebar.module.css";
 
 /**
@@ -32,7 +33,11 @@ export default async function PanelLayout({ children }: { children: React.ReactN
   return (
     <>
       <Sidebar items={items} user={session.user} />
-      <div className={styles.main}>{children}</div>
+      <div className={styles.main}>
+        {/* Turnstile warnings (V63) on every page, for the desk roles. */}
+        {canControlGate(session.user.role) && <GateAlerts />}
+        {children}
+      </div>
     </>
   );
 }

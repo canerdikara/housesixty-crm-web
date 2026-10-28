@@ -1150,6 +1150,29 @@ export type QrAccess = {
 /** The «Üye» search — id, name and role only (members, trainers, employees). */
 export type GatePerson = { userId: string; fullName: string; role: string };
 
+/**
+ * A turnstile warning (V63), shown on every page until someone presses X.
+ * UNKNOWN_CODE: a listed code opened the turnstile and nobody held it.
+ * DOUBLE_ENTRY: [memberName] entered again with no exit since [previousEntryAt].
+ */
+export type GateAlert = {
+  id: string;
+  kind: "UNKNOWN_CODE" | "DOUBLE_ENTRY";
+  occurredAt: string;
+  reader: number;
+  userId: string | null;
+  memberName: string | null;
+  previousEntryAt: string | null;
+};
+
+/** «No scans arriving» (V63) — «Turnikeler» only. */
+export type GateSilence = {
+  active: boolean;
+  lastScanAt: string | null;
+  codesSince: number;
+  key: string;
+};
+
 /** One person the desk let through with the physical button. */
 export type DeskVisit = {
   id: string;
