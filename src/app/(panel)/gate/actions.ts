@@ -1,82 +1,87 @@
 "use server";
 
-import { apiRequest } from "@/lib/api";
-import type {
-  GateAction,
-  GateCommandLogItem,
-  GateCommandStatus,
-  GatePerson,
-  GateStatus,
-  TurnstileDirection,
-} from "@/lib/types";
+import { apiRequest, type ApiResult } from "@/lib/api";
+import { izmirLocalInputToIso } from "@/lib/dates";
+import type { DeskVisit, GatePerson } from "@/lib/types";
 
 /**
- * «Turnikeler»'s calls to `/api/v1/crm/gate/*` (turnstile.md §9).
+ * «Turnikeler»'s calls to `/api/v1/crm/gate/visits*` (V61): the desk's hand-written log of
+ * who it let through with the turnstile's physical button.
  *
- * All go through `apiRequest`, so unlike the simulator's validate call these **need a live
- * session** — and this page stays open all shift without navigating. `middleware.ts`
- * refreshes the token on every request its matcher covers, server-action POSTs included,
- * and the page also calls `router.refresh()` every few minutes as a belt to those braces
- * (§9.5). If a session does lapse, every action answers `{ kind: "unauthorized" }` and the
- * page sends the browser to /login itself — a redirect thrown from an action called by a
- * client component would otherwise surface as an error.
+ * All go through `apiRequest`, so they need a live session — and this page stays open all
+ * shift. `middleware.ts` refreshes the token on every request its matcher covers, server-
+ * action POSTs included, and the page also calls `router.refresh()` every few minutes. If a
+ * session does lapse, every action answers `{ kind: "unauthorized" }` and the page sends the
+ * browser to /login itself (a redirect thrown from an action called by a client component
+ * would otherwise surface as an error).
+ *
+ * Times arrive as `datetime-local` text and are read as İzmir time here, on the server, so
+ * the laptop's own time zone never shifts a record.
  */
 
 export type Unauthorized = { kind: "unauthorized" };
+type Result<T> = { kind: "ok"; data: T } | Unauthorized | { kind: "error"; message: string };
 
-export async function gateStatusAction(): Promise<{ kind: "ok"; data: GateStatus } | Unauthorized | { kind: "error"; message: string }> {
-  const r = await apiRequest<GateStatus>("/api/v1/crm/gate/status");
+const UUID = /^[0-9a-f-]{36}$/i;
+
+function settle<T>(r: ApiResult<T>): Result<T> {
   if (r.kind === "ok") return { kind: "ok", data: r.data };
   if (r.kind === "unauthorized") return r;
   return { kind: "error", message: r.message };
 }
 
-export type CreateCommandResult =
-  | { kind: "ok"; id: string }
-  | Unauthorized
-  /** 409 GATE_OFFLINE — the bridge is not answering; open by hand. Never queued. */
-  | { kind: "offline"; message: string }
-  | { kind: "error"; message: string };
-
-export async function createGateCommandAction(input: {
-  turnstile: string;
-  action: GateAction;
-  direction?: TurnstileDirection;
-  subjectUserId?: string;
-  reservationId?: string;
-  reason?: string;
-}): Promise<CreateCommandResult> {
-  const r = await apiRequest<{ id: string }>("/api/v1/crm/gate/commands", { method: "POST", body: input });
-  if (r.kind === "ok") return { kind: "ok", id: r.data.id };
-  if (r.kind === "unauthorized") return r;
-  if (r.kind === "error" && r.status === 409) return { kind: "offline", message: r.message };
-  return { kind: "error", message: r.message };
-}
-
-export async function gateCommandAction(
-  id: string,
-): Promise<{ kind: "ok"; status: GateCommandStatus; resultMessage: string | null } | Unauthorized | { kind: "error"; message: string }> {
-  // The id comes from our own create call, but it still goes into a path — refuse anything
-  // that is not a UUID rather than trusting it.
-  if (!/^[0-9a-f-]{36}$/i.test(id)) return { kind: "error", message: "Geçersiz komut" };
-  const r = await apiRequest<{ status: GateCommandStatus; resultMessage: string | null }>(`/api/v1/crm/gate/commands/${id}`);
-  if (r.kind === "ok") return { kind: "ok", status: r.data.status, resultMessage: r.data.resultMessage };
-  if (r.kind === "unauthorized") return r;
-  return { kind: "error", message: r.message };
-}
-
-export async function gateLogAction(): Promise<{ kind: "ok"; data: GateCommandLogItem[] } | Unauthorized | { kind: "error"; message: string }> {
-  const r = await apiRequest<GateCommandLogItem[]>("/api/v1/crm/gate/commands");
-  if (r.kind === "ok") return { kind: "ok", data: r.data };
-  if (r.kind === "unauthorized") return r;
-  return { kind: "error", message: r.message };
-}
-
-export async function gatePeopleAction(q: string): Promise<{ kind: "ok"; data: GatePerson[] } | Unauthorized | { kind: "error"; message: string }> {
+export async function deskPeopleAction(q: string): Promise<Result<GatePerson[]>> {
   const term = q.trim();
   if (term.length < 2) return { kind: "ok", data: [] };
-  const r = await apiRequest<GatePerson[]>(`/api/v1/crm/gate/people?q=${encodeURIComponent(term)}`);
-  if (r.kind === "ok") return { kind: "ok", data: r.data };
+  return settle(await apiRequest<GatePerson[]>(`/api/v1/crm/gate/visits/people?q=${encodeURIComponent(term)}`));
+}
+
+export async function createDeskVisitAction(input: {
+  userId?: string;
+  guestName?: string;
+  note?: string;
+  entryLocal: string;
+}): Promise<Result<DeskVisit>> {
+  const entryAt = izmirLocalInputToIso(input.entryLocal);
+  if (!entryAt) return { kind: "error", message: "Giriş tarihini ve saatini seçin" };
+  if (input.userId && !UUID.test(input.userId)) return { kind: "error", message: "Geçersiz kişi" };
+  return settle(
+    await apiRequest<DeskVisit>("/api/v1/crm/gate/visits", {
+      method: "POST",
+      body: {
+        userId: input.userId || undefined,
+        guestName: input.guestName?.trim() || undefined,
+        note: input.note?.trim() || undefined,
+        entryAt,
+      },
+    }),
+  );
+}
+
+export async function exitDeskVisitAction(id: string, exitLocal: string): Promise<Result<DeskVisit>> {
+  if (!UUID.test(id)) return { kind: "error", message: "Geçersiz kayıt" };
+  const exitAt = izmirLocalInputToIso(exitLocal);
+  if (!exitAt) return { kind: "error", message: "Çıkış tarihini ve saatini seçin" };
+  return settle(await apiRequest<DeskVisit>(`/api/v1/crm/gate/visits/${id}/exit`, { method: "POST", body: { exitAt } }));
+}
+
+export async function deleteDeskVisitAction(id: string): Promise<Result<null>> {
+  if (!UUID.test(id)) return { kind: "error", message: "Geçersiz kayıt" };
+  const r = await apiRequest<unknown>(`/api/v1/crm/gate/visits/${id}`, { method: "DELETE" });
+  if (r.kind === "ok") return { kind: "ok", data: null };
   if (r.kind === "unauthorized") return r;
   return { kind: "error", message: r.message };
+}
+
+/** The «Çıkış» list and the day's log, together — one refresh after every change. */
+export async function deskVisitsAction(date: string): Promise<Result<{ open: DeskVisit[]; day: DeskVisit[] }>> {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { kind: "error", message: "Geçersiz tarih" };
+  const [open, day] = await Promise.all([
+    apiRequest<DeskVisit[]>("/api/v1/crm/gate/visits/open"),
+    apiRequest<DeskVisit[]>(`/api/v1/crm/gate/visits?date=${date}`),
+  ]);
+  if (open.kind === "unauthorized" || day.kind === "unauthorized") return { kind: "unauthorized" };
+  if (open.kind !== "ok") return { kind: "error", message: open.message };
+  if (day.kind !== "ok") return { kind: "error", message: day.message };
+  return { kind: "ok", data: { open: open.data, day: day.data } };
 }

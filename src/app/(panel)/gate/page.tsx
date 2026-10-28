@@ -5,24 +5,20 @@ import { apiRequest } from "@/lib/api";
 import { izmirToday } from "@/lib/dates";
 import { canControlGate } from "@/lib/roles";
 import { readSession } from "@/lib/session";
-import type { GateCommandLogItem, GateSpaBooking, GateStatus, ReservationCalendar } from "@/lib/types";
-import { TurnstileDesk } from "./TurnstileDesk";
+import type { DeskVisit } from "@/lib/types";
+import { DeskLog } from "./DeskLog";
 
 export const metadata = { title: "Turnikeler · House Sixty CRM" };
 export const dynamic = "force-dynamic";
 
 /**
- * «Turnikeler» — the desk opens, holds open and releases the two turnstiles (turnstile.md §9).
+ * «Turnikeler» — the desk's hand-written turnstile log (V61, Can 2026-10-28).
  *
- * Mainly for spa guests, who have no QR. The command goes to the gate bridge at the club,
- * which long-polls the backend for it; a command not collected within 10 seconds is never
- * executed, and while the bridge is offline the desk is told at once to open by hand.
+ * The supplier's turnstile is opened at the desk with a physical button; the CRM opens
+ * nothing. The desk records here who it let through and when: members without their phone
+ * (whose entry and exit then count in the reports like a scan) and guests by name.
  *
- * ADMIN and RECEPTION. ⚠️ The sidebar shows it to ADMIN only until the bridge is installed
- * (§9.5) — a page that can only ever say "offline" would teach the desk to ignore it.
- *
- * Today's spa bookings are offered first in «Kim için?», so attaching the guest — which
- * records their arrival — is the easy path rather than the extra step.
+ * ADMIN and RECEPTION.
  */
 export default async function GatePage() {
   const session = await readSession();
@@ -34,7 +30,7 @@ export default async function GatePage() {
         <PageHeader title="Turnikeler" />
         <Card>
           <EmptyState title="Bu ekranı görüntüleme yetkiniz yok">
-            Turnikeleri yalnızca yönetici ve resepsiyon açabilir.
+            Turnike kayıtlarını yalnızca yönetici ve resepsiyon görebilir.
           </EmptyState>
         </Card>
       </PageBody>
@@ -42,53 +38,28 @@ export default async function GatePage() {
   }
 
   const today = izmirToday();
-  const [status, log, spa] = await Promise.all([
-    apiRequest<GateStatus>("/api/v1/crm/gate/status"),
-    apiRequest<GateCommandLogItem[]>("/api/v1/crm/gate/commands"),
-    apiRequest<ReservationCalendar>(`/api/v1/crm/reservations/calendar?date=${today}&facilityType=SPA`),
+  const [open, day] = await Promise.all([
+    apiRequest<DeskVisit[]>("/api/v1/crm/gate/visits/open"),
+    apiRequest<DeskVisit[]>(`/api/v1/crm/gate/visits?date=${today}`),
   ]);
-  if (status.kind === "unauthorized" || log.kind === "unauthorized") redirect("/login");
+  if (open.kind === "unauthorized" || day.kind === "unauthorized") redirect("/login");
 
-  if (status.kind !== "ok") {
+  if (open.kind !== "ok" || day.kind !== "ok") {
+    const message = open.kind !== "ok" && "message" in open ? open.message : day.kind !== "ok" && "message" in day ? day.message : "";
     return (
       <PageBody>
         <PageHeader title="Turnikeler" />
         <Card>
-          <EmptyState title="Turnike durumu yüklenemedi">{status.message}</EmptyState>
+          <EmptyState title="Turnike kayıtları yüklenemedi">{message}</EmptyState>
         </Card>
       </PageBody>
     );
   }
 
-  // A spa calendar that fails to load costs the shortcut, not the page: the person search
-  // still finds the guest.
-  const spaBookings: GateSpaBooking[] =
-    spa.kind === "ok"
-      ? spa.data.facilities.flatMap((f) =>
-          f.slots
-            .filter((s) => s.reservation && ["PENDING", "CONFIRMED"].includes(s.reservation.status))
-            .map((s) => ({
-              reservationId: s.reservation!.id,
-              userId: s.reservation!.userId,
-              fullName: s.reservation!.fullName,
-              facilityName: f.name,
-              startTime: s.startTime,
-              endTime: s.endTime,
-            })),
-        ).sort((a, b) => a.startTime.localeCompare(b.startTime))
-      : [];
-
   return (
     <PageBody>
-      <PageHeader
-        title="Turnikeler"
-        subtitle="Misafirler ve telefonu yanında olmayanlar için turnikeyi buradan açın"
-      />
-      <TurnstileDesk
-        initialStatus={status.data}
-        initialLog={log.kind === "ok" ? log.data : []}
-        spaBookings={spaBookings}
-      />
+      <PageHeader title="Turnikeler" subtitle="Resepsiyondan elle geçirilenlerin giriş ve çıkış kayıtları" />
+      <DeskLog initialOpen={open.data} initialDay={day.data} initialDate={today} />
     </PageBody>
   );
 }

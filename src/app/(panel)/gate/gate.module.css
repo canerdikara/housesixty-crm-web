@@ -1,62 +1,48 @@
 /*
- * «Turnikeler» — desk control of the two turnstiles (turnstile.md §9).
- *
- * The status line is the first thing on the page and the only coloured band: the desk must
- * see "offline — open by hand" before it reaches for a button that cannot work.
+ * «Turnikeler» — the desk's hand-written turnstile log (V61).
+ * Entry and exit side by side on a wide screen, the day's log below.
  */
 
-.statusLine {
-  padding: 12px 16px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  font-size: 13px;
-  margin-bottom: 18px;
+.intro { margin: 0 0 16px; font-size: 13px; color: var(--text-muted); max-width: 760px; line-height: 1.55; }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+  align-items: start;
 }
-.statusOn { border-color: var(--good); background: var(--good-bg); }
-.statusWarn { border-color: var(--warn); background: var(--warn-bg); }
-.statusOff { border-color: var(--crit); background: var(--crit-bg); }
-.version { color: var(--text-muted); }
 
-.cardTitle { font-size: 16px; margin: 0; }
-.cardSub { margin: 3px 0 12px; color: var(--text-muted); font-size: 12.5px; }
-.label { margin: 0 0 6px; font-size: 12px; color: var(--text-muted); }
-
-/* ── «Kim için?» ───────────────────────────────────────────────────────────── */
-
-.picker,
-.turnstile,
-.logCard {
+.card {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow-card);
   padding: 18px 20px;
 }
-.picker { margin-bottom: 18px; }
 
-.chosen {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  min-height: 32px;
-  margin-bottom: 12px;
-  font-size: 13.5px;
-}
+.cardTitle { font-size: 16px; margin: 0 0 12px; }
+.cardSub { margin: -6px 0 12px; color: var(--text-muted); font-size: 12.5px; }
+.label { display: block; margin: 0 0 5px; font-size: 12px; color: var(--text-muted); }
+.field { margin-bottom: 14px; }
+.field input, .field textarea { width: 100%; max-width: 420px; }
+.note { resize: vertical; min-height: 54px; font-family: inherit; }
+.when { max-width: 240px !important; }
 .small { padding: 3px 10px; font-size: 12px; }
 
-.spaList { margin-bottom: 12px; }
-.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.modeRow { display: flex; gap: 6px; margin-bottom: 14px; }
 .chip {
-  padding: 5px 11px;
+  padding: 6px 16px;
   border-radius: var(--radius-pill);
   border: 1px solid var(--border);
   background: var(--chip);
   color: var(--text);
-  font-size: 12.5px;
+  font-size: 13px;
   cursor: pointer;
 }
 .chipOn { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
+
+.chosen { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-height: 34px; font-size: 13.5px; }
 
 .searchRow { position: relative; max-width: 420px; }
 .searchRow input { width: 100%; }
@@ -68,6 +54,8 @@
   margin: 4px 0 0;
   padding: 4px 0;
   list-style: none;
+  max-height: 280px;
+  overflow-y: auto;
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -85,28 +73,38 @@
   cursor: pointer;
 }
 .results button:hover { background: var(--chip); }
-.reason { display: block; margin-top: 10px; width: 100%; max-width: 420px; }
-
-/* ── The turnstiles ────────────────────────────────────────────────────────── */
-
-.turnstiles {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 16px;
-}
-.tHead { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
-.tName { margin: 0; font-size: 18px; font-family: var(--font-serif); }
-.sideDown { margin: 0 0 10px; font-size: 12.5px; color: var(--crit); }
-.buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.buttons button { justify-content: center; }
-.buttons button:disabled { opacity: 0.45; cursor: not-allowed; }
+.noResult { padding: 7px 12px; font-size: 13px; color: var(--text-muted); }
 
 .feedback { margin: 12px 0 0; font-size: 13px; font-weight: 600; }
 .fb_good { color: var(--good); }
 .fb_crit { color: var(--crit); }
-.fb_warn { color: var(--warn); }
-.fb_busy { color: var(--text-muted); font-weight: 400; }
 
-.footNote { margin: 10px 2px 18px; font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+/* ── Çıkış ── */
+.openList { list-style: none; margin: 0; padding: 0; }
+.openList > li { border-top: 1px solid var(--border); }
+.openList > li:first-child { border-top: 0; }
+.openOn { background: var(--chip); border-radius: var(--radius-sm); }
+.openRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 8px;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font-size: 13.5px;
+  text-align: left;
+  cursor: pointer;
+}
+.openRow:hover { background: var(--chip); }
+.openName { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.openNote { margin: -4px 8px 8px; font-size: 12px; color: var(--text-muted); }
+.exitForm { padding: 4px 8px 12px; }
+.exitButtons { display: flex; gap: 8px; margin-top: 10px; }
 
-.logCard .cardTitle { margin-bottom: 12px; }
+/* ── Kayıtlar ── */
+.logHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.logHead .cardTitle { margin: 0; }
+.dateInput { width: auto; }

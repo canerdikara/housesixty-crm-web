@@ -123,3 +123,31 @@ export function dueLabel(iso: string | null | undefined, now: Date = new Date())
   if (n === -1) return "yarın";
   return `${Math.abs(n)} gün sonra`;
 }
+
+/**
+ * Now in İzmir as a `<input type="datetime-local">` value, `YYYY-MM-DDTHH:mm`.
+ *
+ * That input has no time zone: it shows and returns wall-clock text. These two helpers
+ * make that text mean İzmir, whatever the laptop is set to.
+ */
+export function izmirNowLocalInput(now: Date = new Date()): string {
+  const p = Object.fromEntries(localInputFmt.formatToParts(now).map((x) => [x.type, x.value]));
+  // Some engines print midnight as "24".
+  const hour = p.hour === "24" ? "00" : p.hour;
+  return `${p.year}-${p.month}-${p.day}T${hour}:${p.minute}`;
+}
+
+/**
+ * A `datetime-local` value read as İzmir wall-clock time → ISO instant. Turkey is UTC+3
+ * all year (no DST since 2016), so the offset is a constant. Null if it doesn't parse.
+ */
+export function izmirLocalInputToIso(value: string): string | null {
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)) return null;
+  const d = new Date(`${value}:00+03:00`);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+const localInputFmt = new Intl.DateTimeFormat("en-CA", {
+  timeZone: ZONE, year: "numeric", month: "2-digit", day: "2-digit",
+  hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+});
