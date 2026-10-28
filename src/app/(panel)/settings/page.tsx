@@ -8,8 +8,8 @@ import { iysUpload } from "@/lib/iys";
 import { consentChannelLabel } from "@/lib/labels";
 import { ROLE, roleLabel } from "@/lib/roles";
 import { readSession } from "@/lib/session";
-import type { ConsentLogRow, IysExport, Paged, PanelUserDetail, RoleCandidate } from "@/lib/types";
-import { RoleButton, RoleSelect } from "./SettingsControls";
+import type { ConsentLogRow, IysApiState, IysExport, Paged, PanelUserDetail, RoleCandidate } from "@/lib/types";
+import { IysApiCheckButton, IysApiSendButton, RoleButton, RoleSelect } from "./SettingsControls";
 import styles from "./settings.module.css";
 
 export const metadata = { title: "Ayarlar · House Sixty CRM" };
@@ -56,7 +56,7 @@ export default async function SettingsPage({
   if (subject) cParams.set("subject", subject);
   if (cq) cParams.set("q", cq);
 
-  const [session, users, candidates, consents, iys] = await Promise.all([
+  const [session, users, candidates, consents, iys, iysApi] = await Promise.all([
     readSession(),
     apiRequest<PanelUserDetail[]>("/api/v1/crm/settings/users"),
     uq.length >= 2
@@ -64,6 +64,7 @@ export default async function SettingsPage({
       : Promise.resolve(null),
     apiRequest<Paged<ConsentLogRow>>(`/api/v1/crm/consents?${cParams}`),
     apiRequest<IysExport>(`/api/v1/crm/consents/iys-export${iParams.size ? `?${iParams}` : ""}`),
+    apiRequest<IysApiState>("/api/v1/crm/consents/iys-api"),
   ]);
   if (users.kind === "unauthorized" || consents.kind === "unauthorized") redirect("/login");
   // What the İYS file will actually hold (lib/iys.ts) — the card counts from this, so it
@@ -321,7 +322,50 @@ export default async function SettingsPage({
             <div className={styles.rowActions} style={{ marginTop: 14 }}>
               <a className={ui.button} href={`/settings/iys-export?kind=iys${iParams.size ? `&${iParams}` : ""}`}>İYS dosyasını indir (.csv)</a>
               <a className={`${ui.button} ${ui.buttonGhost}`} href={`/settings/iys-export?kind=review${iParams.size ? `&${iParams}` : ""}`}>Kontrol listesini indir</a>
+              <span className={styles.iysMsg}>
+                <IysApiSendButton
+                  rows={upload.rows.length}
+                  from={ifrom}
+                  to={ito}
+                  configured={iysApi.kind === "ok" && iysApi.data.configured}
+                  sandbox={iysApi.kind === "ok" && iysApi.data.sandbox}
+                />
+              </span>
             </div>
+            {iysApi.kind === "ok" && !iysApi.data.configured && (
+              <p className={styles.rowNote} style={{ marginTop: 8 }}>
+                «İYS&apos;ye direkt aktar» için İYS API kullanıcı adı, şifresi, İYS kodu ve marka kodu sunucuda tanımlanmalı.
+              </p>
+            )}
+            {iysApi.kind === "ok" && iysApi.data.sandbox && (
+              <p className={styles.rowNote} style={{ marginTop: 8 }}>Bağlantı İYS test ortamına (sandbox) — gönderimler gerçek kayda düşmez.</p>
+            )}
+            {iysApi.kind === "ok" && iysApi.data.recent.length > 0 && (
+              <ul className={styles.iysSends} aria-label="Son İYS gönderimleri">
+                {iysApi.data.recent.map((s) => (
+                  <li key={s.id}>
+                    <strong>{formatDateTime(s.createdAt)}</strong>
+                    <span className={styles.iysSendMeta}>
+                      {s.rowCount} satır · {s.dateFrom || s.dateTo ? `${s.dateFrom ? formatDate(s.dateFrom) : "…"} – ${s.dateTo ? formatDate(s.dateTo) : "…"}` : "tüm tarihler"}
+                      {s.requestedByName ? ` · ${s.requestedByName}` : ""}
+                    </span>
+                    {s.status === "FAILED" ? (
+                      <Badge tone="crit">Gönderilemedi</Badge>
+                    ) : s.status === "PARTIAL" ? (
+                      <Badge tone="accent">Kısmen gönderildi</Badge>
+                    ) : s.status === "CHECKED" ? (
+                      <Badge tone="good">Sonuç alındı</Badge>
+                    ) : (
+                      <Badge tone="neutral">İYS işliyor</Badge>
+                    )}
+                    {s.acceptedBatches > 0 && <IysApiCheckButton id={s.id} />}
+                    {(s.error || s.resultSummary) && (
+                      <span className={styles.iysSendResult}>{[s.resultSummary, s.error].filter(Boolean).join(" · ")}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
             <p className={styles.rowNote} style={{ marginTop: 10 }}>
               Dosya İYS portalının örnek dosyasıyla («Ornek_Bireysel.csv») aynı biçimdedir.{" "}
               <strong>Yüklemeden önce Excel&apos;de açıp kaydetmeyin</strong> — Excel telefon numaralarını bozar; indirdiğiniz dosyayı olduğu gibi yükleyin.

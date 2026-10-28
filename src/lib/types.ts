@@ -1135,6 +1135,25 @@ export type IysExportSummary = {
 
 export type IysExport = { rows: IysExportRow[]; summary: IysExportSummary };
 
+/** «İYS'ye direkt aktar» (V64) — one send. */
+export type IysApiSend = {
+  id: string;
+  createdAt: string;
+  requestedByName: string | null;
+  dateFrom: string | null;
+  dateTo: string | null;
+  rowCount: number;
+  skippedNoSource: number;
+  skippedForeign: number;
+  acceptedBatches: number;
+  status: "SENT" | "PARTIAL" | "FAILED" | "CHECKED";
+  error: string | null;
+  checkedAt: string | null;
+  resultSummary: string | null;
+};
+
+export type IysApiState = { configured: boolean; sandbox: boolean; recent: IysApiSend[] };
+
 /** «QR erişimi» — `GET /api/v1/crm/access/{userId}` (V53). */
 export type QrDeviceEventKind = "BOUND" | "SELF_CHANGE" | "DESK_UNBIND";
 export type QrAccess = {

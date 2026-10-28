@@ -117,3 +117,12 @@
 
 .iysList { margin: 0; padding: 0 0 0 18px; font-size: 13px; line-height: 1.7; }
 .iysWarn { color: var(--warn); }
+
+/* «İYS'ye direkt aktar» (V64) */
+.small { padding: 3px 10px; font-size: 12px; }
+.iysMsg .inlineError, .iysMsg .inlineOk { max-width: 60ch; font-size: 12px; }
+.iysSends { margin: 14px 0 0; padding: 0; list-style: none; font-size: 12.5px; }
+.iysSends li { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; padding: 8px 0; border-top: 1px solid var(--border); }
+.iysSends li:first-child { border-top: 0; }
+.iysSendMeta { color: var(--text-muted); }
+.iysSendResult { flex-basis: 100%; color: var(--text-muted); font-size: 12px; }

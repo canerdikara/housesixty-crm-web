@@ -3,7 +3,8 @@
 import { useActionState, useRef } from "react";
 import { PANEL_ROLES, roleLabel } from "@/lib/roles";
 import type { FormState } from "@/lib/formState";
-import { changeRoleAction } from "./actions";
+import { ui } from "@/components/ui";
+import { changeRoleAction, iysApiCheckAction, iysApiSendAction } from "./actions";
 import styles from "./settings.module.css";
 
 /**
@@ -79,6 +80,65 @@ export function RoleButton({
       <button type="submit" className={pick ? styles.miniButton : styles.linkButton} disabled={pending}>{label}</button>
       {state.error && <span className={styles.inlineError}>{state.error}</span>}
       {state.ok && pick && <span className={styles.inlineOk}>{state.ok}</span>}
+    </form>
+  );
+}
+
+/**
+ * «İYS'ye direkt aktar» (V64) — sends the rows the İYS file would hold, for the card's
+ * chosen dates, to İYS's API. Asks first: once İYS has a consent, taking it back means
+ * sending a RET. Disabled, with the reason, until the server has İYS's credentials.
+ */
+export function IysApiSendButton({
+  rows,
+  from,
+  to,
+  configured,
+  sandbox,
+}: {
+  rows: number;
+  from: string;
+  to: string;
+  configured: boolean;
+  sandbox: boolean;
+}) {
+  const [state, formAction, pending] = useActionState<FormState, FormData>(iysApiSendAction, {});
+  const formRef = useRef<HTMLFormElement>(null);
+  const span = from || to ? `${from || "…"} – ${to || "…"}` : "tüm tarihler";
+  return (
+    <form ref={formRef} action={formAction} className={styles.inline}>
+      <input type="hidden" name="from" value={from} />
+      <input type="hidden" name="to" value={to} />
+      <button
+        type="button"
+        className={ui.button}
+        disabled={!configured || pending || rows === 0}
+        title={!configured ? "İYS API bilgileri sunucuda tanımlı değil" : rows === 0 ? "Seçilen tarihlerde gönderilecek satır yok" : undefined}
+        onClick={() => {
+          const where = sandbox ? "İYS TEST ortamına" : "İYS'ye";
+          if (window.confirm(`${rows} satır (${span}) ${where} gönderilecek. İYS bu izinleri kaydeder; geri almak için RET göndermek gerekir. Devam edilsin mi?`)) {
+            formRef.current?.requestSubmit();
+          }
+        }}
+      >
+        {pending ? "Gönderiliyor…" : "İYS'ye direkt aktar"}
+      </button>
+      {state.error && <span className={styles.inlineError}>{state.error}</span>}
+      {state.ok && <span className={styles.inlineOk}>{state.ok}</span>}
+    </form>
+  );
+}
+
+/** «Sonucu kontrol et» on one send. */
+export function IysApiCheckButton({ id }: { id: string }) {
+  const [state, formAction, pending] = useActionState<FormState, FormData>(iysApiCheckAction, {});
+  return (
+    <form action={formAction} className={styles.inline}>
+      <input type="hidden" name="id" value={id} />
+      <button type="submit" className={`${ui.button} ${ui.buttonGhost} ${styles.small}`} disabled={pending}>
+        {pending ? "Soruluyor…" : "Sonucu kontrol et"}
+      </button>
+      {state.error && <span className={styles.inlineError}>{state.error}</span>}
     </form>
   );
 }
