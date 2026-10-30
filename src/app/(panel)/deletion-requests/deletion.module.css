@@ -1,0 +1,27 @@
+/*
+ * «Silme talepleri» — the pending table's cells and row actions. CSS only, like every screen.
+ */
+
+.cardTitle { font-size: 16px; margin: 0; }
+.cardSub { margin: 3px 0 14px; color: var(--text-muted); font-size: 12.5px; }
+
+.person { font-weight: 600; }
+.contact { color: var(--text-muted); font-size: 12px; display: block; }
+.warn { display: block; margin-top: 4px; color: var(--warn); font-size: 11.5px; font-weight: 600; }
+.unverified { display: block; margin-top: 4px; color: var(--crit); font-size: 11.5px; max-width: 220px; }
+.reason { max-width: 240px; font-size: 12.5px; white-space: pre-wrap; }
+
+.actions { display: flex; flex-direction: column; gap: 6px; margin: 0; min-width: 190px; }
+.note {
+  font: inherit; font-size: 12px; padding: 5px 8px;
+  border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--card);
+}
+.buttons { display: flex; gap: 12px; align-items: center; }
+.danger {
+  font: inherit; font-size: 12px; font-weight: 600; padding: 5px 10px; cursor: pointer;
+  border: 1px solid var(--crit); border-radius: var(--radius-sm); background: none; color: var(--crit);
+}
+.danger:disabled { opacity: .5; cursor: default; }
+.linkButton { font: inherit; font-size: 12px; border: 0; padding: 0; background: none; color: var(--accent); cursor: pointer; }
+.linkButton:disabled { color: var(--text-faint); cursor: default; }
+.error { font-size: 11px; color: var(--crit); }

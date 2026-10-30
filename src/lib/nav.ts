@@ -58,6 +58,13 @@ export const NAV: readonly NavItem[] = [
    */
   { href: "/gate", label: "Turnikeler", roles: [ROLE.ADMIN, ROLE.RECEPTION] },
 
+  /*
+   * «Silme talepleri» (V65) — account deletion requests from the member apps and the
+   * unlinked /hesap-silme page (App Store 5.1.1(v), Google Play). Completing one anonymises
+   * the member. ADMIN and RECEPTION, as `CrmAccountDeletionController` admits.
+   */
+  { href: "/deletion-requests", label: "Silme talepleri", roles: [ROLE.ADMIN, ROLE.RECEPTION] },
+
   // Membership terms: reception has no access at all.
   { href: "/renewals", label: "Yenilemeler", roles: [ROLE.ADMIN, ROLE.SALES, ROLE.MARKETING] },
 

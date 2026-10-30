@@ -1296,3 +1296,28 @@ export type BankLookup = {
   history: { type: string | null; status: string | null; authAmount: string | null; authDate: string | null; voidDate: string | null; returnCode: string | null }[];
   note: string | null;
 };
+
+/**
+ * `GET /api/v1/crm/deletion-requests` (V65) — «Silme talepleri». A member asked to delete
+ * their account from the app or the unlinked /hesap-silme page. `fullName`/`email`/`phone`
+ * are null when no account is linked (an unverified web request) or once anonymised.
+ */
+export type AccountDeletionRequest = {
+  id: string;
+  userId: string | null;
+  fullName: string | null;
+  email: string | null;
+  phone: string | null;
+  role: string | null;
+  /** What was typed on the web form; cleared once the request is closed. */
+  identifier: string | null;
+  source: "APP" | "WEB";
+  /** True: signed-in app or web form with the right password — the account is already closed. */
+  verified: boolean;
+  status: "PENDING" | "COMPLETED" | "REJECTED";
+  reason: string | null;
+  requestedAt: string;
+  completedAt: string | null;
+  staffNote: string | null;
+  hasActiveMembership: boolean;
+};
