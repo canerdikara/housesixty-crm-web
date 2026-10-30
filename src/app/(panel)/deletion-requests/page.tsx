@@ -54,19 +54,21 @@ export default async function DeletionRequestsPage() {
   }
 
   const pending = result.data.filter((r) => r.status === "PENDING");
-  const closed = result.data.filter((r) => r.status !== "PENDING");
+  const waiting = result.data.filter((r) => r.status === "APP_REMOVED");
+  const closed = result.data.filter((r) => r.status === "COMPLETED" || r.status === "REJECTED");
 
   return (
     <PageBody>
       <PageHeader
         title="Silme talepleri"
-        subtitle="Uygulamadan ve web formundan gelen hesap silme talepleri — en geç 30 gün içinde sonuçlandırın"
+        subtitle="Uygulamadan ve web formundan gelen uygulama hesabı silme talepleri — en geç 30 gün içinde sonuçlandırın"
       />
 
       <Card>
         <h2 className={styles.cardTitle}>Bekleyen talepler</h2>
         <p className={styles.cardSub}>
-          Doğrulanmış talepte hesap zaten kapatıldı; aktif üyelik varsa önce kişiyle konuşun, ardından anonimleştirin.
+          Doğrulanmış talepte uygulama erişimi zaten kapatıldı; üye kaydı, rezervasyonlar ve dersler olduğu gibi durur.
+          Üyeliği süren kişide yalnızca uygulama hesabı silinir; ad ve iletişim bilgileri üyelik bitince otomatik anonimleştirilir.
         </p>
         {pending.length === 0 ? (
           <EmptyState title="Bekleyen talep yok" />
@@ -99,7 +101,9 @@ export default async function DeletionRequestsPage() {
                         ) : (
                           <span className={styles.contact}>Hesap eşleşmedi — formda yazılan bilgi</span>
                         )}
-                        {r.hasActiveMembership && <span className={styles.warn}>Aktif üyelik var</span>}
+                        {r.appOnly && (
+                          <span className={styles.warn}>Üyelik sürüyor — yalnızca uygulama hesabı silinecek</span>
+                        )}
                       </td>
                       <td>{r.role ? roleLabel(r.role) : "—"}</td>
                       <td>{r.source === "APP" ? "Uygulama" : "Web"}</td>
@@ -116,7 +120,7 @@ export default async function DeletionRequestsPage() {
                       <td className={styles.reason}>{r.reason ?? "—"}</td>
                       <td className={ui.nowrap}>{formatDateTime(r.requestedAt)}</td>
                       <td>
-                        <DeletionActions id={r.id} name={name} verified={r.verified} linked={r.userId !== null} />
+                        <DeletionActions id={r.id} name={name} verified={r.verified} linked={r.userId !== null} appOnly={r.appOnly} />
                       </td>
                     </tr>
                   );
@@ -128,8 +132,48 @@ export default async function DeletionRequestsPage() {
       </Card>
 
       <Card>
+        <h2 className={styles.cardTitle}>Üyelik bitince anonimleştirilecek</h2>
+        <p className={styles.cardSub}>
+          Uygulama hesabı silindi; üyelik (ya da antrenör / çalışan hesabı) sürdüğü için ad ve iletişim bilgileri korunuyor.
+          Üyelik sona erdiğinde her sabah yapılan kontrol kişiyi otomatik anonimleştirir.
+        </p>
+        {waiting.length === 0 ? (
+          <EmptyState title="Bekleyen kişi yok" />
+        ) : (
+          <TableWrap>
+            <table className={ui.table}>
+              <thead>
+                <tr>
+                  <th>Kişi</th>
+                  <th>Rol</th>
+                  <th>Talep tarihi</th>
+                  <th>Uygulama hesabı silindi</th>
+                  <th>Not</th>
+                </tr>
+              </thead>
+              <tbody>
+                {waiting.map((r) => (
+                  <tr key={r.id}>
+                    <td>
+                      <span className={styles.person}>{r.fullName ?? "—"}</span>
+                      {r.email && <span className={styles.contact}>{r.email}</span>}
+                      {r.phone && <span className={styles.contact}>{r.phone}</span>}
+                    </td>
+                    <td>{r.role ? roleLabel(r.role) : "—"}</td>
+                    <td className={ui.nowrap}>{formatDateTime(r.requestedAt)}</td>
+                    <td className={ui.nowrap}>{formatDateTime(r.completedAt)}</td>
+                    <td className={styles.reason}>{r.staffNote ?? "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </TableWrap>
+        )}
+      </Card>
+
+      <Card>
         <h2 className={styles.cardTitle}>Son işlemler</h2>
-        <p className={styles.cardSub}>Son 50 tamamlanan ya da reddedilen talep. Anonimleştirilen kişinin adı artık gösterilmez.</p>
+        <p className={styles.cardSub}>Son 50 tamamlanan ya da reddedilen talep. Anonimleştirilen kişinin adı artık gösterilmez; ödeme kayıtlarında ödeyen bilgisi korunur.</p>
         {closed.length === 0 ? (
           <EmptyState title="Henüz işlem yok" />
         ) : (

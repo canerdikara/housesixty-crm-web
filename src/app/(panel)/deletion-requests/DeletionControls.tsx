@@ -14,12 +14,15 @@ export function DeletionActions({
   name,
   verified,
   linked,
+  appOnly,
 }: {
   id: string;
   name: string;
   verified: boolean;
   /** False when the web form matched no account: nothing to anonymise, only «Reddet». */
   linked: boolean;
+  /** Active membership / working staff: only the app account goes now. */
+  appOnly: boolean;
 }) {
   const [done, complete, completing] = useActionState<FormState, FormData>(
     completeDeletionAction,
@@ -51,16 +54,21 @@ export function DeletionActions({
             disabled={pending}
             onClick={(e) => {
               const ok = window.confirm(
-                `${name} anonimleştirilsin mi?\n\n` +
-                  "Bu işlem geri alınamaz. Ad, e-posta, telefon, profil, sözleşme taraması ve bildirim kaydı silinir; " +
-                  "kişi uygulamaya bir daha giremez.\n\n" +
-                  "Yasal olarak saklanması gereken kayıtlar ad olmadan kalır: ödemeler, sözleşme onayları, " +
-                  "giriş-çıkış kayıtları ve izin (KVKK/İYS) kayıtları.",
+                appOnly
+                  ? `${name} için uygulama hesabı silinsin mi?\n\n` +
+                      "Bu işlem geri alınamaz. Uygulama girişi, şifre, fotoğraf, QR telefonu ve bildirim kaydı silinir. " +
+                      "Üyelik sürdüğü için ad, iletişim bilgileri, rezervasyonlar ve dersler korunur; " +
+                      "üyelik bitince kişi otomatik anonimleştirilir."
+                  : `${name} anonimleştirilsin mi?\n\n` +
+                      "Bu işlem geri alınamaz. Ad, e-posta, telefon, profil, sözleşme taraması ve bildirim kaydı silinir; " +
+                      "kişi uygulamaya bir daha giremez.\n\n" +
+                      "Yasal olarak saklanması gereken kayıtlar kalır: ödemeler (ödeyen bilgisiyle), sözleşme onayları, " +
+                      "giriş-çıkış kayıtları ve izin (KVKK/İYS) kayıtları.",
               );
               if (!ok) e.preventDefault();
             }}
           >
-            Anonimleştir
+            {appOnly ? "Uygulama hesabını sil" : "Anonimleştir"}
           </button>
         )}
         {!verified && (

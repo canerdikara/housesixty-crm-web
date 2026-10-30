@@ -1312,12 +1312,15 @@ export type AccountDeletionRequest = {
   /** What was typed on the web form; cleared once the request is closed. */
   identifier: string | null;
   source: "APP" | "WEB";
-  /** True: signed-in app or web form with the right password — the account is already closed. */
+  /** True: signed-in app or web form with the right password — app access is already off. */
   verified: boolean;
-  status: "PENDING" | "COMPLETED" | "REJECTED";
+  /** APP_REMOVED: app account removed while a member; anonymised automatically when the membership ends. */
+  status: "PENDING" | "APP_REMOVED" | "COMPLETED" | "REJECTED";
   reason: string | null;
   requestedAt: string;
   completedAt: string | null;
   staffNote: string | null;
   hasActiveMembership: boolean;
+  /** PENDING: completing removes only the app account (active membership or working trainer/employee). */
+  appOnly: boolean;
 };
